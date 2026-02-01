@@ -329,8 +329,7 @@ func (s *service) Random(lang string, characterID string, episode int, truth Tru
 			return nil
 		}
 		pick := candidates[rand.IntN(len(candidates))]
-		q := quotes[pick]
-		return &q
+		return &quotes[pick]
 	}
 
 	indices := s.indexer.FilteredIndices(lang, characterID, episode)
@@ -339,11 +338,10 @@ func (s *service) Random(lang string, characterID string, episode int, truth Tru
 			return nil
 		}
 		pick := indices[rand.IntN(len(indices))]
-		q := quotes[pick]
-		return &q
+		return &quotes[pick]
 	}
 
-	var filtered []ParsedQuote
+	var filtered []int
 	for i := 0; i < len(quotes); i++ {
 		if characterID != "" && quotes[i].CharacterID != characterID {
 			continue
@@ -351,15 +349,15 @@ func (s *service) Random(lang string, characterID string, episode int, truth Tru
 		if episode > 0 && quotes[i].Episode != episode {
 			continue
 		}
-		filtered = append(filtered, quotes[i])
+		filtered = append(filtered, i)
 	}
 
 	if len(filtered) == 0 {
 		return nil
 	}
 
-	pick := rand.IntN(len(filtered))
-	return &filtered[pick]
+	pick := filtered[rand.IntN(len(filtered))]
+	return &quotes[pick]
 }
 
 func (s *service) GetByAudioID(lang string, audioID string) *ParsedQuote {

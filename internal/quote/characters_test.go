@@ -5,7 +5,6 @@ import (
 )
 
 func TestGetCharacterName_AllEntries(t *testing.T) {
-	// Every ID in the mapping must resolve to the correct name.
 	expect := map[string]string{
 		"00":       "GroupVoices",
 		"01":       "Kinzo",
@@ -79,7 +78,6 @@ func TestGetCharacterName_AllEntries(t *testing.T) {
 		}
 	}
 
-	// Mapping size must match — catches stale test if new entries are added.
 	if len(CharacterNames) != len(expect) {
 		t.Errorf("CharacterNames has %d entries, test expects %d — update the test", len(CharacterNames), len(expect))
 	}
@@ -98,7 +96,6 @@ func TestGetCharacterName_UnknownID(t *testing.T) {
 func TestGetAllCharacters_ReturnsCopy(t *testing.T) {
 	all := CharacterNames.GetAllCharacters()
 
-	// Must contain every entry.
 	if len(all) != len(CharacterNames) {
 		t.Fatalf("GetAllCharacters returned %d entries, want %d", len(all), len(CharacterNames))
 	}
@@ -108,7 +105,6 @@ func TestGetAllCharacters_ReturnsCopy(t *testing.T) {
 		}
 	}
 
-	// Must be a copy — mutating the returned map must not affect the original.
 	all["test_mutation"] = "should not leak"
 	if _, exists := CharacterNames["test_mutation"]; exists {
 		t.Error("GetAllCharacters did not return a copy — mutation leaked into CharacterNames")

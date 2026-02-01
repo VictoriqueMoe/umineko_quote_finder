@@ -2,6 +2,25 @@
 
 A quote search engine for Umineko no Naku Koro ni. Search through thousands of lines of dialogue from the visual novel.
 
+## Contents
+
+- [Features](#features)
+- [Quick Start](#quick-start)
+  - [Voice Audio (Optional)](#voice-audio-optional)
+  - [Expected zip structure](#expected-zip-structure)
+- [API Endpoints](#api-endpoints)
+  - [Query Parameters](#query-parameters)
+  - [Response Format](#response-format)
+- [Build](#build)
+  - [Cross-compile](#cross-compile)
+- [Docker](#docker)
+- [Data](#data)
+- [Script Tag Parsing](#script-tag-parsing)
+  - [Tags with HTML rendering](#tags-with-html-rendering)
+  - [Tags stripped to content](#tags-stripped-to-content)
+  - [Special character tags](#special-character-tags)
+  - [Other cleanup](#other-cleanup)
+
 ## Features
 
 - Fuzzy search through all dialogue

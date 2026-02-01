@@ -1,0 +1,9 @@
+services:
+  umineko-quote:
+    image: ghcr.io/victoriquemoe/umineko_quote_finder:latest
+    container_name: umineko-quote
+    restart: unless-stopped
+    ports:
+      - "4323:3000"
+    volumes:
+      - ./internal/quote/data/audio:/app/internal/quote/data/audio:ro

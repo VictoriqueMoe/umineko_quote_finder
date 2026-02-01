@@ -247,6 +247,24 @@ func TestParseAll_EpisodeAndContentTypes(t *testing.T) {
 			wantAudioID:     "10200442",
 			enTextContains:  []string{"KyaaaaaAAAAAAaaaaaAAaa"},
 		},
+		{
+			name: "alphanumeric audio ID - awase group voice",
+			enLines: []string{
+				"new_episode 6",
+				"d2 [lv 0*\"00\"*\"awase6100_o\"][ak][text_speed_t 5]`\"\"With your fellow monsters.\"\" `[#][*][\\]",
+			},
+			jaLines: []string{
+				"new_episode 6",
+				"d2 [lv 0*\"00\"*\"awase6100_o\"][ak][text_speed_t 5]`\"\u300c\u30d0\u30b1\u30e2\u30ce\u540c\u58eb\u306b\u9650\u308b\u308f\u300d\u300d`[#][*][\\]",
+			},
+			wantEpisode:     6,
+			wantContentType: "",
+			wantCharID:      "00",
+			wantCharName:    "GroupVoices",
+			wantAudioID:     "awase6100_o",
+			enTextContains:  []string{"With your fellow monsters"},
+			jaTextContains:  []string{"バケモノ同士"},
+		},
 	}
 
 	for _, tt := range tests {
@@ -1052,6 +1070,70 @@ func TestParseAll_MixedRedBlueTruth(t *testing.T) {
 	}
 	if !strings.Contains(q.Text, "impossible for you to commit") {
 		t.Errorf("plain text missing blue truth content: %q", q.Text)
+	}
+}
+
+func TestParseAll_AlphanumericAudioIDs(t *testing.T) {
+	p := NewParser()
+
+	tests := []struct {
+		name         string
+		line         string
+		wantAudioID  string
+		wantCharID   string
+		textContains string
+	}{
+		{
+			name:         "awase group voice",
+			line:         "d2 [lv 0*\"99\"*\"awase0001\"]`\"Eeeeh, mackereeeel?!?! This is long enough surely.\"`[#][*][\\]",
+			wantAudioID:  "awase0001",
+			wantCharID:   "99",
+			textContains: "mackereeeel",
+		},
+		{
+			name:         "announcer voice",
+			line:         "d [lv 0*\"99\"*\"anaf1001\"]`\"Our apologies for the delay. Boarding will now commence for Flight 201 to Niijima.\"`[\\]",
+			wantAudioID:  "anaf1001",
+			wantCharID:   "99",
+			textContains: "Boarding",
+		},
+		{
+			name:         "staff voice",
+			line:         "d [lv 0*\"99\"*\"staf1001\"]`\"Boarding will now commence. As I call out the names on the passenger list.\"`[\\]",
+			wantAudioID:  "staf1001",
+			wantCharID:   "99",
+			textContains: "passenger list",
+		},
+		{
+			name:         "awase with underscore suffix",
+			line:         "d2 [lv 0*\"00\"*\"awase6100_o\"][ak][text_speed_t 5]`\"\"With your fellow monsters.\"\" `[#][*][\\]",
+			wantAudioID:  "awase6100_o",
+			wantCharID:   "00",
+			textContains: "fellow monsters",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			lines := []string{
+				"new_episode 1",
+				tt.line,
+			}
+			quotes := p.ParseAll(lines)
+			if len(quotes) == 0 {
+				t.Fatal("expected at least 1 quote, got 0")
+			}
+			q := quotes[0]
+			if q.AudioID != tt.wantAudioID {
+				t.Errorf("audioID: got %q, want %q", q.AudioID, tt.wantAudioID)
+			}
+			if q.CharacterID != tt.wantCharID {
+				t.Errorf("characterID: got %q, want %q", q.CharacterID, tt.wantCharID)
+			}
+			if !strings.Contains(q.Text, tt.textContains) {
+				t.Errorf("text %q missing substring %q", q.Text, tt.textContains)
+			}
+		})
 	}
 }
 

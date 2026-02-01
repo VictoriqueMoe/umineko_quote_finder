@@ -63,7 +63,7 @@ var (
 func NewParser() Parser {
 	return &parser{
 		dialogueLineRegex: regexp.MustCompile(`^d2? \[lv`),
-		voiceMetaRegex:    regexp.MustCompile(`\[lv 0\*"(\d+)"\*"(\d+)"\]`),
+		voiceMetaRegex:    regexp.MustCompile(`\[lv 0\*"(\d+)"\*"(.+?)"\]`),
 		narratorLineRegex: regexp.MustCompile("^d2? `"),
 		bracketRegex:      regexp.MustCompile(`\[[^\]]*\]`),
 		episodeRegex:      regexp.MustCompile(`^new_episode (\d+)\r?$`),

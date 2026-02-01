@@ -11,7 +11,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-var audioIdPattern = regexp.MustCompile(`^[a-zA-Z0-9]+$`)
+var audioIdPattern = regexp.MustCompile(`^[a-zA-Z0-9_]+$`)
 
 func (s *Service) getAllQuoteRoutes() []FSetupRoute {
 	return []FSetupRoute{

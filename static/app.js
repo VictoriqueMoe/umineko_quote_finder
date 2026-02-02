@@ -738,6 +738,22 @@
             for (const b of toggle.querySelectorAll('.lang-card-btn')) {
                 b.classList.toggle('active', b.dataset.lang === newLang);
             }
+
+            const contextSection = card.querySelector('.context-section');
+            if (contextSection) {
+                const contextAudioId = card.querySelector('.context-btn')?.dataset.audioId;
+                if (contextAudioId) {
+                    try {
+                        const ctxResp = await fetch(`${API_BASE}/context/${contextAudioId}?lang=${newLang}&lines=5`);
+                        const ctxData = await ctxResp.json();
+                        if (!ctxData.error) {
+                            contextSection.innerHTML = renderContextSection(ctxData);
+                        }
+                    } catch (ctxErr) {
+                        console.error('Failed to refresh context:', ctxErr);
+                    }
+                }
+            }
         } catch (error) {
             console.error('Failed to toggle language:', error);
         } finally {

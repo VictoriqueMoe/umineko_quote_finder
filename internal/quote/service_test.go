@@ -357,6 +357,128 @@ func TestService_Random_UnknownLang(t *testing.T) {
 	}
 }
 
+func TestService_GetContext(t *testing.T) {
+	svc := testService
+
+	// Use an audio ID that is not at the very start of the quotes slice
+	resp := svc.Search("Beatrice", "en", 10, 0, "", 0, false, TruthAll)
+	if resp.Total == 0 {
+		t.Fatal("need search results to find a mid-slice audio ID")
+	}
+	var midAudioId string
+	for _, r := range resp.Results {
+		if r.Quote.AudioID != "" {
+			midAudioId = r.Quote.AudioID
+			break
+		}
+	}
+	if midAudioId == "" {
+		t.Skip("no quote with audioId found in search results")
+	}
+	// Handle composite audio IDs
+	parts := strings.SplitN(midAudioId, ", ", 2)
+	midAudioId = parts[0]
+
+	result := svc.GetContext("en", midAudioId, 5)
+
+	if result == nil {
+		t.Fatal("expected context result")
+	}
+	if result.Quote.AudioID == "" {
+		t.Error("expected quote to have an audio ID")
+	}
+	if len(result.Before) > 5 {
+		t.Errorf("Before length exceeds lines: got %d", len(result.Before))
+	}
+	if len(result.After) > 5 {
+		t.Errorf("After length exceeds lines: got %d", len(result.After))
+	}
+	totalContext := len(result.Before) + len(result.After)
+	if totalContext == 0 {
+		t.Error("expected at least some context lines")
+	}
+}
+
+func TestService_GetContext_NotFound(t *testing.T) {
+	svc := testService
+
+	result := svc.GetContext("en", "99999999", 5)
+
+	if result != nil {
+		t.Errorf("expected nil for unknown audio ID, got %+v", result)
+	}
+}
+
+func TestService_GetContext_EdgeOfSlice(t *testing.T) {
+	svc := testService
+
+	// 11900001 is near the start of the slice
+	result := svc.GetContext("en", "11900001", 5)
+
+	if result == nil {
+		t.Fatal("expected context result for edge-of-slice quote")
+	}
+	// Before may be empty if the quote is at the start
+	if len(result.Before) > 5 {
+		t.Errorf("Before length exceeds lines: got %d", len(result.Before))
+	}
+	if len(result.After) > 5 {
+		t.Errorf("After length exceeds lines: got %d", len(result.After))
+	}
+}
+
+func TestService_GetContext_DefaultLines(t *testing.T) {
+	svc := testService
+
+	result := svc.GetContext("en", "11900001", 0)
+
+	if result == nil {
+		t.Fatal("expected context result with default lines")
+	}
+	if len(result.Before) > 5 {
+		t.Errorf("Before with default lines: got %d, want <= 5", len(result.Before))
+	}
+	if len(result.After) > 5 {
+		t.Errorf("After with default lines: got %d, want <= 5", len(result.After))
+	}
+}
+
+func TestService_GetContext_CapsAtMax(t *testing.T) {
+	svc := testService
+
+	result := svc.GetContext("en", "11900001", 100)
+
+	if result == nil {
+		t.Fatal("expected context result")
+	}
+	if len(result.Before) > 20 {
+		t.Errorf("Before exceeds max: got %d", len(result.Before))
+	}
+	if len(result.After) > 20 {
+		t.Errorf("After exceeds max: got %d", len(result.After))
+	}
+}
+
+func TestService_GetContext_UnknownLang(t *testing.T) {
+	svc := testService
+
+	result := svc.GetContext("fr", "11900001", 5)
+
+	if result != nil {
+		t.Errorf("expected nil for unknown lang, got %+v", result)
+	}
+}
+
+func TestService_GetContext_DefaultLang(t *testing.T) {
+	svc := testService
+
+	result := svc.GetContext("", "11900001", 5)
+
+	if result == nil {
+		t.Fatal("expected context result with default lang")
+	}
+}
+
 func TestService_GetCharacters(t *testing.T) {
 	svc := testService
 

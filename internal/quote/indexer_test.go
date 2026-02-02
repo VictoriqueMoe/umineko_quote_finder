@@ -193,6 +193,69 @@ func TestIndexer_AudioFilePath_NonexistentFile(t *testing.T) {
 	}
 }
 
+func TestIndexer_QuoteIndex_Found(t *testing.T) {
+	quotes := map[string][]ParsedQuote{
+		"en": {
+			{Text: "First", CharacterID: "10", AudioID: "10100001"},
+			{Text: "Second", CharacterID: "27", AudioID: "12700001"},
+			{Text: "Third", CharacterID: "10", AudioID: "10100002"},
+		},
+	}
+	idx := NewIndexer(quotes, "")
+
+	i, ok := idx.QuoteIndex("en", "12700001")
+	if !ok {
+		t.Fatal("QuoteIndex: expected to find audio ID")
+	}
+	if i != 1 {
+		t.Errorf("QuoteIndex: got index %d, want 1", i)
+	}
+}
+
+func TestIndexer_QuoteIndex_NotFound(t *testing.T) {
+	idx, _ := buildTestIndexer()
+
+	_, ok := idx.QuoteIndex("en", "99999999")
+	if ok {
+		t.Error("QuoteIndex: expected not found for unknown audio ID")
+	}
+}
+
+func TestIndexer_QuoteIndex_CompositeIDs(t *testing.T) {
+	quotes := map[string][]ParsedQuote{
+		"en": {
+			{Text: "Line one", CharacterID: "10", AudioID: "10100001, 10100002"},
+			{Text: "Line two", CharacterID: "27", AudioID: "12700001"},
+		},
+	}
+	idx := NewIndexer(quotes, "")
+
+	i1, ok1 := idx.QuoteIndex("en", "10100001")
+	if !ok1 {
+		t.Fatal("QuoteIndex: expected to find first sub-ID")
+	}
+	if i1 != 0 {
+		t.Errorf("QuoteIndex first sub-ID: got %d, want 0", i1)
+	}
+
+	i2, ok2 := idx.QuoteIndex("en", "10100002")
+	if !ok2 {
+		t.Fatal("QuoteIndex: expected to find second sub-ID")
+	}
+	if i2 != 0 {
+		t.Errorf("QuoteIndex second sub-ID: got %d, want 0", i2)
+	}
+}
+
+func TestIndexer_QuoteIndex_UnknownLang(t *testing.T) {
+	idx, _ := buildTestIndexer()
+
+	_, ok := idx.QuoteIndex("fr", "10100001")
+	if ok {
+		t.Error("QuoteIndex: expected not found for unknown lang")
+	}
+}
+
 func TestIndexer_MultipleLangs(t *testing.T) {
 	quotes := map[string][]ParsedQuote{
 		"en": {

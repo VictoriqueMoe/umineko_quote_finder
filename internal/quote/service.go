@@ -20,6 +20,7 @@ type (
 		Browse(lang string, characterID string, limit int, offset int, episode int, truth Truth) CharacterResponse
 		GetByCharacter(lang string, characterID string, limit int, offset int, episode int, truth Truth) CharacterResponse
 		GetByAudioID(lang string, audioID string) *ParsedQuote
+		GetContext(lang string, audioID string, lines int) *ContextResponse
 		Random(lang string, characterID string, episode int, truth Truth) *ParsedQuote
 		GetCharacters() map[string]string
 		AudioFilePath(characterId string, audioId string) string
@@ -52,10 +53,7 @@ func NewService() Service {
 	var wg sync.WaitGroup
 
 	for lang, path := range langFiles {
-		wg.Add(1)
-		go func(lang, path string) {
-			defer wg.Done()
-
+		wg.Go(func() {
 			data, err := dataFS.ReadFile(path)
 			if err != nil {
 				return
@@ -74,7 +72,7 @@ func NewService() Service {
 				parsed: parsed,
 				texts:  texts,
 			}
-		}(lang, path)
+		})
 	}
 
 	go func() {
@@ -381,6 +379,43 @@ func (s *service) GetByAudioID(lang string, audioID string) *ParsedQuote {
 		}
 	}
 	return nil
+}
+
+func (s *service) GetContext(lang string, audioID string, lines int) *ContextResponse {
+	if lang == "" {
+		lang = "en"
+	}
+	if lines <= 0 {
+		lines = 5
+	}
+	if lines > 20 {
+		lines = 20
+	}
+
+	quotes := s.quotes[lang]
+	if quotes == nil {
+		return nil
+	}
+
+	idx, ok := s.indexer.QuoteIndex(lang, audioID)
+	if !ok {
+		return nil
+	}
+
+	start := idx - lines
+	if start < 0 {
+		start = 0
+	}
+	end := idx + lines + 1
+	if end > len(quotes) {
+		end = len(quotes)
+	}
+
+	return &ContextResponse{
+		Before: quotes[start:idx],
+		Quote:  quotes[idx],
+		After:  quotes[idx+1 : end],
+	}
 }
 
 func (s *service) GetCharacters() map[string]string {

@@ -130,7 +130,10 @@
                         </div>
                     </div>
                     ${audioPlayerHTML(quote.audioId, quote.characterId)}
-                    ${shareBtnHTML(quote.audioId)}
+                    <div class="quote-actions">
+                        ${contextBtnHTML(quote.audioId)}
+                        ${shareBtnHTML(quote.audioId)}
+                    </div>
                 </article>
             `;
         }).join('');
@@ -175,7 +178,10 @@
                 ${quote.episode ? `<p class="featured-episode">${episodeLabel(quote)}</p>` : ''}
                 ${audioPlayerHTML(quote.audioId, quote.characterId)}
                 ${langToggleHTML(quote.audioId)}
-                ${shareBtnHTML(quote.audioId)}
+                <div class="quote-actions">
+                    ${contextBtnHTML(quote.audioId)}
+                    ${shareBtnHTML(quote.audioId)}
+                </div>
             </article>
         `;
     }
@@ -206,6 +212,14 @@
         }
         const firstId = escapeHtml(audioId.split(', ')[0]);
         return `<button class="share-btn" data-audio-id="${firstId}">Share this Fragment</button>`;
+    }
+
+    function contextBtnHTML(audioId) {
+        if (!audioId) {
+            return '';
+        }
+        const firstId = escapeHtml(audioId.split(', ')[0]);
+        return `<button class="context-btn" data-audio-id="${firstId}">Show Context</button>`;
     }
 
     function audioPlayerHTML(audioId, characterId) {
@@ -358,7 +372,66 @@
         playAudioUrl(`${API_BASE}/audio/${charId}/${audioId}`, btn);
     }
 
-    resultsContainer.addEventListener('click', (e) => {
+    function renderContextSection(data) {
+        const lines = [...data.before, data.quote, ...data.after];
+        const quoteAudioId = data.quote.audioId || '';
+        return lines.map(line => {
+            const isHighlight = line.audioId === quoteAudioId && quoteAudioId !== '';
+            const highlightClass = isHighlight ? ' context-highlight' : '';
+            const firstId = line.audioId ? escapeHtml(line.audioId.split(', ')[0]) : '';
+            const clickable = firstId && !isHighlight ? ` context-clickable" data-audio-id="${firstId}` : '';
+            return `<div class="context-line${highlightClass}${clickable}">
+                <span class="context-character">${escapeHtml(line.character)}</span>
+                <span class="context-text">${line.textHtml || escapeHtml(line.text)}</span>
+            </div>`;
+        }).join('');
+    }
+
+    resultsContainer.addEventListener('click', async (e) => {
+        const contextBtn = e.target.closest('.context-btn');
+        if (contextBtn) {
+            const card = contextBtn.closest('.quote-card') || contextBtn.closest('.featured-quote');
+            const existing = card.querySelector('.context-section');
+            if (existing) {
+                existing.remove();
+                contextBtn.textContent = 'Show Context';
+                return;
+            }
+            const audioId = contextBtn.dataset.audioId;
+            const activeLangBtn = card ? card.querySelector('.lang-card-btn.active') : null;
+            const lang = activeLangBtn ? activeLangBtn.dataset.lang : currentLang;
+            contextBtn.textContent = 'Loading...';
+            contextBtn.disabled = true;
+            try {
+                const response = await fetch(`${API_BASE}/context/${audioId}?lang=${lang}&lines=5`);
+                const data = await response.json();
+                if (data.error) {
+                    contextBtn.textContent = 'Show Context';
+                    contextBtn.disabled = false;
+                    return;
+                }
+                const section = document.createElement('div');
+                section.className = 'context-section';
+                section.innerHTML = renderContextSection(data);
+                card.appendChild(section);
+                contextBtn.textContent = 'Hide Context';
+            } catch (err) {
+                console.error('Failed to load context:', err);
+                contextBtn.textContent = 'Show Context';
+            } finally {
+                contextBtn.disabled = false;
+            }
+            return;
+        }
+        const contextLine = e.target.closest('.context-clickable');
+        if (contextLine) {
+            const audioId = contextLine.dataset.audioId;
+            if (audioId) {
+                quoteMode = true;
+                getQuoteByAudioId(audioId);
+            }
+            return;
+        }
         const shareBtn = e.target.closest('.share-btn');
         if (shareBtn) {
             const audioId = shareBtn.dataset.audioId;
@@ -738,7 +811,10 @@
                         </div>
                     </div>
                     ${audioPlayerHTML(quote.audioId, quote.characterId)}
-                    ${shareBtnHTML(quote.audioId)}
+                    <div class="quote-actions">
+                        ${contextBtnHTML(quote.audioId)}
+                        ${shareBtnHTML(quote.audioId)}
+                    </div>
                 </article>
             `;
         }).join('');

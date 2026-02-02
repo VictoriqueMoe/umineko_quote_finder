@@ -20,6 +20,7 @@ func (s *Service) getAllQuoteRoutes() []FSetupRoute {
 		s.setupBrowseRoute,
 		s.setupByCharacterRoute,
 		s.setupByAudioIDRoute,
+		s.setupContextRoute,
 		s.setupCharactersRoute,
 		s.setupCombinedAudioRoute,
 		s.setupAudioRoute,
@@ -126,6 +127,29 @@ func (s *Service) byAudioID(ctx *fiber.Ctx) error {
 		})
 	}
 	return ctx.JSON(quote)
+}
+
+func (s *Service) setupContextRoute(routeGroup fiber.Router) {
+	routeGroup.Get("/context/:audioId", s.context)
+}
+
+func (s *Service) context(ctx *fiber.Ctx) error {
+	lang := ctx.Query("lang", "en")
+	audioID := ctx.Params("audioId")
+	if !audioIdPattern.MatchString(audioID) {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid audio ID",
+		})
+	}
+
+	lines := ctx.QueryInt("lines", 5)
+	result := s.QuoteService.GetContext(lang, audioID, lines)
+	if result == nil {
+		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "quote not found",
+		})
+	}
+	return ctx.JSON(result)
 }
 
 func (s *Service) characters(ctx *fiber.Ctx) error {

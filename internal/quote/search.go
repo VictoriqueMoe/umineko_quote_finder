@@ -33,9 +33,7 @@ func concurrentExactSearch(indices []int, lowerTexts []string, quotes []ParsedQu
 	var wg sync.WaitGroup
 
 	for w, c := range chunks {
-		wg.Add(1)
-		go func(workerIdx int, c chunk) {
-			defer wg.Done()
+		wg.Go(func() {
 			var local []SearchResult
 			for j := c.start; j < c.end; j++ {
 				idx := indices[j]
@@ -45,8 +43,8 @@ func concurrentExactSearch(indices []int, lowerTexts []string, quotes []ParsedQu
 					}
 				}
 			}
-			resultSlices[workerIdx] = local
-		}(w, c)
+			resultSlices[w] = local
+		})
 	}
 
 	wg.Wait()

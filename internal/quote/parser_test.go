@@ -1076,7 +1076,6 @@ func TestParseAll_MixedRedBlueTruth(t *testing.T) {
 func TestParseAll_NestedTagsInTruth(t *testing.T) {
 	p := NewParser()
 
-	// Real line from episode 2: red truth containing italic
 	lines := []string{
 		"new_episode 2",
 		`d2 [lv 0*"27"*"20700984"]` + "`" + `"You talk too much, you incompetent fool. ` + "`" + `[@][lv 0*"27"*"20700985"]` + "`" + `Then let me expand on my earlier move. ` + "`" + `[@][lv 0*"27"*"20700986"][#][*]` + "`" + `{p:1:The six definitely entered through {i:this front door}}!!" ` + "`" + `[\]`,
@@ -1087,17 +1086,14 @@ func TestParseAll_NestedTagsInTruth(t *testing.T) {
 	}
 	q := quotes[0]
 
-	// The red truth span should wrap the entire content including the italic
 	if !strings.Contains(q.TextHtml, `<span class="red-truth">The six definitely entered through <em>this front door</em></span>`) {
 		t.Errorf("HTML has broken nested tags: %q", q.TextHtml)
 	}
 
-	// Plain text should not contain stray braces
 	if strings.Contains(q.Text, "{") || strings.Contains(q.Text, "}") {
 		t.Errorf("plain text contains stray braces: %q", q.Text)
 	}
 
-	// Plain text should contain the full content
 	if !strings.Contains(q.Text, "The six definitely entered through this front door") {
 		t.Errorf("plain text missing truth content: %q", q.Text)
 	}
@@ -1106,7 +1102,6 @@ func TestParseAll_NestedTagsInTruth(t *testing.T) {
 func TestParseAll_NestedNobrInTruth(t *testing.T) {
 	p := NewParser()
 
-	// Real line from episode 5: red truth containing {nobr:...} tags
 	lines := []string{
 		"new_episode 5",
 		`d2 [lv 0*"28"*"52100552"]` + "`" + `"I'll respond. ` + "`" + `[@][lv 0*"28"*"52100553"][#][*]` + "`" + `{p:1:From {nobr:1 a.m.} to {nobr:3 a.m.}, the trio of Erika, Nanjo, and Gohda... ` + "`" + `[@][lv 0*"28"*"52100554"]` + "`" + `spent their time in the lounge on the first floor of the guesthouse}." ` + "`" + `[\]`,
@@ -1117,7 +1112,6 @@ func TestParseAll_NestedNobrInTruth(t *testing.T) {
 	}
 	q := quotes[0]
 
-	// The red truth span should wrap the entire content with nobr tags resolved
 	if !strings.Contains(q.TextHtml, `<span class="red-truth">From 1 a.m. to 3 a.m., the trio of Erika, Nanjo, and Gohda...`) {
 		t.Errorf("HTML has broken nested nobr tags: %q", q.TextHtml)
 	}
@@ -1125,12 +1119,10 @@ func TestParseAll_NestedNobrInTruth(t *testing.T) {
 		t.Errorf("HTML red truth span not closed properly: %q", q.TextHtml)
 	}
 
-	// Plain text should not contain stray braces
 	if strings.Contains(q.Text, "{") || strings.Contains(q.Text, "}") {
 		t.Errorf("plain text contains stray braces: %q", q.Text)
 	}
 
-	// Plain text should contain the resolved nobr content
 	if !strings.Contains(q.Text, "From 1 a.m. to 3 a.m.") {
 		t.Errorf("plain text missing nobr content: %q", q.Text)
 	}

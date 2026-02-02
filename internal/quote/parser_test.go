@@ -587,8 +587,163 @@ func TestParseAll_FontNameFormatting(t *testing.T) {
 	if strings.Contains(q.Text, "{f:") {
 		t.Errorf("plain text should not contain raw {f:} tag: %q", q.Text)
 	}
-	if !strings.Contains(q.TextHtml, `<span class="quote-name">Bernkastel</span>`) {
-		t.Errorf("HTML missing quote-name span: %q", q.TextHtml)
+	// {f:} is a font selection tag (small caps), not a name highlight — should pass through as plain text
+	if strings.Contains(q.TextHtml, "quote-name") {
+		t.Errorf("HTML should not contain quote-name span for {f:} font tag: %q", q.TextHtml)
+	}
+	if !strings.Contains(q.TextHtml, "Bernkastel") {
+		t.Errorf("HTML missing font content: %q", q.TextHtml)
+	}
+}
+
+func TestParseAll_FontSelectionPassthrough(t *testing.T) {
+	p := testParser
+
+	// Real line: Kinzo calling out to Beatrice with {f:5:} small caps (EP1)
+	lines := []string{
+		"new_episode 1",
+		"d [lv 0*\"01\"*\"11500055\"]`And even if I had a chance to write such a thing, `[|][lv 0*\"01\"*\"11500056\"]`......if I did have such a chance!!\" `[@][lv 0*\"01\"*\"11500057\"]`\"...I'd want to see it. `[@][lv 0*\"01\"*\"11500058\"]`I want to see it one more time! `[@][lv 0*\"01\"*\"11500059\"]`I want to see {f:5:Beatrice}'s smiling face one last time!! `[\\]",
+	}
+	quotes := p.ParseAll(lines)
+	if len(quotes) == 0 {
+		t.Fatal("expected at least 1 quote")
+	}
+	q := quotes[0]
+
+	if !strings.Contains(q.Text, "Beatrice") {
+		t.Errorf("plain text should contain inner text: %q", q.Text)
+	}
+	if strings.Contains(q.Text, "{") || strings.Contains(q.Text, "}") {
+		t.Errorf("plain text should not contain braces: %q", q.Text)
+	}
+	if strings.Contains(q.TextHtml, "quote-name") {
+		t.Errorf("HTML should not contain quote-name for font tag: %q", q.TextHtml)
+	}
+	if strings.Contains(q.TextHtml, "{") || strings.Contains(q.TextHtml, "}") {
+		t.Errorf("HTML should not contain braces: %q", q.TextHtml)
+	}
+}
+
+func TestParseAll_PresetGoldText(t *testing.T) {
+	p := testParser
+
+	// Real line: Battler's gold truth declaration (EP5)
+	lines := []string{
+		"new_episode 5",
+		"d [lv 0*\"10\"*\"50101465\"]`\"{p:41:I guarantee that this is the corpse of Ushiromiya Kinzo}...!!\" `[\\]",
+	}
+	quotes := p.ParseAll(lines)
+	if len(quotes) == 0 {
+		t.Fatal("expected at least 1 quote")
+	}
+	q := quotes[0]
+
+	if !strings.Contains(q.TextHtml, `<span style="color:#FFAA00">I guarantee that this is the corpse of Ushiromiya Kinzo</span>`) {
+		t.Errorf("HTML should contain gold colour span: %q", q.TextHtml)
+	}
+	if !strings.Contains(q.Text, "I guarantee that this is the corpse of Ushiromiya Kinzo") {
+		t.Errorf("plain text should contain gold text content: %q", q.Text)
+	}
+	if strings.Contains(q.Text, "{") || strings.Contains(q.Text, "}") {
+		t.Errorf("plain text should not contain braces: %q", q.Text)
+	}
+}
+
+func TestParseAll_PresetPurpleText(t *testing.T) {
+	p := testParser
+
+	// Real line: Kumasawa's purple declaration in Bernkastel's game (EP8)
+	lines := []string{
+		"new_episode 8",
+		"d [lv 0*\"17\"*\"81700082\"]`\"{p:42:The dining hall was locked up}. `[@][lv 0*\"17\"*\"81700083\"]`Of course, there is a lock on the doors to the dining hall, but they usually remained unlocked. `[@][lv 0*\"17\"*\"81700084\"]`I knocked, but there was no answer...\" `[\\]",
+	}
+	quotes := p.ParseAll(lines)
+	if len(quotes) == 0 {
+		t.Fatal("expected at least 1 quote")
+	}
+	q := quotes[0]
+
+	if !strings.Contains(q.TextHtml, `<span style="color:#AA71FF">The dining hall was locked up</span>`) {
+		t.Errorf("HTML should contain purple colour span: %q", q.TextHtml)
+	}
+	if !strings.Contains(q.Text, "The dining hall was locked up") {
+		t.Errorf("plain text should contain purple text content: %q", q.Text)
+	}
+	if strings.Contains(q.Text, "{") || strings.Contains(q.Text, "}") {
+		t.Errorf("plain text should not contain braces: %q", q.Text)
+	}
+}
+
+func TestParseAll_PresetPassthrough(t *testing.T) {
+	p := testParser
+
+	// Real line: Battler introduces his name with {p:0:} Japanese font preset (EP1)
+	lines := []string{
+		"new_episode 1",
+		"d `My name is written {p:0:\u53f3\u4ee3\u5bae \u6226\u4eba}. `[@]`Can you read it? `[@]`The first part is my family name, \"Ushiromiya\". `[@]`That's a fairly plausible Japanese pronunciation so far. `[\\]",
+	}
+	quotes := p.ParseAll(lines)
+	if len(quotes) == 0 {
+		t.Fatal("expected at least 1 quote")
+	}
+	q := quotes[0]
+
+	if !strings.Contains(q.Text, "\u53f3\u4ee3\u5bae \u6226\u4eba") {
+		t.Errorf("plain text should contain Japanese content: %q", q.Text)
+	}
+	if strings.Contains(q.Text, "{") || strings.Contains(q.Text, "}") {
+		t.Errorf("plain text should not contain braces: %q", q.Text)
+	}
+	if strings.Contains(q.TextHtml, "quote-name") {
+		t.Errorf("HTML should not contain quote-name for generic preset: %q", q.TextHtml)
+	}
+	if strings.Contains(q.TextHtml, "color:") {
+		t.Errorf("HTML should not contain colour for generic preset: %q", q.TextHtml)
+	}
+}
+
+func TestParseAll_StrayBracesStripped(t *testing.T) {
+	p := testParser
+
+	// Dlanor's line: {p:1: red truth spans across backtick segments, leaving a stray }
+	lines := []string{
+		"new_episode 5",
+		`d2 [lv 0*"47"*"54600338"][#][*]` + "`" + `"{p:1:Die the death!  ` + "`" + `[|][lv 0*"47"*"54600339"][#][*][!w167]` + "`" + `Sentence to death!!{n}` + "`" + `[|][lv 0*"47"*"54600340"][#][*][!w167]` + "`" + `Great equalizer is the death!!}" ` + "`" + `[\]`,
+	}
+	quotes := p.ParseAll(lines)
+	if len(quotes) == 0 {
+		t.Fatal("expected at least 1 quote")
+	}
+	q := quotes[0]
+
+	if strings.Contains(q.Text, "{") || strings.Contains(q.Text, "}") {
+		t.Errorf("plain text should not contain braces: %q", q.Text)
+	}
+	if strings.Contains(q.TextHtml, "{") || strings.Contains(q.TextHtml, "}") {
+		t.Errorf("HTML should not contain braces: %q", q.TextHtml)
+	}
+	if !strings.Contains(q.Text, "Die the death") {
+		t.Errorf("plain text should contain the quote content: %q", q.Text)
+	}
+}
+
+func TestParseAll_NoBracesInOutput(t *testing.T) {
+	p := testParser
+
+	data, err := dataFS.ReadFile("data/english.txt")
+	if err != nil {
+		t.Fatalf("failed to read english.txt: %v", err)
+	}
+	lines := strings.Split(string(data), "\n")
+	quotes := p.ParseAll(lines)
+
+	for i, q := range quotes {
+		if strings.Contains(q.Text, "{") || strings.Contains(q.Text, "}") {
+			t.Errorf("quote %d text contains braces: %q", i, q.Text)
+		}
+		if strings.Contains(q.TextHtml, "{") || strings.Contains(q.TextHtml, "}") {
+			t.Errorf("quote %d HTML contains braces: %q", i, q.TextHtml)
+		}
 	}
 }
 
@@ -854,7 +1009,7 @@ func TestParseAll_SpecialCharTags(t *testing.T) {
 		}
 	})
 
-	t.Run("ob and eb tags produce braces", func(t *testing.T) {
+	t.Run("ob and eb tags are stripped", func(t *testing.T) {
 		lines := []string{
 			"new_episode 1",
 			"d `The text contains {ob}curly braces{eb} that need preserving somehow. `[\\]",
@@ -863,8 +1018,11 @@ func TestParseAll_SpecialCharTags(t *testing.T) {
 		if len(quotes) == 0 {
 			t.Fatal("expected at least 1 quote")
 		}
-		if !strings.Contains(quotes[0].Text, "{curly braces}") {
-			t.Errorf("text should have braces from {ob}/{eb}: %q", quotes[0].Text)
+		if strings.Contains(quotes[0].Text, "{") || strings.Contains(quotes[0].Text, "}") {
+			t.Errorf("text should not contain braces: %q", quotes[0].Text)
+		}
+		if !strings.Contains(quotes[0].Text, "curly braces") {
+			t.Errorf("text should preserve inner content: %q", quotes[0].Text)
 		}
 	})
 

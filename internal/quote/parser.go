@@ -78,12 +78,14 @@ func NewParser() Parser {
 		textRules: []textRule{
 			{regexp.MustCompile(`\{n\}`), "<br>", " "},
 			{regexp.MustCompile(`\{c:([A-Fa-f0-9]+):([^{}]+)\}`), `<span style="color:#$1">$2</span>`, "$2"},
-			{regexp.MustCompile(`\{f:\d+:([^{}]+)\}`), `<span class="quote-name">$1</span>`, "$1"},
+			{regexp.MustCompile(`\{f:\d+:([^{}]+)\}`), "$1", "$1"},
 			{regexp.MustCompile(`\{i:([^{}]+)\}`), `<em>$1</em>`, "$1"},
 			{regexp.MustCompile(`\{ruby:([^:]+):([^{}]+)\}`), `<ruby>$2<rp>(</rp><rt>$1</rt><rp>)</rp></ruby>`, "$2 ($1)"},
-			{regexp.MustCompile(`\{p:\d{2,}:((?:[^{}]|\{[^{}]*\})+)\}`), `<span class="quote-name">$1</span>`, "$1"},
 			{regexp.MustCompile(`\{p:1:((?:[^{}]|\{[^{}]*\})+)\}?`), `<span class="red-truth">$1</span>`, "$1"},
 			{regexp.MustCompile(`\{p:2:((?:[^{}]|\{[^{}]*\})+)\}?`), `<span class="blue-truth">$1</span>`, "$1"},
+			{regexp.MustCompile(`\{p:41:((?:[^{}]|\{[^{}]*\})+)\}`), `<span style="color:#FFAA00">$1</span>`, "$1"},
+			{regexp.MustCompile(`\{p:42:((?:[^{}]|\{[^{}]*\})+)\}`), `<span style="color:#AA71FF">$1</span>`, "$1"},
+			{regexp.MustCompile(`\{p:\d+:((?:[^{}]|\{[^{}]*\})+)\}`), "$1", "$1"},
 			{regexp.MustCompile(`\{y:\d+:([^{}]*)\}`), "", ""},
 			{regexp.MustCompile(`\{n:\d+:([^{}]*)\}`), "$1", "$1"},
 			{regexp.MustCompile(`\{a:[^{}:]*:([^{}]*)\}`), "$1", "$1"},
@@ -179,6 +181,11 @@ func (p *parser) extractText(line string) (string, string) {
 
 	textHtml = p.unclosedTagRegex.ReplaceAllString(textHtml, "")
 	plainText = p.unclosedTagRegex.ReplaceAllString(plainText, "")
+
+	textHtml = strings.ReplaceAll(textHtml, "{", "")
+	textHtml = strings.ReplaceAll(textHtml, "}", "")
+	plainText = strings.ReplaceAll(plainText, "{", "")
+	plainText = strings.ReplaceAll(plainText, "}", "")
 
 	return plainText, textHtml
 }

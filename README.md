@@ -17,6 +17,7 @@ A quote search engine for Umineko no Naku Koro ni. Search through thousands of l
 - [Data](#data)
 - [Script Tag Parsing](#script-tag-parsing)
   - [Tags with HTML rendering](#tags-with-html-rendering)
+  - [Preset colour reference](#preset-colour-reference)
   - [Tags stripped to content](#tags-stripped-to-content)
   - [Special character tags](#special-character-tags)
   - [Other cleanup](#other-cleanup)
@@ -26,6 +27,7 @@ A quote search engine for Umineko no Naku Koro ni. Search through thousands of l
 - Fuzzy search through all dialogue
 - Filter by character and episode
 - Random quote generator
+- Scene context viewer — see surrounding dialogue for any quote
 - English/Japanese language toggle
 - Inline audio playback for voiced lines
 - Umineko-themed web interface
@@ -83,25 +85,27 @@ voice.zip
 
 ## API Endpoints
 
-| Endpoint                             | Description                        |
-|--------------------------------------|------------------------------------|
-| `GET /api/v1/search`                 | Fuzzy search quotes                |
-| `GET /api/v1/random`                 | Get random quote                   |
-| `GET /api/v1/character/:id`          | Get quotes by character ID         |
-| `GET /api/v1/characters`             | List all character IDs and names   |
-| `GET /api/v1/audio/:charId/:audioId` | Stream audio file for a voice line |
-| `GET /api/v1/health`                 | Health check                       |
+| Endpoint                             | Description                            |
+|--------------------------------------|----------------------------------------|
+| `GET /api/v1/search`                 | Fuzzy search quotes                    |
+| `GET /api/v1/random`                 | Get random quote                       |
+| `GET /api/v1/character/:id`          | Get quotes by character ID             |
+| `GET /api/v1/context/:audioId`       | Get surrounding dialogue for a quote   |
+| `GET /api/v1/characters`             | List all character IDs and names       |
+| `GET /api/v1/audio/:charId/:audioId` | Stream audio file for a voice line     |
+| `GET /api/v1/health`                 | Health check                           |
 
 ### Query Parameters
 
-| Parameter   | Endpoints                      | Description                              |
-|-------------|--------------------------------|------------------------------------------|
-| `q`         | search                         | Search query (required)                  |
-| `lang`      | search, random, character      | Language: `en` (default) or `ja`         |
-| `character` | search, random                 | Filter by character ID                   |
-| `episode`   | search, random, character      | Filter by episode (1-8)                  |
-| `limit`     | search, character              | Results per page (default: 30)           |
-| `offset`    | search, character              | Pagination offset                        |
+| Parameter   | Endpoints                          | Description                                        |
+|-------------|------------------------------------|----------------------------------------------------|
+| `q`         | search                             | Search query (required)                            |
+| `lang`      | search, random, character, context | Language: `en` (default) or `ja`                   |
+| `character` | search, random                     | Filter by character ID                             |
+| `episode`   | search, random, character          | Filter by episode (1-8)                            |
+| `lines`     | context                            | Number of lines before/after (default: 5, max: 20) |
+| `limit`     | search, character                  | Results per page (default: 30)                     |
+| `offset`    | search, character                  | Pagination offset                                  |
 
 ### Response Format
 
@@ -187,11 +191,44 @@ The source text files use [ONScripter-RU](https://github.com/umineko-project/ons
 | `{n}`                               | space          | `<br>`                                                  |
 | `{i:text}` / `{italic:text}`        | text           | `<em>text</em>`                                         |
 | `{c:HEX:text}` / `{color:HEX:text}` | text           | `<span style="color:#HEX">text</span>`                  |
-| `{p:1:text}` (red truth preset)     | text           | `<span class="red-truth">text</span>`                   |
-| `{p:2:text}` (blue truth preset)    | text           | `<span class="blue-truth">text</span>`                  |
-| `{p:N:text}` (other presets)        | text           | `<span class="quote-name">text</span>`                  |
-| `{f:N:text}` / `{font:N:text}`      | text           | `<span class="quote-name">text</span>`                  |
+| `{p:1:text}` (red truth)            | text           | `<span class="red-truth">text</span>`                   |
+| `{p:2:text}` (blue truth)           | text           | `<span class="blue-truth">text</span>`                  |
+| `{p:41:text}` (gold text)           | text           | `<span style="color:#FFAA00">text</span>`               |
+| `{p:42:text}` (purple text)         | text           | `<span style="color:#AA71FF">text</span>`               |
 | `{ruby:reading:text}`               | text (reading) | `<ruby>text<rp>(</rp><rt>reading</rt><rp>)</rp></ruby>` |
+
+### Preset colour reference
+
+The `{p:N:text}` tag applies a style preset defined in the script header via `preset_define`. The format is `preset_define number,font,size,colour,...`. Only presets that appear in actual dialogue lines are rendered with colour; the rest are stripped to plain text.
+
+**Game presets** (used in dialogue):
+
+| Preset | Colour    | Usage         | Rendering                           |
+|--------|-----------|---------------|-------------------------------------|
+| 0      | `#FFFFFF` | Japanese font | Stripped (white on dark is default) |
+| 1      | `#FF0000` | Red truth     | `<span class="red-truth">`          |
+| 2      | `#39C6FF` | Blue truth    | `<span class="blue-truth">`         |
+| 7      | `#C0FFFF` | Chapter/Hint  | Not used in dialogue                |
+| 41     | `#FFAA00` | Gold text     | `<span style="color:#FFAA00">`      |
+| 42     | `#AA71FF` | Purple text   | `<span style="color:#AA71FF">`      |
+
+**Menu/UI presets** (not rendered — stripped to plain text if they appear):
+
+| Preset | Usage                          |
+|--------|--------------------------------|
+| 3      | Menu character text            |
+| 4      | Menu JP text                   |
+| 5      | Menu tips/notes text           |
+| 6      | Music box BGM titles           |
+| 8–9    | Menu titles and buttons        |
+| 10     | Menu first setting line        |
+| 11–12  | Menu buttons                   |
+| 13     | Menu tips/notes titles         |
+| 14–16  | Menu jump titles/lines         |
+| 18     | Trophy description             |
+| 20–25  | Credits                        |
+| 30–31  | Load/Save                      |
+| 32     | EP8 menu murder                |
 
 ### Tags stripped to content
 
@@ -199,6 +236,8 @@ These tags control visual styling in the game engine (font size, spacing, line b
 
 | Script tag                                 | Result      |
 |--------------------------------------------|-------------|
+| `{f:N:text}` / `{font:N:text}`             | text        |
+| `{p:N:text}` (other presets)               | text        |
 | `{bold:text}` / `{b:text}`                 | text        |
 | `{bolditalic:text}` / `{x:text}`           | text        |
 | `{underline:text}` / `{u:text}`            | text        |
@@ -224,16 +263,17 @@ These tags control visual styling in the game engine (font size, spacing, line b
 
 These are replaced before other processing.
 
-| Tag                  | Replacement                          |
-|----------------------|--------------------------------------|
-| `{0}`                | *(zero-width space, removed)*        |
-| `{-}`                | *(soft hyphen, removed)*             |
-| `{qt}`               | `"`                                  |
-| `{ob}` / `{eb}`      | `{` / `}`                            |
-| `{os}` / `{es}`      | `[` / `]`                            |
-| `{t}` / `{parallel}` | *(parallel display marker, removed)* |
+| Tag                  | Replacement                             |
+|----------------------|-----------------------------------------|
+| `{0}`                | *(zero-width space, removed)*           |
+| `{-}`                | *(soft hyphen, removed)*                |
+| `{qt}`               | `"`                                     |
+| `{ob}` / `{eb}`      | *(removed — stray braces are stripped)* |
+| `{os}` / `{es}`      | `[` / `]`                               |
+| `{t}` / `{parallel}` | *(parallel display marker, removed)*    |
 
 ### Other cleanup
 
 - Backticks (`` ` ``), inline commands (`[@]`, `[\]`, `[|]`), and voice metadata (`[lv ...]`) are stripped
 - `{Comment:...}` translator notes are stripped entirely
+- Any remaining `{` or `}` are stripped after all tag processing (catches stray braces from tags that span across backtick segments, e.g. `{p:1:` red truth split across voice lines)

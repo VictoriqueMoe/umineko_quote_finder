@@ -1219,3 +1219,89 @@ func TestParseAll_OmakeNarratorLine(t *testing.T) {
 		t.Errorf("text missing expected content: %q", q.Text)
 	}
 }
+
+func TestParseAll_CleanupPatterns(t *testing.T) {
+	p := NewParser()
+
+	tests := []struct {
+		name     string
+		line     string
+		wantText string
+		wantHtml string
+	}{
+		{
+			name:     "backtick [@] separates multi-voice segments",
+			line:     "d [lv 0*\"10\"*\"10100001\"]`\"First segment here. `[@][lv 0*\"10\"*\"10100002\"]`Second segment here too.\" `[\\]",
+			wantText: "First segment here. Second segment here too.",
+			wantHtml: "First segment here. Second segment here too.",
+		},
+		{
+			name:     "backtick [\\] ends a dialogue line",
+			line:     "d [lv 0*\"10\"*\"10100001\"]`\"This line ends with the backslash marker.\" `[\\]",
+			wantText: "This line ends with the backslash marker.",
+			wantHtml: "This line ends with the backslash marker.",
+		},
+		{
+			name:     "backtick [|] acts as a page break marker",
+			line:     "d [lv 0*\"10\"*\"10100001\"]`\"Before the page break marker. `[|][lv 0*\"10\"*\"10100002\"]`After the page break text here.\" `[\\]",
+			wantText: "Before the page break marker. After the page break text here.",
+			wantHtml: "Before the page break marker. After the page break text here.",
+		},
+		{
+			name:     "bare [@] without backtick prefix",
+			line:     "d [lv 0*\"10\"*\"10100001\"]`\"Text before bare marker. [@][lv 0*\"10\"*\"10100002\"]`More text after the marker.\" `[\\]",
+			wantText: "Text before bare marker. More text after the marker.",
+			wantHtml: "Text before bare marker. More text after the marker.",
+		},
+		{
+			name:     "bare [\\] without backtick prefix",
+			line:     "d [lv 0*\"10\"*\"10100001\"]`\"Text that uses bare backslash at end.\"[\\]",
+			wantText: "Text that uses bare backslash at end.",
+			wantHtml: "Text that uses bare backslash at end.",
+		},
+		{
+			name:     "bare [|] without backtick prefix",
+			line:     "d [lv 0*\"10\"*\"10100001\"]`\"Text with bare pipe break. [|][lv 0*\"10\"*\"10100002\"]`Continued after pipe.\" `[\\]",
+			wantText: "Text with bare pipe break. Continued after pipe.",
+			wantHtml: "Text with bare pipe break. Continued after pipe.",
+		},
+		{
+			name:     "backtick-quote and quote-backtick pairs stripped",
+			line:     "d [lv 0*\"10\"*\"10100001\"]`\"The quoted dialogue text is long enough here.\"`[\\]",
+			wantText: "The quoted dialogue text is long enough here.",
+			wantHtml: "The quoted dialogue text is long enough here.",
+		},
+		{
+			name:     "all cleanup patterns in one line",
+			line:     "d2 [lv 0*\"10\"*\"10100001\"]`\"First part of the text. `[@][lv 0*\"10\"*\"10100002\"]`Second part continues here. `[|][lv 0*\"10\"*\"10100003\"]`Third part after pipe break.\" `[\\]",
+			wantText: "First part of the text. Second part continues here. Third part after pipe break.",
+			wantHtml: "First part of the text. Second part continues here. Third part after pipe break.",
+		},
+		{
+			name:     "narrator line cleanup patterns",
+			line:     "d `The narrator speaks across segments. `[@]`More narration continues here. `[\\]",
+			wantText: "The narrator speaks across segments. More narration continues here.",
+			wantHtml: "The narrator speaks across segments. More narration continues here.",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			lines := []string{
+				"new_episode 1",
+				tt.line,
+			}
+			quotes := p.ParseAll(lines)
+			if len(quotes) == 0 {
+				t.Fatalf("expected at least 1 quote for input: %s", tt.line)
+			}
+			q := quotes[0]
+			if q.Text != tt.wantText {
+				t.Errorf("text:\n  got  %q\n  want %q", q.Text, tt.wantText)
+			}
+			if q.TextHtml != tt.wantHtml {
+				t.Errorf("html:\n  got  %q\n  want %q", q.TextHtml, tt.wantHtml)
+			}
+		})
+	}
+}

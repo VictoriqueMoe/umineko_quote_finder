@@ -29,7 +29,7 @@ A quote search engine for Umineko no Naku Koro ni. Search through thousands of l
 
 ## Features
 
-- Fuzzy search through all dialogue
+- Search through all dialogue
 - Filter by character and episode
 - Random quote generator
 - Scene context viewer — see surrounding dialogue for any quote
@@ -92,7 +92,7 @@ voice.zip
 
 | Endpoint                             | Description                            |
 |--------------------------------------|----------------------------------------|
-| `GET /api/v1/search`                 | Fuzzy search quotes                    |
+| `GET /api/v1/search`                 | Search quotes                          |
 | `GET /api/v1/random`                 | Get random quote                       |
 | `GET /api/v1/character/:id`          | Get quotes by character ID             |
 | `GET /api/v1/context/:audioId`       | Get surrounding dialogue for a quote   |

@@ -25,6 +25,7 @@ A quote search engine for Umineko no Naku Koro ni. Search through thousands of l
   - [Tags stripped to content](#tags-stripped-to-content)
   - [Special character tags](#special-character-tags)
   - [Other cleanup](#other-cleanup)
+- [Contributors](#contributors)
 
 ## Features
 
@@ -378,3 +379,22 @@ These are replaced before other processing.
 - Backticks (`` ` ``), inline commands (`[@]`, `[\]`, `[|]`), and voice metadata (`[lv ...]`) are stripped
 - `{Comment:...}` translator notes are stripped entirely
 - Any remaining `{` or `}` are stripped after all tag processing (catches stray braces from tags that span across backtick segments, e.g. `{p:1:` red truth split across voice lines)
+
+## Contributors
+
+<table>
+  <tr>
+    <td align="center">
+      <a href="https://github.com/HannahBanana1312">
+        <img src="https://avatars.githubusercontent.com/u/36461227?v=4" width="100px;" alt="Hannah"/><br />
+        <sub><b>Hannah</b></sub>
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/nakedmcse">
+        <img src="https://avatars.githubusercontent.com/u/133156975?v=4" width="100px;" alt="Walker Boh"/><br />
+        <sub><b>Walker Boh</b></sub>
+      </a>
+    </td>
+  </tr>
+</table>

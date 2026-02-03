@@ -68,10 +68,7 @@ func (p *scriptParser) ParseAll(lines []string) []ParsedQuote {
 		if start >= end {
 			break
 		}
-
-		wg.Add(1)
-		go func(start, end int) {
-			defer wg.Done()
+		wg.Go(func() {
 			for i := start; i < end; i++ {
 				eq := &extracted[i]
 				quotes[i] = ParsedQuote{
@@ -86,7 +83,7 @@ func (p *scriptParser) ParseAll(lines []string) []ParsedQuote {
 					HasBlueTruth: eq.Truth.HasBlue,
 				}
 			}
-		}(start, end)
+		})
 	}
 	wg.Wait()
 

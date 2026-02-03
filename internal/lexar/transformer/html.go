@@ -29,6 +29,7 @@ func (t *HtmlTransformer) Transform(elements []ast.DialogueElement) string {
 	text = strings.TrimSuffix(text, "&#34;")
 	text = strings.ReplaceAll(text, "{", "")
 	text = strings.ReplaceAll(text, "}", "")
+	text = strings.TrimSpace(text)
 
 	return text
 }

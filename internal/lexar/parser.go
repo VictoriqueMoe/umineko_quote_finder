@@ -133,9 +133,11 @@ func (p *Parser) parseDialogue(cmdTok ast.Token) *ast.DialogueLine {
 func (p *Parser) parseFormatTagContent(tok ast.Token) ast.DialogueElement {
 	tagName, param, content := p.parseFormatTag(tok.Value)
 
-	switch tagName {
-	case "n", "0", "qt", "ob", "eb", "os", "es", "-", "t", "parallel":
-		return &ast.SpecialChar{Name: tagName, Pos: tok}
+	if param == "" && content == "" {
+		switch tagName {
+		case "n", "0", "qt", "ob", "eb", "os", "es", "-", "t", "parallel":
+			return &ast.SpecialChar{Name: tagName, Pos: tok}
+		}
 	}
 
 	var nested []ast.DialogueElement
@@ -163,6 +165,8 @@ func (p *Parser) parseNestedContent(content string) []ast.DialogueElement {
 			}
 		case ast.TokenFormatTag:
 			elements = append(elements, p.parseFormatTagContent(tok))
+		case ast.TokenInlineCommand:
+			elements = append(elements, p.parseInlineCommandContent(tok))
 		case ast.TokenCommand, ast.TokenBacktick:
 		}
 	}
@@ -291,8 +295,14 @@ func (*Parser) parseFormatTag(value string) (tagName, param, content string) {
 	if len(parts) == 2 {
 		content = parts[1]
 	} else if len(parts) == 3 {
-		param = parts[1]
-		content = parts[2]
+		// If the candidate param contains '{', it's actually nested content,
+		// not a parameter. Rejoin as content-only (tag:content).
+		if strings.Contains(parts[1], "{") {
+			content = parts[1] + ":" + parts[2]
+		} else {
+			param = parts[1]
+			content = parts[2]
+		}
 	}
 
 	return tagName, param, content

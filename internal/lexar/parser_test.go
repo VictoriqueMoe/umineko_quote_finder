@@ -318,3 +318,69 @@ d2 [lv 0*"10"*"10100001"]` + "`{p:1:I'll make you understand!}`[@]"
 		t.Errorf("text: got %q", text)
 	}
 }
+
+func TestParse_VoiceInsideFormatTag(t *testing.T) {
+	input := `d2 ` + "`{a:c: `[lv 0*\"30\"*\"53200275\"][#][*]`\"{p:1:Ushiromiya Natsuhi is not the culprit}!\"} `[\\]"
+
+	script := Parse(input)
+	if len(script.Lines) != 1 {
+		t.Fatalf("expected 1 line, got %d", len(script.Lines))
+	}
+
+	d, ok := script.Lines[0].(*ast.DialogueLine)
+	if !ok {
+		t.Fatalf("expected DialogueLine, got %T", script.Lines[0])
+	}
+
+	voices := d.GetVoiceCommands()
+	if len(voices) != 1 {
+		t.Fatalf("expected 1 voice command, got %d", len(voices))
+	}
+
+	if voices[0].CharacterID != "30" {
+		t.Errorf("character ID: got %q, want '30'", voices[0].CharacterID)
+	}
+	if voices[0].AudioID != "53200275" {
+		t.Errorf("audio ID: got %q, want '53200275'", voices[0].AudioID)
+	}
+}
+
+func TestParse_NestedNobrWithCharSpacing(t *testing.T) {
+	// {nobr:{m:-5:——}—} should produce "———" not "-5:——}—"
+	input := `d ` + "`{nobr:{m:-5:——}—}`"
+	script := Parse(input)
+
+	d := script.Lines[0].(*ast.DialogueLine)
+	text := getPlainText(d)
+
+	if text != "———" {
+		t.Errorf("plain text: got %q, want '———'", text)
+	}
+}
+
+func TestParse_ConditionalNTag(t *testing.T) {
+	// {n:0:human} is a conditional default tag, not a line break.
+	// {y:0:Human} is a conditional non-default tag (stripped).
+	input := `d ` + "`the {y:0:Human}{n:0:human} side`"
+	script := Parse(input)
+
+	d := script.Lines[0].(*ast.DialogueLine)
+	text := getPlainText(d)
+
+	if text != "the human side" {
+		t.Errorf("plain text: got %q, want 'the human side'", text)
+	}
+}
+
+func TestParse_LeadingSpaceAfterQuote(t *testing.T) {
+	// '" text' — the quote mark should be trimmed and so should the space after it.
+	input := `d ` + "`\" Everything I speak in red is the truth!\"`"
+	script := Parse(input)
+
+	d := script.Lines[0].(*ast.DialogueLine)
+	text := getPlainText(d)
+
+	if text != "Everything I speak in red is the truth!" {
+		t.Errorf("plain text: got %q, want 'Everything I speak in red is the truth!'", text)
+	}
+}

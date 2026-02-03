@@ -213,10 +213,17 @@ func (t *TimedWait) dialogueElement()         {}
 
 func (d *DialogueLine) GetVoiceCommands() []*VoiceCommand {
 	var voices []*VoiceCommand
-	for _, elem := range d.Content {
-		if v, ok := elem.(*VoiceCommand); ok {
-			voices = append(voices, v)
+	d.collectVoiceCommands(d.Content, &voices)
+	return voices
+}
+
+func (d *DialogueLine) collectVoiceCommands(elements []DialogueElement, voices *[]*VoiceCommand) {
+	for _, elem := range elements {
+		switch el := elem.(type) {
+		case *VoiceCommand:
+			*voices = append(*voices, el)
+		case *FormatTag:
+			d.collectVoiceCommands(el.Content, voices)
 		}
 	}
-	return voices
 }

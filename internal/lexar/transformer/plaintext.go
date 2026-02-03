@@ -24,6 +24,7 @@ func (t *PlainTextTransformer) Transform(elements []ast.DialogueElement) string 
 	text = strings.Trim(text, "`\"")
 	text = strings.ReplaceAll(text, "{", "")
 	text = strings.ReplaceAll(text, "}", "")
+	text = strings.TrimSpace(text)
 
 	return text
 }

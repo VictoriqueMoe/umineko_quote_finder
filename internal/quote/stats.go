@@ -139,12 +139,12 @@ func (s *statsComputer) tally(episode int) tallies {
 			continue
 		}
 
-		if strings.Contains(q.TextHtml, "red-truth") {
+		if q.TruthType == "red" {
 			counts := t.epTruth[q.Episode]
 			counts[0]++
 			t.epTruth[q.Episode] = counts
 		}
-		if strings.Contains(q.TextHtml, "blue-truth") {
+		if q.TruthType == "blue" {
 			counts := t.epTruth[q.Episode]
 			counts[1]++
 			t.epTruth[q.Episode] = counts

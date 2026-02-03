@@ -15,6 +15,10 @@ A quote search engine for Umineko no Naku Koro ni. Search through thousands of l
   - [Cross-compile](#cross-compile)
 - [Docker](#docker)
 - [Data](#data)
+- [Architecture: The Lexar Package](#architecture-the-lexar-package)
+  - [Pipeline Overview](#pipeline-overview)
+  - [Package Structure](#package-structure)
+  - [Key Design Decisions](#key-design-decisions)
 - [Script Tag Parsing](#script-tag-parsing)
   - [Tags with HTML rendering](#tags-with-html-rendering)
   - [Preset colour reference](#preset-colour-reference)
@@ -179,6 +183,103 @@ internal/quote/data/
 ```
 
 Text files are embedded at compile time. Audio files are read from disk at runtime and are organized by character ID subdirectory.
+
+## Architecture: The Lexar Package
+
+The `internal/lexar` package handles parsing Umineko script files and extracting quotes. It follows a pipeline architecture that separates concerns.
+
+### Pipeline Overview
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              Source Text                                    │
+│  d [lv 0*"27"*"10100001"]`"{p:1:Without love, it cannot be seen.}"`[\]     │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                      │
+                                      ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           LEXER (lexer.go)                                  │
+│  Tokenises input into a stream of typed tokens                              │
+│  • TokenCommand: "d"                                                        │
+│  • TokenInlineCommand: "lv 0*\"27\"*\"10100001\""                           │
+│  • TokenBacktick: "`"                                                       │
+│  • TokenFormatTag: "p:1:Without love, it cannot be seen."                   │
+│  • etc.                                                                     │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                      │
+                                      ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                          PARSER (parser.go)                                 │
+│  Builds Abstract Syntax Tree from tokens                                    │
+│                                                                             │
+│  Script                                                                     │
+│   └── Lines[]                                                               │
+│        ├── EpisodeMarkerLine { Episode: 1, Type: "episode" }                │
+│        ├── PresetDefineLine { ID: 1, Colour: "#FF0000" }                    │
+│        ├── LabelLine { Name: "ep1_scene1" }                                 │
+│        └── DialogueLine                                                     │
+│             ├── Command: "d"                                                │
+│             └── Content[]                                                   │
+│                  ├── VoiceCommand { CharacterID: "27", AudioID: "..." }     │
+│                  └── FormatTag { Name: "p", Param: "1", Content: [...] }    │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                      │
+                                      ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                       EXTRACTOR (extractor.go)                              │
+│  Walks AST, extracts quotes with metadata                                   │
+│                                                                             │
+│  ExtractedQuote {                                                           │
+│      Content:     []DialogueElement  ◄── Raw AST, not yet transformed       │
+│      CharacterID: "27"                                                      │
+│      AudioID:     "10100001"                                                │
+│      Episode:     1                                                         │
+│      TruthType:   TruthRed                                                  │
+│  }                                                                          │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                      │
+                                      ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                   TRANSFORMER FACTORY (transformer/)                        │
+│  Converts raw AST to output format on demand                                │
+│                                                                             │
+│  factory.MustGet(FormatPlainText) ──► "Without love, it cannot be seen."    │
+│  factory.MustGet(FormatHTML)      ──► "<span class=\"red-truth\">...</span>"│
+│  factory.MustGet(FormatJSON)      ──► (add your own transformer)            │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Package Structure
+
+```
+internal/lexar/
+├── ast/                    # Abstract Syntax Tree types
+│   └── ast.go              # Token, Line, DialogueElement types
+├── transformer/            # Output format transformers
+│   ├── transformer.go      # Transformer interface
+│   ├── factory.go          # Factory for obtaining transformers
+│   ├── preset.go           # Preset colour/class context
+│   ├── plaintext.go        # Plain text output
+│   └── html.go             # HTML output with styling
+├── lexer.go                # Tokeniser
+├── parser.go               # AST builder
+├── extractor.go            # Quote extraction
+└── truth.go                # Red/blue truth detection
+```
+
+### Key Design Decisions
+
+**AST stores raw content** — The extractor outputs `ExtractedQuote` with raw `[]DialogueElement`, not pre-transformed strings. This allows transformation to happen on-demand via the factory.
+
+**Factory pattern for transformers** — Adding a new output format (e.g., JSON, Markdown) requires:
+1. Implement the `Transformer` interface
+2. Register it in the factory
+
+No changes are needed to the extractor or parser.
+
+**Preset context** — Colour presets (`{p:1:text}`) are defined in script headers via `preset_define`. The `PresetContext` collects these definitions and provides semantic class lookups (preset 1 → "red-truth", preset 2 → "blue-truth") and dynamic colour lookups for other presets.
+
+**Truth type detection** — Red and blue truth is detected by walking the AST looking for preset tags with semantic classes. This is stored on `ExtractedQuote.TruthType` for filtering without needing to parse HTML.
 
 ## Script Tag Parsing
 

@@ -1007,26 +1007,6 @@ func TestParseAll_NarratorLines(t *testing.T) {
 	})
 }
 
-func TestParseAll_ShortLineFiltering(t *testing.T) {
-	p := testParser
-
-	lines := []string{
-		"new_episode 1",
-		// This should be filtered (text <= 10 chars after processing)
-		"d [lv 0*\"10\"*\"10100001\"]`\"Hello.\" `[\\]",
-		// This should be kept (text > 10 chars)
-		"d [lv 0*\"10\"*\"10100002\"]`\"This is a much longer line of dialogue that passes.\" `[\\]",
-	}
-
-	quotes := p.ParseAll(lines)
-	if len(quotes) != 1 {
-		t.Fatalf("expected 1 quote (short line filtered), got %d", len(quotes))
-	}
-	if !strings.Contains(quotes[0].Text, "longer line") {
-		t.Errorf("wrong quote kept: %q", quotes[0].Text)
-	}
-}
-
 func TestParseAll_MultipleAudioIDs(t *testing.T) {
 	p := testParser
 

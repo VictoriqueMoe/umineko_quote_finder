@@ -5,7 +5,6 @@ go 1.25
 require (
 	github.com/fogleman/gg v1.3.0
 	github.com/gofiber/fiber/v2 v2.52.11
-	github.com/sahilm/fuzzy v0.1.1
 	golang.org/x/image v0.35.0
 )
 
@@ -16,7 +15,6 @@ require (
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/klauspost/compress v1.18.3 // indirect
-	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.19 // indirect

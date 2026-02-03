@@ -10,7 +10,7 @@ var testService = NewService()
 func TestService_Search_ExactMatch(t *testing.T) {
 	svc := testService
 
-	resp := svc.Search("Beatrice", "en", 10, 0, "", 0, false, TruthAll)
+	resp := svc.Search("Beatrice", "en", 10, 0, "", 0, TruthAll)
 
 	if resp.Total == 0 {
 		t.Fatal("expected search results for 'Beatrice'")
@@ -26,7 +26,7 @@ func TestService_Search_ExactMatch(t *testing.T) {
 func TestService_Search_DefaultValues(t *testing.T) {
 	svc := testService
 
-	resp := svc.Search("witch", "", 0, -1, "", 0, false, TruthAll)
+	resp := svc.Search("witch", "", 0, -1, "", 0, TruthAll)
 
 	if resp.Limit != 30 {
 		t.Errorf("default limit: got %d, want 30", resp.Limit)
@@ -39,7 +39,7 @@ func TestService_Search_DefaultValues(t *testing.T) {
 func TestService_Search_WithCharacterFilter(t *testing.T) {
 	svc := testService
 
-	resp := svc.Search("witch", "en", 10, 0, "10", 0, false, TruthAll)
+	resp := svc.Search("witch", "en", 10, 0, "10", 0, TruthAll)
 
 	for i := 0; i < len(resp.Results); i++ {
 		if resp.Results[i].Quote.CharacterID != "10" {
@@ -51,7 +51,7 @@ func TestService_Search_WithCharacterFilter(t *testing.T) {
 func TestService_Search_WithEpisodeFilter(t *testing.T) {
 	svc := testService
 
-	resp := svc.Search("witch", "en", 10, 0, "", 1, false, TruthAll)
+	resp := svc.Search("witch", "en", 10, 0, "", 1, TruthAll)
 
 	for i := 0; i < len(resp.Results); i++ {
 		if resp.Results[i].Quote.Episode != 1 {
@@ -63,7 +63,7 @@ func TestService_Search_WithEpisodeFilter(t *testing.T) {
 func TestService_Search_RedTruthFilter(t *testing.T) {
 	svc := testService
 
-	resp := svc.Search("truth", "en", 10, 0, "", 0, false, TruthRed)
+	resp := svc.Search("truth", "en", 10, 0, "", 0, TruthRed)
 
 	for i := 0; i < len(resp.Results); i++ {
 		if !strings.Contains(resp.Results[i].Quote.TextHtml, "red-truth") {
@@ -75,7 +75,7 @@ func TestService_Search_RedTruthFilter(t *testing.T) {
 func TestService_Search_NoResults(t *testing.T) {
 	svc := testService
 
-	resp := svc.Search("xyzzyxyzzyxyzzy", "en", 10, 0, "", 0, false, TruthAll)
+	resp := svc.Search("xyzzyxyzzyxyzzy", "en", 10, 0, "", 0, TruthAll)
 
 	if resp.Total != 0 {
 		t.Errorf("Total: got %d, want 0", resp.Total)
@@ -85,20 +85,10 @@ func TestService_Search_NoResults(t *testing.T) {
 	}
 }
 
-func TestService_Search_ForceFuzzy(t *testing.T) {
-	svc := testService
-
-	resp := svc.Search("Beatrice", "en", 10, 0, "", 0, true, TruthAll)
-
-	if resp.Total == 0 {
-		t.Fatal("expected fuzzy search results for 'Beatrice'")
-	}
-}
-
 func TestService_Search_Japanese(t *testing.T) {
 	svc := testService
 
-	resp := svc.Search("ベアトリーチェ", "ja", 10, 0, "", 0, false, TruthAll)
+	resp := svc.Search("ベアトリーチェ", "ja", 10, 0, "", 0, TruthAll)
 
 	if resp.Total == 0 {
 		t.Fatal("expected Japanese search results")
@@ -108,7 +98,7 @@ func TestService_Search_Japanese(t *testing.T) {
 func TestService_Search_UnknownLang(t *testing.T) {
 	svc := testService
 
-	resp := svc.Search("test", "fr", 10, 0, "", 0, false, TruthAll)
+	resp := svc.Search("test", "fr", 10, 0, "", 0, TruthAll)
 
 	if resp.Total != 0 {
 		t.Errorf("Total for unknown lang: got %d, want 0", resp.Total)
@@ -361,7 +351,7 @@ func TestService_GetContext(t *testing.T) {
 	svc := testService
 
 	// Use an audio ID that is not at the very start of the quotes slice
-	resp := svc.Search("Beatrice", "en", 10, 0, "", 0, false, TruthAll)
+	resp := svc.Search("Beatrice", "en", 10, 0, "", 0, TruthAll)
 	if resp.Total == 0 {
 		t.Fatal("need search results to find a mid-slice audio ID")
 	}

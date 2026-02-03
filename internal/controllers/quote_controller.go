@@ -65,10 +65,9 @@ func (s *Service) search(ctx *fiber.Ctx) error {
 	offset := ctx.QueryInt("offset", 0)
 	characterID := ctx.Query("character")
 	episode := ctx.QueryInt("episode", 0)
-	forceFuzzy := ctx.QueryBool("fuzzy", false)
 	truth := quote.TruthAll.Parse(ctx.Query("truth"))
 
-	response := s.QuoteService.Search(query, lang, limit, offset, characterID, episode, forceFuzzy, truth)
+	response := s.QuoteService.Search(query, lang, limit, offset, characterID, episode, truth)
 	return ctx.JSON(fiber.Map{
 		"query":   query,
 		"results": response.Results,

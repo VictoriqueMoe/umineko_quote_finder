@@ -7,8 +7,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/sahilm/fuzzy"
 )
 
 const audioDir = "internal/quote/data/audio"
@@ -18,7 +16,7 @@ var dataFS embed.FS
 
 type (
 	Service interface {
-		Search(query string, lang string, limit int, offset int, characterID string, episode int, forceFuzzy bool, truth Truth) SearchResponse
+		Search(query string, lang string, limit int, offset int, characterID string, episode int, truth Truth) SearchResponse
 		Browse(lang string, characterID string, limit int, offset int, episode int, truth Truth) CharacterResponse
 		GetByCharacter(lang string, characterID string, limit int, offset int, episode int, truth Truth) CharacterResponse
 		GetByAudioID(lang string, audioID string) *ParsedQuote
@@ -31,22 +29,18 @@ type (
 	}
 
 	service struct {
-		quotes     map[string][]ParsedQuote
-		quoteTexts map[string][]string
-		indexer    Indexer
-		stats      Stats
+		quotes  map[string][]ParsedQuote
+		indexer Indexer
+		stats   Stats
 	}
 
 	langParseResult struct {
 		lang   string
 		parsed []ParsedQuote
-		texts  []string
 	}
 )
 
 func NewService() Service {
-	p := NewParser()
-
 	langFiles := map[string]string{
 		"en": "data/english.txt",
 		"ja": "data/japanese.txt",
@@ -63,19 +57,14 @@ func NewService() Service {
 			}
 			lines := strings.Split(string(data), "\n")
 
+			p := NewParser()
 			start := time.Now()
 			parsed := p.ParseAll(lines)
 			log.Printf("[%s] parsed %d lines → %d quotes in %v", lang, len(lines), len(parsed), time.Since(start).Round(time.Millisecond))
 
-			texts := make([]string, len(parsed))
-			for i := 0; i < len(parsed); i++ {
-				texts[i] = parsed[i].Text
-			}
-
 			results <- langParseResult{
 				lang:   lang,
 				parsed: parsed,
-				texts:  texts,
 			}
 		})
 	}
@@ -86,11 +75,9 @@ func NewService() Service {
 	}()
 
 	quotes := make(map[string][]ParsedQuote)
-	texts := make(map[string][]string)
 
 	for r := range results {
 		quotes[r.lang] = r.parsed
-		texts[r.lang] = r.texts
 	}
 
 	indexer := NewIndexer(quotes, audioDir)
@@ -102,14 +89,13 @@ func NewService() Service {
 	}
 
 	return &service{
-		quotes:     quotes,
-		quoteTexts: texts,
-		indexer:    indexer,
-		stats:      NewStats(quotes["en"]),
+		quotes:  quotes,
+		indexer: indexer,
+		stats:   NewStats(quotes["en"]),
 	}
 }
 
-func (s *service) Search(query string, lang string, limit int, offset int, characterID string, episode int, forceFuzzy bool, truth Truth) SearchResponse {
+func (s *service) Search(query string, lang string, limit int, offset int, characterID string, episode int, truth Truth) SearchResponse {
 	if limit <= 0 {
 		limit = 30
 	}
@@ -142,57 +128,32 @@ func (s *service) Search(query string, lang string, limit int, offset int, chara
 		return true
 	}
 
-	if !forceFuzzy {
-		queryLower := strings.ToLower(query)
+	queryLower := strings.ToLower(query)
 
-		searchIndices := s.indexer.FilteredIndices(lang, characterID, episode)
+	searchIndices := s.indexer.FilteredIndices(lang, characterID, episode)
 
-		var exactMatches []SearchResult
-		if searchIndices != nil {
-			if len(searchIndices) > 5000 {
-				exactMatches = concurrentExactSearch(searchIndices, lowerTexts, quotes, queryLower, matchesFilter)
-			} else {
-				for _, idx := range searchIndices {
-					if strings.Contains(lowerTexts[idx], queryLower) {
-						if matchesFilter(quotes[idx]) {
-							exactMatches = append(exactMatches, NewSearchResult(quotes[idx], 100))
-						}
+	var exactMatches []SearchResult
+	if searchIndices != nil {
+		if len(searchIndices) > 5000 {
+			exactMatches = concurrentExactSearch(searchIndices, lowerTexts, quotes, queryLower, matchesFilter)
+		} else {
+			for _, idx := range searchIndices {
+				if strings.Contains(lowerTexts[idx], queryLower) {
+					if matchesFilter(quotes[idx]) {
+						exactMatches = append(exactMatches, NewSearchResult(quotes[idx], 100))
 					}
 				}
 			}
-		} else {
-			allIndices := make([]int, len(quotes))
-			for i := range allIndices {
-				allIndices[i] = i
-			}
-			exactMatches = concurrentExactSearch(allIndices, lowerTexts, quotes, queryLower, matchesFilter)
 		}
-
-		if len(exactMatches) > 0 {
-			return NewSearchResponse(exactMatches, limit, offset)
+	} else {
+		allIndices := make([]int, len(quotes))
+		for i := range allIndices {
+			allIndices[i] = i
 		}
+		exactMatches = concurrentExactSearch(allIndices, lowerTexts, quotes, queryLower, matchesFilter)
 	}
 
-	quoteTexts := s.quoteTexts[lang]
-	matches := fuzzy.Find(query, quoteTexts)
-	if len(matches) == 0 {
-		return NewSearchResponse(nil, limit, offset)
-	}
-
-	topScore := matches[0].Score
-	relativeThreshold := topScore / 10
-	minFuzzyScore := len(query) * 100
-
-	var fuzzyResults []SearchResult
-	for i := 0; i < len(matches); i++ {
-		if matches[i].Score >= relativeThreshold && matches[i].Score >= minFuzzyScore {
-			if matchesFilter(quotes[matches[i].Index]) {
-				fuzzyResults = append(fuzzyResults, NewSearchResult(quotes[matches[i].Index], matches[i].Score))
-			}
-		}
-	}
-
-	return NewSearchResponse(fuzzyResults, limit, offset)
+	return NewSearchResponse(exactMatches, limit, offset)
 }
 
 func (s *service) Browse(lang string, characterID string, limit int, offset int, episode int, truth Truth) CharacterResponse {

@@ -2,8 +2,6 @@ package ast
 
 import "fmt"
 
-// Token types and Token struct
-
 type (
 	TokenType int
 

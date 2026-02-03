@@ -1,7 +1,9 @@
 package quote
 
 import (
+	"runtime"
 	"strings"
+	"sync"
 
 	"umineko_quote/internal/lexar"
 	"umineko_quote/internal/lexar/transformer"
@@ -19,19 +21,44 @@ func (p *scriptParser) ParseAll(lines []string) []ParsedQuote {
 
 	extracted := p.extractor.ExtractQuotes(input)
 
-	var quotes []ParsedQuote
-	for _, eq := range extracted {
-		quotes = append(quotes, ParsedQuote{
-			Text:        p.factory.MustGet(transformer.FormatPlainText).Transform(eq.Content),
-			TextHtml:    p.factory.MustGet(transformer.FormatHTML).Transform(eq.Content),
-			CharacterID: eq.CharacterID,
-			Character:   CharacterNames.GetCharacterName(eq.CharacterID),
-			AudioID:     eq.AudioID,
-			Episode:     eq.Episode,
-			ContentType: eq.ContentType,
-			TruthType:   eq.TruthType.String(),
-		})
+	quotes := make([]ParsedQuote, len(extracted))
+
+	plainText := p.factory.MustGet(transformer.FormatPlainText)
+	htmlText := p.factory.MustGet(transformer.FormatHTML)
+
+	numWorkers := runtime.GOMAXPROCS(0)
+	chunkSize := (len(extracted) + numWorkers - 1) / numWorkers
+
+	var wg sync.WaitGroup
+	for w := 0; w < numWorkers; w++ {
+		start := w * chunkSize
+		end := start + chunkSize
+		if end > len(extracted) {
+			end = len(extracted)
+		}
+		if start >= end {
+			break
+		}
+
+		wg.Add(1)
+		go func(start, end int) {
+			defer wg.Done()
+			for i := start; i < end; i++ {
+				eq := &extracted[i]
+				quotes[i] = ParsedQuote{
+					Text:        plainText.Transform(eq.Content),
+					TextHtml:    htmlText.Transform(eq.Content),
+					CharacterID: eq.CharacterID,
+					Character:   CharacterNames.GetCharacterName(eq.CharacterID),
+					AudioID:     eq.AudioID,
+					Episode:     eq.Episode,
+					ContentType: eq.ContentType,
+					TruthType:   eq.TruthType.String(),
+				}
+			}
+		}(start, end)
 	}
+	wg.Wait()
 
 	return quotes
 }

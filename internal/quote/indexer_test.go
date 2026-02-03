@@ -1,6 +1,10 @@
 package quote
 
-import "testing"
+import (
+	"os"
+	"path/filepath"
+	"testing"
+)
 
 func buildTestIndexer() (Indexer, map[string][]ParsedQuote) {
 	quotes := map[string][]ParsedQuote{
@@ -286,5 +290,60 @@ func TestIndexer_MultipleLangs(t *testing.T) {
 	jaBeatrice := idx.CharacterIndices("ja", "27")
 	if len(jaBeatrice) != 1 {
 		t.Errorf("JA CharacterIndices for Beatrice: got %d, want 1", len(jaBeatrice))
+	}
+}
+
+func TestIndexer_HasAudio_EmptyDir(t *testing.T) {
+	idx, _ := buildTestIndexer()
+
+	// Empty audioDir string means no audio configured
+	if idx.HasAudio() {
+		t.Error("HasAudio with empty dir string: expected false")
+	}
+}
+
+func TestIndexer_HasAudio_NonexistentDir(t *testing.T) {
+	quotes := map[string][]ParsedQuote{
+		"en": {{Text: "test", CharacterID: "10", Episode: 1}},
+	}
+	idx := NewIndexer(quotes, "/nonexistent/audio/dir")
+
+	// Non-existent directory means no audio
+	if idx.HasAudio() {
+		t.Error("HasAudio with nonexistent dir: expected false")
+	}
+}
+
+func TestIndexer_HasAudio_EmptyExistingDir(t *testing.T) {
+	dir := t.TempDir()
+	quotes := map[string][]ParsedQuote{
+		"en": {{Text: "test", CharacterID: "10", Episode: 1}},
+	}
+	idx := NewIndexer(quotes, dir)
+
+	// Empty existing directory means no audio files available
+	if idx.HasAudio() {
+		t.Error("HasAudio with empty existing dir: expected false")
+	}
+}
+
+func TestIndexer_HasAudio_WithFiles(t *testing.T) {
+	dir := t.TempDir()
+	// Create subdirectory with a file
+	subDir := filepath.Join(dir, "10")
+	if err := os.MkdirAll(subDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(subDir, "10100001.ogg"), []byte("test"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	quotes := map[string][]ParsedQuote{
+		"en": {{Text: "test", CharacterID: "10", Episode: 1}},
+	}
+	idx := NewIndexer(quotes, dir)
+
+	if !idx.HasAudio() {
+		t.Error("HasAudio with files: expected true")
 	}
 }

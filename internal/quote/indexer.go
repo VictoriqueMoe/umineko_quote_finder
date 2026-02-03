@@ -15,6 +15,7 @@ type (
 		NonNarratorIndices(lang string) []int
 		AudioFilePath(characterId string, audioId string) string
 		QuoteIndex(lang string, audioID string) (int, bool)
+		HasAudio() bool
 	}
 
 	indexer struct {
@@ -25,6 +26,7 @@ type (
 		audioIndex       map[string]map[string]int
 		quotes           map[string][]ParsedQuote
 		audioDir         string
+		hasAudio         bool
 	}
 
 	langIndexResult struct {
@@ -81,6 +83,21 @@ func NewIndexer(quotes map[string][]ParsedQuote, audioDir string) Indexer {
 		close(results)
 	}()
 
+	hasAudio := false
+	if audioDir != "" {
+		if entries, err := os.ReadDir(audioDir); err == nil {
+			for _, entry := range entries {
+				if entry.IsDir() {
+					subPath := filepath.Join(audioDir, entry.Name())
+					if files, err := os.ReadDir(subPath); err == nil && len(files) > 0 {
+						hasAudio = true
+						break
+					}
+				}
+			}
+		}
+	}
+
 	idx := &indexer{
 		quoteLowerTexts:  make(map[string][]string),
 		characterIndex:   make(map[string]map[string][]int),
@@ -89,6 +106,7 @@ func NewIndexer(quotes map[string][]ParsedQuote, audioDir string) Indexer {
 		audioIndex:       make(map[string]map[string]int),
 		quotes:           quotes,
 		audioDir:         audioDir,
+		hasAudio:         hasAudio,
 	}
 
 	for r := range results {
@@ -176,4 +194,8 @@ func (idx *indexer) FilteredIndices(lang string, characterID string, episode int
 		}
 	}
 	return result
+}
+
+func (idx *indexer) HasAudio() bool {
+	return idx.hasAudio
 }

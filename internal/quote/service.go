@@ -2,9 +2,11 @@ package quote
 
 import (
 	"embed"
+	"log"
 	"math/rand/v2"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/sahilm/fuzzy"
 )
@@ -25,6 +27,7 @@ type (
 		GetCharacters() map[string]string
 		AudioFilePath(characterId string, audioId string) string
 		GetStats() Stats
+		HasAudio() bool
 	}
 
 	service struct {
@@ -60,7 +63,9 @@ func NewService() Service {
 			}
 			lines := strings.Split(string(data), "\n")
 
+			start := time.Now()
 			parsed := p.ParseAll(lines)
+			log.Printf("[%s] parsed %d lines → %d quotes in %v", lang, len(lines), len(parsed), time.Since(start).Round(time.Millisecond))
 
 			texts := make([]string, len(parsed))
 			for i := 0; i < len(parsed); i++ {
@@ -88,10 +93,18 @@ func NewService() Service {
 		texts[r.lang] = r.texts
 	}
 
+	indexer := NewIndexer(quotes, audioDir)
+
+	if indexer.HasAudio() {
+		log.Printf("[audio] audio features enabled")
+	} else {
+		log.Printf("[audio] no audio files found, disabling audio features")
+	}
+
 	return &service{
 		quotes:     quotes,
 		quoteTexts: texts,
-		indexer:    NewIndexer(quotes, audioDir),
+		indexer:    indexer,
 		stats:      NewStats(quotes["en"]),
 	}
 }
@@ -428,4 +441,8 @@ func (s *service) AudioFilePath(characterId string, audioId string) string {
 
 func (s *service) GetStats() Stats {
 	return s.stats
+}
+
+func (s *service) HasAudio() bool {
+	return s.indexer.HasAudio()
 }

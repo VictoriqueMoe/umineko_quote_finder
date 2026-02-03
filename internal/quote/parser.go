@@ -33,13 +33,13 @@ type (
 		narratorLineRegex *regexp.Regexp
 		voiceMetaRegex    *regexp.Regexp
 		bracketRegex      *regexp.Regexp
-		episodeRegex      *regexp.Regexp
-		teaRegex          *regexp.Regexp
-		uraRegex          *regexp.Regexp
+		contentTypeRegex  *regexp.Regexp // matches new_episode, new_tea, new_ura
 		omakeRegex        *regexp.Regexp
+		presetRegex       *regexp.Regexp // matches {p:N:content}
 		unclosedTagRegex  *regexp.Regexp
 		cleanupPatterns   []string
 		textRules         []textRule
+		presetColours     map[string]string // parsed from script's preset_define lines
 	}
 )
 
@@ -58,37 +58,46 @@ var (
 		{"{t}", ""},
 		{"{parallel}", ""},
 	}
+
+	// presetClasses maps preset IDs to semantic CSS class names (these override colours)
+	presetClasses = map[string]string{
+		"1": "red-truth",
+		"2": "blue-truth",
+	}
+
+	// nestedContent matches content that may contain nested braces (for truth tags)
+	nestedContent = `((?:[^{}]|\{[^{}]*\})+)`
+
+	// simpleContent matches content without nested braces
+	simpleContent = `([^{}]+)`
+
+	presetDefineRegex = regexp.MustCompile(`^preset_define (\d+),\d+,-?\d+,(#[A-Fa-f0-9]{6})`)
 )
 
 func NewParser() Parser {
 	return &parser{
-		dialogueLineRegex: regexp.MustCompile(`^d2? \[lv`),
-		voiceMetaRegex:    regexp.MustCompile(`\[lv 0\*"(\d+)"\*"(.+?)"\]`),
+		dialogueLineRegex: regexp.MustCompile(`^d2? (?:\[[^\]]*\])*\[lv`),
+		voiceMetaRegex:    regexp.MustCompile(`\[lv \d+\*"(\d+)"\*"(.+?)"\]`),
 		narratorLineRegex: regexp.MustCompile("^d2? `"),
 		bracketRegex:      regexp.MustCompile(`\[[^\]]*\]`),
-		episodeRegex:      regexp.MustCompile(`^new_episode (\d+)\r?$`),
-		teaRegex:          regexp.MustCompile(`^new_tea (\d+)\r?$`),
-		uraRegex:          regexp.MustCompile(`^new_ura (\d+)\r?$`),
+		contentTypeRegex:  regexp.MustCompile(`^new_(episode|tea|ura) (\d+)\r?$`),
 		omakeRegex:        regexp.MustCompile(`^\*o(\d+)_`),
+		presetRegex:       regexp.MustCompile(`\{p:(\d+):(` + nestedContent + `)\}?`),
 		unclosedTagRegex:  regexp.MustCompile(`\{[a-zA-Z]+:(?:[^{}:]*:)*`),
 		cleanupPatterns: []string{
 			"`[@]", "`[\\]", "`[|]", "`\"", "\"`",
 			"[@]", "[\\]", "[|]",
 		},
 		textRules: []textRule{
+			// Special tags
 			{regexp.MustCompile(`\{n\}`), "<br>", " "},
-			{regexp.MustCompile(`\{c:([A-Fa-f0-9]+):([^{}]+)\}`), `<span style="color:#$1">$2</span>`, "$2"},
-			{regexp.MustCompile(`\{f:\d+:([^{}]+)\}`), "$1", "$1"},
-			{regexp.MustCompile(`\{i:([^{}]+)\}`), `<em>$1</em>`, "$1"},
-			{regexp.MustCompile(`\{ruby:([^:]+):([^{}]+)\}`), `<ruby>$2<rp>(</rp><rt>$1</rt><rp>)</rp></ruby>`, "$2 ($1)"},
-			{regexp.MustCompile(`\{p:1:((?:[^{}]|\{[^{}]*\})+)\}?`), `<span class="red-truth">$1</span>`, "$1"},
-			{regexp.MustCompile(`\{p:2:((?:[^{}]|\{[^{}]*\})+)\}?`), `<span class="blue-truth">$1</span>`, "$1"},
-			{regexp.MustCompile(`\{p:41:((?:[^{}]|\{[^{}]*\})+)\}`), `<span style="color:#FFAA00">$1</span>`, "$1"},
-			{regexp.MustCompile(`\{p:42:((?:[^{}]|\{[^{}]*\})+)\}`), `<span style="color:#AA71FF">$1</span>`, "$1"},
-			{regexp.MustCompile(`\{p:\d+:((?:[^{}]|\{[^{}]*\})+)\}`), "$1", "$1"},
+			{regexp.MustCompile(`\{i:` + simpleContent + `\}`), `<em>$1</em>`, "$1"},
+			{regexp.MustCompile(`\{c:([A-Fa-f0-9]+):` + simpleContent + `\}`), `<span style="color:#$1">$2</span>`, "$2"},
+			{regexp.MustCompile(`\{ruby:([^:]+):` + simpleContent + `\}`), `<ruby>$2<rp>(</rp><rt>$1</rt><rp>)</rp></ruby>`, "$2 ($1)"},
+			// Tags that strip content entirely
 			{regexp.MustCompile(`\{y:\d+:([^{}]*)\}`), "", ""},
-			{regexp.MustCompile(`\{n:\d+:([^{}]*)\}`), "$1", "$1"},
-			{regexp.MustCompile(`\{a:[^{}:]*:([^{}]*)\}`), "$1", "$1"},
+			// Passthrough tags (content preserved, tag removed)
+			{regexp.MustCompile(`\{(?:f|n|a|nobr):[^{}:]*:([^{}]*)\}`), "$1", "$1"},
 			{regexp.MustCompile(`\{[a-zA-Z]+:(?:[^{}:]*:)?([^{}]*)\}`), "$1", "$1"},
 		},
 	}
@@ -144,6 +153,48 @@ func (p *parser) parseEpisodeFromAudioID(audioID string) int {
 	return 0
 }
 
+func (p *parser) replacePresets(text string, forHtml bool) string {
+	return p.presetRegex.ReplaceAllStringFunc(text, func(match string) string {
+		parts := p.presetRegex.FindStringSubmatch(match)
+		if len(parts) < 3 {
+			return match
+		}
+		presetID, content := parts[1], parts[2]
+
+		if !forHtml {
+			return content
+		}
+
+		if class, ok := presetClasses[presetID]; ok {
+			return `<span class="` + class + `">` + content + `</span>`
+		}
+
+		if colour, ok := p.presetColours[presetID]; ok {
+			return `<span style="color:` + colour + `">` + content + `</span>`
+		}
+
+		return content
+	})
+}
+
+func (p *parser) parsePresetColours(lines []string) {
+	p.presetColours = make(map[string]string)
+
+	for _, line := range lines {
+		if matches := presetDefineRegex.FindStringSubmatch(line); len(matches) >= 3 {
+			presetID := matches[1]
+			colour := strings.ToUpper(matches[2])
+			if _, hasClass := presetClasses[presetID]; hasClass {
+				continue
+			}
+			if colour == "#FFFFFF" {
+				continue
+			}
+			p.presetColours[presetID] = colour
+		}
+	}
+}
+
 func (p *parser) extractText(line string) (string, string) {
 	text := line
 
@@ -170,6 +221,12 @@ func (p *parser) extractText(line string) (string, string) {
 	for {
 		prevHtml := textHtml
 		prevPlain := plainText
+
+		// Handle preset tags with custom logic
+		textHtml = p.replacePresets(textHtml, true)
+		plainText = p.replacePresets(plainText, false)
+
+		// Handle other text rules
 		for _, rule := range p.textRules {
 			textHtml = rule.pattern.ReplaceAllString(textHtml, rule.htmlRepl)
 			plainText = rule.pattern.ReplaceAllString(plainText, rule.plainRepl)
@@ -235,6 +292,8 @@ func (p *parser) parseNarratorLine(line string) *ParsedQuote {
 }
 
 func (p *parser) ParseAll(lines []string) []ParsedQuote {
+	p.parsePresetColours(lines)
+
 	quotes := make([]ParsedQuote, 0, len(lines)/6)
 	currentEpisode := 0
 	currentContentType := ""
@@ -242,27 +301,15 @@ func (p *parser) ParseAll(lines []string) []ParsedQuote {
 	for i := 0; i < len(lines); i++ {
 		line := lines[i]
 
-		if matches := p.episodeRegex.FindStringSubmatch(line); len(matches) >= 2 {
-			ep, err := strconv.Atoi(matches[1])
+		if matches := p.contentTypeRegex.FindStringSubmatch(line); len(matches) >= 3 {
+			ep, err := strconv.Atoi(matches[2])
 			if err == nil {
 				currentEpisode = ep
-				currentContentType = ""
-			}
-			continue
-		}
-		if matches := p.teaRegex.FindStringSubmatch(line); len(matches) >= 2 {
-			ep, err := strconv.Atoi(matches[1])
-			if err == nil {
-				currentEpisode = ep
-				currentContentType = "tea"
-			}
-			continue
-		}
-		if matches := p.uraRegex.FindStringSubmatch(line); len(matches) >= 2 {
-			ep, err := strconv.Atoi(matches[1])
-			if err == nil {
-				currentEpisode = ep
-				currentContentType = "ura"
+				if matches[1] == "episode" {
+					currentContentType = ""
+				} else {
+					currentContentType = matches[1]
+				}
 			}
 			continue
 		}

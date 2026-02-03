@@ -7,6 +7,89 @@ import (
 
 var testParser = NewParser()
 
+func TestPresetColoursParsedFromScript(t *testing.T) {
+	p := testParser
+
+	lines := []string{
+		"preset_define 0,6,36,#FFFFFF,0,0,0,1,-1,#000000,0,-1,-1,#000000,1,-1 ;Japanse text",
+		"preset_define 1,1,-1,#FF0000,0,0,0,1,-1,#000000,0,-1,-1,#000000,1,-1 ;Red text",
+		"preset_define 2,1,-1,#39C6FF,0,0,0,1,-1,#000000,0,-1,-1,#000000,1,-1 ;Blue text",
+		"preset_define 7,6,48,#C0FFFF,0,0,0,1,6,#000000,0,0,0,#000000,0,70,1880 ;Chapter/BGM/Hint",
+		"preset_define 41,1,-1,#FFAA00,0,0,0,1,-1,#000000,0,-1,-1,#000000,1,-1 ;Gold text",
+		"preset_define 42,1,-1,#AA71FF,0,0,0,1,-1,#000000,0,-1,-1,#000000,1,-1 ;Purple text",
+		"preset_define 3,1,40,#FFFFFF,0,0,0,1,8,#000000,0,0,0,#000000,2,40,700 ;Menu chars text",
+		"preset_define 4,6,30,#FFFFFF,0,0,0,1,8,#000000,0,0,0,#000000,2,40 ;Menu chars/tips/notes text jp",
+		"preset_define 5,1,40,#FFFFFF,0,0,0,1,8,#000000,0,0,0,#000000,2,20,830 ;Menu tips/notes text",
+		"preset_define 13,2,55,#FFFFFF,1,0,0,1,10,#000000,0,0,0,#000000,3,80 ;Menu tips/notes titles",
+		"preset_define 11,6,36,#FFFFFF,0,0,0,1,-1,#000000,0,-1,-1,#000000,1,-1 ;Menu main buttons",
+		"preset_define 12,6,36,#FFFFFF,0,0,0,1,3,#000000,0,0,0,#000000,-2,-1 ;Menu chars kill/change buttons",
+		"preset_define 6,6,30,#FFFFFF,0,0,0,1,8,#000000,0,0,0,#000000,2,70 ;Musicbox bgm titles",
+		"preset_define 8,1,75,#FFFFFF,0,0,0,1,10,#000000,0,0,0,#000000,3,80 ;Menu titles and buttons",
+		"preset_define 9,1,65,#FFFFFF,0,0,0,1,10,#000000,0,0,0,#000000,3,80 ;Menu titles and buttons (smaller)",
+		"preset_define 10,8,75,#FFFFFF,0,0,0,1,10,#000000,0,0,0,#000000,0,80,1920 ;Menu first setting line",
+		"preset_define 14,1,30,#FFFFFF,0,0,0,1,8,#000000,0,0,0,#000000,2,40,1920 ;Menu jump portrait titles",
+		"preset_define 15,1,42,#FFFFFF,0,0,0,1,8,#000000,0,0,0,#000000,2,40,1920 ;Menu jump right titles and confirmation",
+		"preset_define 16,8,30,#FFFFFF,0,0,0,1,8,#000000,0,0,0,#000000,0,40,1920 ;Menu jump portrait line",
+		"preset_define 18,1,34,#FFFFFF,0,0,0,1,8,#000000,0,0,0,#000000,2,20,1700 ;Trophy description",
+		"preset_define 20,8,40,#FFFFFF,0,0,0,1,10,#000000,0,0,0,#000000,3,40,1920 ;Credits normal",
+		"preset_define 21,9,90,#000000,0,0,0,1,10,#fae8e8,0,0,0,#000000,6,140,1920 ;Credits h1",
+		"preset_define 22,8,60,#a90303,0,0,0,1,10,#000000,0,0,0,#000000,3,120,1920 ;Credits h2",
+		"preset_define 23,8,50,#a90303,0,0,0,1,10,#000000,0,0,0,#000000,3,50,1920 ;Credits h3",
+		"preset_define 24,8,60,#a90303,0,0,0,1,10,#000000,0,0,0,#000000,0,120,1920 ;Credits h2-sep",
+		"preset_define 25,5,47,#FFFFFF,0,0,0,1,10,#000000,0,0,0,#000000,3,40,1920 ;Credits MVP",
+		"preset_define 30,2,45,#FFFFFF,0,0,0,1,5,#000000,0,0,0,#000000,1,40,1920 ;Episode names",
+		"preset_define 31,6,36,#FFFFFF,0,0,0,1,3,#000000,0,0,0,#000000,-2,-1 ;Save dates",
+		"preset_define 32,1,40,#FFFFFF,0,0,0,1,8,#000000,0,0,0,#000000,2,20,1590 ;Menu murder'",
+		"new_episode 1",
+		// Red truth - should use class, not colour
+		`d [lv 0*"27"*"10100001"]"{p:1:Red truth test line here}."[\]`,
+		// Blue truth - should use class, not colour
+		`d [lv 0*"10"*"10100002"]"{p:2:Blue truth test line here}."[\]`,
+		// Gold - should use inline colour
+		`d [lv 0*"10"*"10100003"]"{p:41:Gold truth test line here}."[\]`,
+		// Purple - should use inline colour
+		`d [lv 0*"17"*"10100004"]"{p:42:Purple truth test line}."[\]`,
+		// White preset - should NOT add colour span
+		`d [lv 0*"10"*"10100005"]"Text with {p:0:Japanese font preset} here."[\]`,
+	}
+
+	quotes := p.ParseAll(lines)
+	if len(quotes) != 5 {
+		t.Fatalf("expected 5 quotes, got %d", len(quotes))
+	}
+
+	// Red truth uses semantic class
+	if !strings.Contains(quotes[0].TextHtml, `class="red-truth"`) {
+		t.Errorf("red truth should use class: %q", quotes[0].TextHtml)
+	}
+	if strings.Contains(quotes[0].TextHtml, "color:#FF0000") {
+		t.Errorf("red truth should NOT use inline colour: %q", quotes[0].TextHtml)
+	}
+
+	// Blue truth uses semantic class
+	if !strings.Contains(quotes[1].TextHtml, `class="blue-truth"`) {
+		t.Errorf("blue truth should use class: %q", quotes[1].TextHtml)
+	}
+
+	// Gold uses inline colour from parsed preset
+	if !strings.Contains(quotes[2].TextHtml, `color:#FFAA00`) {
+		t.Errorf("gold should use parsed colour: %q", quotes[2].TextHtml)
+	}
+
+	// Purple uses inline colour from parsed preset
+	if !strings.Contains(quotes[3].TextHtml, `color:#AA71FF`) {
+		t.Errorf("purple should use parsed colour: %q", quotes[3].TextHtml)
+	}
+
+	// White preset (0) should NOT add any colour span
+	if strings.Contains(quotes[4].TextHtml, "color:") {
+		t.Errorf("white preset should not add colour: %q", quotes[4].TextHtml)
+	}
+	if !strings.Contains(quotes[4].Text, "Japanese font preset") {
+		t.Errorf("content should be preserved: %q", quotes[4].Text)
+	}
+}
+
 func TestParseAll_EpisodeAndContentTypes(t *testing.T) {
 	p := testParser
 
@@ -615,6 +698,7 @@ func TestParseAll_PresetGoldText(t *testing.T) {
 
 	// Real line: Battler's gold truth declaration (EP5)
 	lines := []string{
+		"preset_define 41,1,-1,#FFAA00,0,0,0,1,-1,#000000,0,-1,-1,#000000,1,-1 ;Gold text",
 		"new_episode 5",
 		"d [lv 0*\"10\"*\"50101465\"]`\"{p:41:I guarantee that this is the corpse of Ushiromiya Kinzo}...!!\" `[\\]",
 	}
@@ -640,6 +724,7 @@ func TestParseAll_PresetPurpleText(t *testing.T) {
 
 	// Real line: Kumasawa's purple declaration in Bernkastel's game (EP8)
 	lines := []string{
+		"preset_define 42,1,-1,#AA71FF,0,0,0,1,-1,#000000,0,-1,-1,#000000,1,-1 ;Purple text",
 		"new_episode 8",
 		"d [lv 0*\"17\"*\"81700082\"]`\"{p:42:The dining hall was locked up}. `[@][lv 0*\"17\"*\"81700083\"]`Of course, there is a lock on the doors to the dining hall, but they usually remained unlocked. `[@][lv 0*\"17\"*\"81700084\"]`I knocked, but there was no answer...\" `[\\]",
 	}
@@ -665,6 +750,7 @@ func TestParseAll_PresetPassthrough(t *testing.T) {
 
 	// Real line: Battler introduces his name with {p:0:} Japanese font preset (EP1)
 	lines := []string{
+		"preset_define 0,6,36,#FFFFFF,0,0,0,1,-1,#000000,0,-1,-1,#000000,1,-1 ;Japanese text (white)",
 		"new_episode 1",
 		"d `My name is written {p:0:\u53f3\u4ee3\u5bae \u6226\u4eba}. `[@]`Can you read it? `[@]`The first part is my family name, \"Ushiromiya\". `[@]`That's a fairly plausible Japanese pronunciation so far. `[\\]",
 	}
@@ -1311,6 +1397,13 @@ func TestParseAll_AlphanumericAudioIDs(t *testing.T) {
 			wantAudioID:  "awase6100_o",
 			wantCharID:   "00",
 			textContains: "fellow monsters",
+		},
+		{
+			name:         "brackets before lv tag",
+			line:         "d2 [ak][text_speed_t 10][text_fade_t 0][lv 1*\"60\"*\"60700401\"][#][*][lv 0*\"47\"*\"54600449\"]`\"*cackle*cackle*cackle*...... Yes, it is. {p:41:You used magic to create a golden flower petal inside an overturned cup.}\"`[|][\\]",
+			wantAudioID:  "60700401, 54600449",
+			wantCharID:   "60",
+			textContains: "golden flower petal",
 		},
 	}
 

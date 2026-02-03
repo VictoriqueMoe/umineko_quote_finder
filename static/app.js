@@ -26,6 +26,7 @@
     let browseEpisode = 0;
     let browseOffset = 0;
     let browseTotal = 0;
+    let hasAudio = true;
 
     const contentTypeLabels = { tea: 'Tea Party', ura: '????', omake: 'Omake' };
 
@@ -223,7 +224,7 @@
     }
 
     function audioPlayerHTML(audioId, characterId) {
-        if (!audioId) {
+        if (!audioId || !hasAudio) {
             return '';
         }
         const charId = escapeHtml(characterId || '');
@@ -1353,7 +1354,20 @@
         statsCharts.push(chart);
     }
 
+    async function loadConfig() {
+        try {
+            const response = await fetch(`${API_BASE}/config`);
+            if (response.ok) {
+                const config = await response.json();
+                hasAudio = config.hasAudio === true;
+            }
+        } catch (e) {
+            console.warn('Failed to load config:', e);
+        }
+    }
+
     createButterflies();
+    await loadConfig();
     await loadCharacters();
     loadFromURL();
 })();

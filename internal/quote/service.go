@@ -133,10 +133,10 @@ func (s *service) Search(query string, lang string, limit int, offset int, chara
 		if episode > 0 && q.Episode != episode {
 			return false
 		}
-		if truth == TruthRed && q.TruthType != "red" {
+		if truth == TruthRed && !q.HasRedTruth {
 			return false
 		}
-		if truth == TruthBlue && q.TruthType != "blue" {
+		if truth == TruthBlue && !q.HasBlueTruth {
 			return false
 		}
 		return true
@@ -225,10 +225,10 @@ func (s *service) Browse(lang string, characterID string, limit int, offset int,
 	var all []ParsedQuote
 	for _, idx := range source {
 		q := quotes[idx]
-		if truth == TruthRed && q.TruthType != "red" {
+		if truth == TruthRed && !q.HasRedTruth {
 			continue
 		}
-		if truth == TruthBlue && q.TruthType != "blue" {
+		if truth == TruthBlue && !q.HasBlueTruth {
 			continue
 		}
 		all = append(all, q)
@@ -264,10 +264,10 @@ func (s *service) GetByCharacter(lang string, characterID string, limit int, off
 		if episode > 0 && q.Episode != episode {
 			continue
 		}
-		if truth == TruthRed && q.TruthType != "red" {
+		if truth == TruthRed && !q.HasRedTruth {
 			continue
 		}
-		if truth == TruthBlue && q.TruthType != "blue" {
+		if truth == TruthBlue && !q.HasBlueTruth {
 			continue
 		}
 		all = append(all, q)
@@ -287,10 +287,10 @@ func (s *service) Random(lang string, characterID string, episode int, truth Tru
 	}
 
 	matchesTruth := func(q ParsedQuote) bool {
-		if truth == TruthRed && q.TruthType != "red" {
+		if truth == TruthRed && !q.HasRedTruth {
 			return false
 		}
-		if truth == TruthBlue && q.TruthType != "blue" {
+		if truth == TruthBlue && !q.HasBlueTruth {
 			return false
 		}
 		return true

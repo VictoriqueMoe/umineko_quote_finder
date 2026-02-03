@@ -139,12 +139,12 @@ func (s *statsComputer) tally(episode int) tallies {
 			continue
 		}
 
-		if q.TruthType == "red" {
+		if q.HasRedTruth {
 			counts := t.epTruth[q.Episode]
 			counts[0]++
 			t.epTruth[q.Episode] = counts
 		}
-		if q.TruthType == "blue" {
+		if q.HasBlueTruth {
 			counts := t.epTruth[q.Episode]
 			counts[1]++
 			t.epTruth[q.Episode] = counts

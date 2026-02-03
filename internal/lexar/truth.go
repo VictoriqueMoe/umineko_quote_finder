@@ -5,42 +5,17 @@ import (
 	"umineko_quote/internal/lexar/transformer"
 )
 
-// TruthType indicates the type of truth used in a quote.
-type TruthType int
-
-const (
-	TruthNone TruthType = iota
-	TruthRed
-	TruthBlue
-)
-
-// String returns the string representation of a TruthType.
-func (t TruthType) String() string {
-	switch t {
-	case TruthRed:
-		return "red"
-	case TruthBlue:
-		return "blue"
-	default:
-		return ""
-	}
+// TruthFlags indicates which truth types are present in a quote.
+type TruthFlags struct {
+	HasRed  bool
+	HasBlue bool
 }
 
-// DetectTruthType examines dialogue elements and returns the truth type.
-// Red truth takes precedence if both are present.
-func DetectTruthType(elements []ast.DialogueElement, presets *transformer.PresetContext) TruthType {
-	hasRed := false
-	hasBlue := false
-
-	detectInElements(elements, presets, &hasRed, &hasBlue)
-
-	if hasRed {
-		return TruthRed
-	}
-	if hasBlue {
-		return TruthBlue
-	}
-	return TruthNone
+// DetectTruth examines dialogue elements and returns which truth types are present.
+func DetectTruth(elements []ast.DialogueElement, presets *transformer.PresetContext) TruthFlags {
+	var flags TruthFlags
+	detectInElements(elements, presets, &flags.HasRed, &flags.HasBlue)
+	return flags
 }
 
 func detectInElements(elements []ast.DialogueElement, presets *transformer.PresetContext, hasRed, hasBlue *bool) {

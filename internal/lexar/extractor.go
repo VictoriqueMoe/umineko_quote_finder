@@ -20,7 +20,7 @@ type (
 		AudioID     string
 		Episode     int
 		ContentType string
-		TruthType   TruthType
+		Truth       TruthFlags
 	}
 )
 
@@ -79,13 +79,13 @@ func (e *QuoteExtractor) ExtractFromScript(script *ast.Script) []ExtractedQuote 
 
 func (e *QuoteExtractor) extractFromDialogue(d *ast.DialogueLine) *ExtractedQuote {
 	voices := d.GetVoiceCommands()
-	truthType := DetectTruthType(d.Content, e.presets)
+	truth := DetectTruth(d.Content, e.presets)
 
 	if len(voices) == 0 {
 		return &ExtractedQuote{
 			Content:     d.Content,
 			CharacterID: "narrator",
-			TruthType:   truthType,
+			Truth:       truth,
 		}
 	}
 
@@ -113,7 +113,7 @@ func (e *QuoteExtractor) extractFromDialogue(d *ast.DialogueLine) *ExtractedQuot
 		CharacterID: characterID,
 		AudioID:     strings.Join(audioIDs, ", "),
 		Episode:     episode,
-		TruthType:   truthType,
+		Truth:       truth,
 	}
 }
 

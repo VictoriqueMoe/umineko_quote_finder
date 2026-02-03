@@ -174,8 +174,8 @@ d [lv 0*"27"*"40700001"]` + "`\"{p:1:I speak the red truth!}\"`" + `[\]`
 	if !strings.Contains(text, "I speak the red truth!") {
 		t.Errorf("text content: %q", text)
 	}
-	if q.TruthType != TruthRed {
-		t.Errorf("TruthType: got %v, want TruthRed", q.TruthType)
+	if !q.Truth.HasRed {
+		t.Errorf("Truth.HasRed: got false, want true")
 	}
 }
 
@@ -200,8 +200,8 @@ d [lv 0*"10"*"50100001"]` + "`\"{p:2:Counter with blue truth!}\"`" + `[\]`
 	if !strings.Contains(html, `class="blue-truth"`) {
 		t.Errorf("expected blue-truth class: %q", html)
 	}
-	if q.TruthType != TruthBlue {
-		t.Errorf("TruthType: got %v, want TruthBlue", q.TruthType)
+	if !q.Truth.HasBlue {
+		t.Errorf("Truth.HasBlue: got false, want true")
 	}
 }
 
@@ -230,8 +230,8 @@ d [lv 0*"10"*"10100001"]` + "`\"This is {c:FF0000:red text} here.\"`" + `[\]`
 	if text != "This is red text here." {
 		t.Errorf("plain text: got %q, want 'This is red text here.'", text)
 	}
-	if q.TruthType != TruthNone {
-		t.Errorf("TruthType: got %v, want TruthNone (colour tag is not truth)", q.TruthType)
+	if q.Truth.HasRed || q.Truth.HasBlue {
+		t.Errorf("Truth: got HasRed=%v HasBlue=%v, want both false (colour tag is not truth)", q.Truth.HasRed, q.Truth.HasBlue)
 	}
 }
 
@@ -458,5 +458,94 @@ func TestExtractQuotes_EpisodeFromAudioID(t *testing.T) {
 	// Episode should be inferred from audio ID starting with 5
 	if quotes[0].Episode != 5 {
 		t.Errorf("episode: got %d, want 5 (from audio ID)", quotes[0].Episode)
+	}
+}
+
+func TestExtractQuotes_TruthDetection(t *testing.T) {
+	presets := `preset_define 1,1,-1,#FF0000,0,0,0,0,0
+preset_define 2,1,-1,#39C6FF,0,0,0,0,0
+`
+
+	tests := []struct {
+		name     string
+		dialogue string
+		wantRed  bool
+		wantBlue bool
+	}{
+		{
+			name:     "red only",
+			dialogue: `d [lv 0*"27"*"10100001"]` + "`\"{p:1:This is red truth}.\"`" + `[\]`,
+			wantRed:  true,
+			wantBlue: false,
+		},
+		{
+			name:     "blue only",
+			dialogue: `d [lv 0*"10"*"50100001"]` + "`\"{p:2:This is blue truth}.\"`" + `[\]`,
+			wantRed:  false,
+			wantBlue: true,
+		},
+		{
+			name:     "red then blue",
+			dialogue: `d [lv 0*"27"*"20700001"]` + "`\"{p:1:Red first}. `[@]`{p:2:Then blue}.\"`" + `[\]`,
+			wantRed:  true,
+			wantBlue: true,
+		},
+		{
+			name:     "blue then red",
+			dialogue: `d [lv 0*"10"*"50100001"]` + "`\"{p:2:Blue first}. `[@]`{p:1:Then red}.\"`" + `[\]`,
+			wantRed:  true,
+			wantBlue: true,
+		},
+		{
+			name:     "nested blue inside red",
+			dialogue: `d [lv 0*"27"*"10100001"]` + "`\"{p:1:Red with {p:2:blue nested} inside}.\"`" + `[\]`,
+			wantRed:  true,
+			wantBlue: true,
+		},
+		{
+			name:     "nested red inside blue",
+			dialogue: `d [lv 0*"10"*"50100001"]` + "`\"{p:2:Blue with {p:1:red nested} inside}.\"`" + `[\]`,
+			wantRed:  true,
+			wantBlue: true,
+		},
+		{
+			name:     "neither truth",
+			dialogue: `d [lv 0*"10"*"10100001"]` + "`\"Just normal dialogue.\"`" + `[\]`,
+			wantRed:  false,
+			wantBlue: false,
+		},
+		{
+			name:     "colour tag is not truth",
+			dialogue: `d [lv 0*"10"*"10100001"]` + "`\"This is {c:FF0000:red coloured} but not truth.\"`" + `[\]`,
+			wantRed:  false,
+			wantBlue: false,
+		},
+		{
+			name:     "real mixed quote from game (blue first)",
+			dialogue: `d2 [lv 0*"47"*"54600077"]` + "`\"{p:2:Was the existence of Natsuhi's blind spot depicted?}. `[@]`{p:1:Knox's 8th}!\"`" + `[\]`,
+			wantRed:  true,
+			wantBlue: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			input := presets + tt.dialogue
+
+			extractor := NewQuoteExtractor()
+			quotes := extractor.ExtractQuotes(input)
+
+			if len(quotes) != 1 {
+				t.Fatalf("expected 1 quote, got %d", len(quotes))
+			}
+
+			q := quotes[0]
+			if q.Truth.HasRed != tt.wantRed {
+				t.Errorf("HasRed: got %v, want %v", q.Truth.HasRed, tt.wantRed)
+			}
+			if q.Truth.HasBlue != tt.wantBlue {
+				t.Errorf("HasBlue: got %v, want %v", q.Truth.HasBlue, tt.wantBlue)
+			}
+		})
 	}
 }

@@ -234,7 +234,7 @@ The `internal/lexar` package handles parsing Umineko script files and extracting
 │      CharacterID: "27"                                                      │
 │      AudioID:     "10100001"                                                │
 │      Episode:     1                                                         │
-│      TruthType:   TruthRed                                                  │
+│      Truth:       { HasRed: true, HasBlue: false }                          │
 │  }                                                                          │
 └─────────────────────────────────────────────────────────────────────────────┘
                                       │
@@ -279,7 +279,7 @@ No changes are needed to the extractor or parser.
 
 **Preset context** — Colour presets (`{p:1:text}`) are defined in script headers via `preset_define`. The `PresetContext` collects these definitions and provides semantic class lookups (preset 1 → "red-truth", preset 2 → "blue-truth") and dynamic colour lookups for other presets.
 
-**Truth type detection** — Red and blue truth is detected by walking the AST looking for preset tags with semantic classes. This is stored on `ExtractedQuote.TruthType` for filtering without needing to parse HTML.
+**Truth detection** — Red and blue truth are detected by walking the AST looking for preset tags with semantic classes. This is stored as `TruthFlags` with `HasRed` and `HasBlue` booleans, allowing quotes with mixed truth (both red and blue) to appear in both filters.
 
 ## Script Tag Parsing
 

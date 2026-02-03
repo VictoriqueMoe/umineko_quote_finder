@@ -17,7 +17,36 @@ type scriptParser struct {
 
 // ParseAll parses all lines and returns quotes.
 func (p *scriptParser) ParseAll(lines []string) []ParsedQuote {
-	input := strings.Join(lines, "\n")
+	// Pre-filter to only relevant lines (dialogue, presets, episode markers, labels)
+	filtered := make([]string, 0, len(lines)/8)
+	for _, line := range lines {
+		if len(line) < 2 {
+			continue
+		}
+		// Fast prefix check without allocations
+		switch line[0] {
+		case 'd':
+			// d or d2 dialogue
+			if line[1] == ' ' || (line[1] == '2' && len(line) > 2 && line[2] == ' ') {
+				filtered = append(filtered, line)
+			}
+		case 'p':
+			// preset_define
+			if len(line) > 13 && line[:13] == "preset_define" {
+				filtered = append(filtered, line)
+			}
+		case 'n':
+			// new_episode, new_tea, new_ura
+			if len(line) > 4 && line[:4] == "new_" {
+				filtered = append(filtered, line)
+			}
+		case '*':
+			// labels (for omake detection)
+			filtered = append(filtered, line)
+		}
+	}
+
+	input := strings.Join(filtered, "\n")
 
 	extracted := p.extractor.ExtractQuotes(input)
 
@@ -46,14 +75,15 @@ func (p *scriptParser) ParseAll(lines []string) []ParsedQuote {
 			for i := start; i < end; i++ {
 				eq := &extracted[i]
 				quotes[i] = ParsedQuote{
-					Text:        plainText.Transform(eq.Content),
-					TextHtml:    htmlText.Transform(eq.Content),
-					CharacterID: eq.CharacterID,
-					Character:   CharacterNames.GetCharacterName(eq.CharacterID),
-					AudioID:     eq.AudioID,
-					Episode:     eq.Episode,
-					ContentType: eq.ContentType,
-					TruthType:   eq.TruthType.String(),
+					Text:         plainText.Transform(eq.Content),
+					TextHtml:     htmlText.Transform(eq.Content),
+					CharacterID:  eq.CharacterID,
+					Character:    CharacterNames.GetCharacterName(eq.CharacterID),
+					AudioID:      eq.AudioID,
+					Episode:      eq.Episode,
+					ContentType:  eq.ContentType,
+					HasRedTruth:  eq.Truth.HasRed,
+					HasBlueTruth: eq.Truth.HasBlue,
 				}
 			}
 		}(start, end)

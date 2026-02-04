@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cloud-backup-rules>
+    <include domain="sharedpref" path="." />
+</cloud-backup-rules>

@@ -1,0 +1,51 @@
+name: Android Release
+
+on:
+  push:
+    tags: ['android-v*']
+
+jobs:
+  release:
+    name: Build & Release APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v5
+
+      - name: Decode keystore
+        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/umineko-release.keystore
+
+      - name: Create keystore.properties
+        run: |
+          cat > android/keystore.properties <<EOF
+          storeFile=umineko-release.keystore
+          storePassword=${{ secrets.KEYSTORE_PASSWORD }}
+          keyAlias=${{ secrets.KEY_ALIAS }}
+          keyPassword=${{ secrets.KEYSTORE_PASSWORD }}
+          EOF
+
+      - name: Build release APK
+        run: cd android && ./gradlew assembleRelease
+
+      - name: Get version from tag
+        id: version
+        run: echo "version=${GITHUB_REF_NAME#android-v}" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Android ${{ steps.version.outputs.version }}"
+          body: |
+            ## Umineko Quotes Android ${{ steps.version.outputs.version }}
+
+            ### Installation
+            Download the APK below and install it on your Android device.
+          files: android/app/build/outputs/apk/release/umineko-quotes-v*.apk

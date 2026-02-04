@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="golden_primary">#FFB830</color>
+    <color name="red_truth">#CC0000</color>
+    <color name="blue_truth">#0055CC</color>
+    <color name="dark_surface">#1A1A2E</color>
+    <color name="dark_background">#0F0F1A</color>
+</resources>

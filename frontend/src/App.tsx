@@ -40,7 +40,7 @@ export default function App() {
     const loading = search.loading || browse.loading || stats.loading || featured.loading;
     const error = search.error || browse.error || stats.error || featured.error;
     const hasViewData =
-        (viewMode === "search" && search.results.length > 0) ||
+        (viewMode === "search" && !!search.query) ||
         (viewMode === "browse" && !!browse.data) ||
         ((viewMode === "featured" || viewMode === "quoteLookup") && !!featured.quote) ||
         (viewMode === "stats" && !!stats.data);
@@ -308,7 +308,7 @@ export default function App() {
                 <section className={`results-section${loading && hasViewData ? " results-loading" : ""}`}>
                     {loading && !hasViewData && <LoadingSpinner />}
                     {!loading && error && <EmptyState message={error} />}
-                    {!error && viewMode === "search" && search.results.length > 0 && (
+                    {!error && viewMode === "search" && !!search.query && (
                         <QuoteList
                             results={search.results}
                             query={search.query}

@@ -56,17 +56,45 @@ func (s *Service) setupOGPageRoute(routeGroup fiber.Router) {
 	routeGroup.Get("/", s.ogPage)
 }
 
+const (
+	defaultOGTitle       = "Umineko Quote Search"
+	defaultOGDescription = "Search through the words of witches, humans, and furniture from Umineko no Naku Koro ni. When the seagulls cry, none shall remain."
+	defaultOGImage       = "https://waifuvault.moe/f/5e9cf90a-8a63-48b3-802d-1bc9be9062ea/clipboard-image-1769601762638.png"
+	defaultTwitterDesc   = "Search through the words of witches, humans, and furniture from Umineko no Naku Koro ni."
+)
+
+func replaceMetaContent(html, attrName, attrValue, oldContent, newContent string) string {
+	old := attrName + `="` + attrValue + `" content="` + oldContent + `"`
+	repl := attrName + `="` + attrValue + `" content="` + newContent + `"`
+	return strings.Replace(html, old, repl, 1)
+}
+
+func (s *Service) replaceOGPlaceholders(title, description, twitterDesc, imageURL string) string {
+	html := s.HTMLContent
+	html = replaceMetaContent(html, "property", "og:title", defaultOGTitle, escapeAttr(title))
+	html = replaceMetaContent(html, "property", "og:description", defaultOGDescription, escapeAttr(description))
+	html = replaceMetaContent(html, "property", "og:image", defaultOGImage, imageURL)
+	html = replaceMetaContent(html, "name", "twitter:title", defaultOGTitle, escapeAttr(title))
+	html = replaceMetaContent(html, "name", "twitter:description", defaultTwitterDesc, escapeAttr(twitterDesc))
+	html = replaceMetaContent(html, "name", "twitter:image", defaultOGImage, imageURL)
+	return html
+}
+
 func (s *Service) ogPage(ctx *fiber.Ctx) error {
 	audioId := ctx.Query("quote")
 	if audioId == "" {
-		return ctx.Next()
+		html := s.replaceOGPlaceholders(defaultOGTitle, defaultOGDescription, defaultTwitterDesc, defaultOGImage)
+		ctx.Set("Content-Type", "text/html; charset=utf-8")
+		return ctx.SendString(html)
 	}
 
 	lang := ctx.Query("lang", "en")
 
 	q := s.QuoteService.GetByAudioID(lang, audioId)
 	if q == nil {
-		return ctx.Next()
+		html := s.replaceOGPlaceholders(defaultOGTitle, defaultOGDescription, defaultTwitterDesc, defaultOGImage)
+		ctx.Set("Content-Type", "text/html; charset=utf-8")
+		return ctx.SendString(html)
 	}
 
 	scheme := "https"
@@ -86,14 +114,7 @@ func (s *Service) ogPage(ctx *fiber.Ctx) error {
 	}
 	imageURL := fmt.Sprintf("%s/api/v1/og/%s.png?lang=%s", baseURL, audioId, lang)
 
-	html := s.HTMLContent
-	html = strings.Replace(html, `<meta property="og:title" content="Umineko Quote Search">`, fmt.Sprintf(`<meta property="og:title" content="%s">`, escapeAttr(title)), 1)
-	html = strings.Replace(html, `<meta property="og:description" content="Search through the words of witches, humans, and furniture from Umineko no Naku Koro ni. When the seagulls cry, none shall remain.">`, fmt.Sprintf(`<meta property="og:description" content="%s">`, escapeAttr(description)), 1)
-	html = strings.Replace(html, `<meta property="og:image" content="https://waifuvault.moe/f/5e9cf90a-8a63-48b3-802d-1bc9be9062ea/clipboard-image-1769601762638.png">`, fmt.Sprintf(`<meta property="og:image" content="%s">`, imageURL), 1)
-	html = strings.Replace(html, `<meta name="twitter:title" content="Umineko Quote Search">`, fmt.Sprintf(`<meta name="twitter:title" content="%s">`, escapeAttr(title)), 1)
-	html = strings.Replace(html, `<meta name="twitter:description" content="Search through the words of witches, humans, and furniture from Umineko no Naku Koro ni.">`, fmt.Sprintf(`<meta name="twitter:description" content="%s">`, escapeAttr(description)), 1)
-	html = strings.Replace(html, `<meta name="twitter:image" content="https://waifuvault.moe/f/5e9cf90a-8a63-48b3-802d-1bc9be9062ea/clipboard-image-1769601762638.png">`, fmt.Sprintf(`<meta name="twitter:image" content="%s">`, imageURL), 1)
-
+	html := s.replaceOGPlaceholders(title, description, description, imageURL)
 	ctx.Set("Content-Type", "text/html; charset=utf-8")
 	return ctx.SendString(html)
 }

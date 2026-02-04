@@ -1,0 +1,19 @@
+:root {
+    --bg-void: #0a0612;
+    --bg-purple: #1a0f2e;
+    --bg-card: #150d24;
+    --bg-card-hover: #1d1230;
+    --gold: #d4a84b;
+    --gold-light: #f0d590;
+    --gold-dark: #a67c2e;
+    --purple: #6b4c9a;
+    --purple-light: #9d7bc9;
+    --purple-muted: #3d2a5c;
+    --text: #e8e0f0;
+    --text-muted: #a89bb8;
+    --rose: #8b2942;
+    --font-display: "Cinzel", serif;
+    --font-body: "Cormorant Garamond", serif;
+    --ease-out: cubic-bezier(0.4, 0, 0.2, 1);
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}

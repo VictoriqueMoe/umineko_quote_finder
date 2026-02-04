@@ -1,24 +1,6 @@
-:root {
-    --bg-void: #0a0612;
-    --bg-purple: #1a0f2e;
-    --bg-card: #150d24;
-    --bg-card-hover: #1d1230;
-    --gold: #d4a84b;
-    --gold-light: #f0d590;
-    --gold-dark: #a67c2e;
-    --purple: #6b4c9a;
-    --purple-light: #9d7bc9;
-    --purple-muted: #3d2a5c;
-    --text: #e8e0f0;
-    --text-muted: #a89bb8;
-    --rose: #8b2942;
-    --font-display: 'Cinzel', serif;
-    --font-body: 'Cormorant Garamond', serif;
-    --ease-out: cubic-bezier(0.4, 0, 0.2, 1);
-    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-*, *::before, *::after {
+*,
+*::before,
+*::after {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
@@ -57,7 +39,9 @@ body {
     font-size: 1.2rem;
     color: var(--gold);
     opacity: 0;
-    text-shadow: 0 0 15px var(--gold), 0 0 30px rgba(212, 168, 75, 0.5);
+    text-shadow:
+        0 0 15px var(--gold),
+        0 0 30px rgba(212, 168, 75, 0.5);
     animation: flutter var(--duration, 25s) var(--delay, 0s) infinite linear;
 }
 
@@ -66,7 +50,9 @@ body {
         transform: translateY(100vh) translateX(var(--start-x, 0)) rotate(0deg) scale(0.8);
         opacity: 0;
     }
-    5% { opacity: 0.7; }
+    5% {
+        opacity: 0.7;
+    }
     25% {
         transform: translateY(75vh) translateX(calc(var(--start-x, 0) + 80px)) rotate(90deg) scale(1);
     }
@@ -77,7 +63,9 @@ body {
     75% {
         transform: translateY(25vh) translateX(calc(var(--start-x, 0) + 60px)) rotate(270deg) scale(1);
     }
-    95% { opacity: 0.6; }
+    95% {
+        opacity: 0.6;
+    }
     100% {
         transform: translateY(-10vh) translateX(var(--start-x, 0)) rotate(360deg) scale(0.9);
         opacity: 0;
@@ -92,8 +80,20 @@ body {
         radial-gradient(ellipse at 30% 20%, rgba(107, 76, 154, 0.12) 0%, transparent 50%),
         radial-gradient(ellipse at 70% 80%, rgba(212, 168, 75, 0.08) 0%, transparent 40%),
         radial-gradient(circle at 50% 50%, rgba(139, 41, 66, 0.05) 0%, transparent 60%),
-        repeating-linear-gradient(0deg, transparent, transparent 100px, rgba(212, 168, 75, 0.02) 100px, rgba(212, 168, 75, 0.02) 101px),
-        repeating-linear-gradient(90deg, transparent, transparent 100px, rgba(212, 168, 75, 0.02) 100px, rgba(212, 168, 75, 0.02) 101px);
+        repeating-linear-gradient(
+            0deg,
+            transparent,
+            transparent 100px,
+            rgba(212, 168, 75, 0.02) 100px,
+            rgba(212, 168, 75, 0.02) 101px
+        ),
+        repeating-linear-gradient(
+            90deg,
+            transparent,
+            transparent 100px,
+            rgba(212, 168, 75, 0.02) 100px,
+            rgba(212, 168, 75, 0.02) 101px
+        );
     pointer-events: none;
     z-index: -1;
 }
@@ -185,7 +185,9 @@ body {
     border-radius: 4px;
     overflow: hidden;
     transition: all 0.4s var(--ease-out);
-    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(212, 168, 75, 0.1);
+    box-shadow:
+        0 4px 30px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(212, 168, 75, 0.1);
 }
 
 .audio-id-wrapper {
@@ -194,7 +196,10 @@ body {
 
 .search-wrapper:focus-within {
     border-color: var(--gold);
-    box-shadow: 0 4px 40px rgba(212, 168, 75, 0.2), 0 0 0 1px var(--gold-dark), inset 0 1px 0 rgba(212, 168, 75, 0.2);
+    box-shadow:
+        0 4px 40px rgba(212, 168, 75, 0.2),
+        0 0 0 1px var(--gold-dark),
+        inset 0 1px 0 rgba(212, 168, 75, 0.2);
 }
 
 .search-icon {
@@ -273,7 +278,7 @@ body {
 }
 
 .action-btn::before {
-    content: '';
+    content: "";
     position: absolute;
     inset: 0;
     background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
@@ -583,7 +588,9 @@ body {
     border-color: var(--gold-dark);
     background: linear-gradient(135deg, var(--bg-card-hover) 0%, rgba(26, 15, 46, 0.9) 100%);
     transform: translateX(4px);
-    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.3), -4px 0 20px rgba(212, 168, 75, 0.1);
+    box-shadow:
+        0 8px 40px rgba(0, 0, 0, 0.3),
+        -4px 0 20px rgba(212, 168, 75, 0.1);
 }
 
 .quote-mark {
@@ -640,7 +647,7 @@ body {
 }
 
 .quote-episode::before {
-    content: '◆';
+    content: "\u25C6";
     color: var(--purple-light);
     font-size: 0.6rem;
 }
@@ -790,7 +797,9 @@ body {
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .loading-text {
@@ -833,7 +842,7 @@ body {
 
 .featured-quote::before,
 .featured-quote::after {
-    content: '❧';
+    content: "\2767";
     position: absolute;
     color: var(--gold);
     opacity: 0.4;
@@ -897,7 +906,9 @@ body {
     letter-spacing: 0.2em;
     text-transform: uppercase;
     cursor: pointer;
-    transition: background 0.3s var(--ease-out), border-color 0.3s var(--ease-out);
+    transition:
+        background 0.3s var(--ease-out),
+        border-color 0.3s var(--ease-out);
 }
 
 .share-btn:hover {
@@ -945,7 +956,10 @@ body {
     letter-spacing: 0.2em;
     text-transform: uppercase;
     cursor: pointer;
-    transition: background 0.3s var(--ease-out), border-color 0.3s var(--ease-out), color 0.3s var(--ease-out);
+    transition:
+        background 0.3s var(--ease-out),
+        border-color 0.3s var(--ease-out),
+        color 0.3s var(--ease-out);
 }
 
 .context-btn:hover {
@@ -1173,7 +1187,9 @@ body {
     background: var(--gold);
     border: none;
     box-shadow: 0 0 6px rgba(212, 168, 75, 0.4);
-    transition: background 0.2s, box-shadow 0.2s;
+    transition:
+        background 0.2s,
+        box-shadow 0.2s;
 }
 
 .audio-volume-slider::-webkit-slider-thumb:hover {
@@ -1229,7 +1245,7 @@ body {
 }
 
 .audio-progress::after {
-    content: '';
+    content: "";
     position: absolute;
     right: -4px;
     top: 50%;
@@ -1315,7 +1331,9 @@ body {
 .stats-card:hover {
     border-color: var(--gold-dark);
     background: linear-gradient(135deg, var(--bg-card-hover) 0%, rgba(26, 15, 46, 0.9) 100%);
-    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.3), -4px 0 20px rgba(212, 168, 75, 0.1);
+    box-shadow:
+        0 8px 40px rgba(0, 0, 0, 0.3),
+        -4px 0 20px rgba(212, 168, 75, 0.1);
 }
 
 .stats-card-wide {
@@ -1443,7 +1461,7 @@ body {
     }
 }
 
-/* Hide scrollbar but keep functionality */
+/* Scrollbar */
 ::-webkit-scrollbar {
     width: 8px;
 }

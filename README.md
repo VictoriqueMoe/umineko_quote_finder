@@ -40,11 +40,33 @@ A quote search engine for Umineko no Naku Koro ni. Search through thousands of l
 ## Quick Start
 
 ```bash
-go build -o umineko_quote.exe .
-./umineko_quote.exe
+# Build the frontend
+cd frontend
+npm install
+npm run build
+cd ..
+
+# Build and run the Go server
+go build -o umineko_quote .
+./umineko_quote
 ```
 
 Open http://127.0.0.1:3000
+
+### Development
+
+For frontend development with hot reload, run the Vite dev server alongside the Go backend:
+
+```bash
+# Terminal 1: Go backend
+go run main.go
+
+# Terminal 2: Vite dev server (proxies /api to :3000)
+cd frontend
+npm run dev
+```
+
+Open http://localhost:5173
 
 ### Voice Audio (Optional)
 
@@ -136,6 +158,12 @@ voice.zip
 The `contentType` field distinguishes content sections: `""` for main episodes, `"tea"` for tea parties, `"ura"` for ???? chapters, and `"omake"` for omakes (bonus content).
 
 ## Build
+
+The frontend must be built before the Go binary, as the Go binary embeds the `static/` directory.
+
+```bash
+cd frontend && npm ci && npm run build && cd ..
+```
 
 ### Windows
 ```powershell

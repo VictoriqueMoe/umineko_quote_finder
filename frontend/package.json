@@ -1,0 +1,36 @@
+{
+    "name": "umineko-quote-finder",
+    "private": true,
+    "version": "1.0.0",
+    "type": "module",
+    "scripts": {
+        "dev": "vite",
+        "build": "tsc -b && vite build",
+        "preview": "vite preview",
+        "lint": "eslint --max-warnings=0 .",
+        "lint:fix": "eslint . --fix",
+        "prettier": "prettier ./src --check",
+        "prettier:fix": "prettier ./src --write"
+    },
+    "dependencies": {
+        "chart.js": "^4.5.1",
+        "chartjs-plugin-zoom": "^2.2.0",
+        "hammerjs": "^2.0.8",
+        "react": "^19.2.4",
+        "react-chartjs-2": "^5.3.1",
+        "react-dom": "^19.2.4"
+    },
+    "devDependencies": {
+        "@eslint/js": "^9.39.2",
+        "@types/react": "^19.2.11",
+        "@types/react-dom": "^19.2.3",
+        "@vitejs/plugin-react": "^5.1.3",
+        "eslint": "^9.39.2",
+        "eslint-plugin-react-hooks": "^7.0.1",
+        "eslint-plugin-react-refresh": "^0.5.0",
+        "prettier": "^3.8.1",
+        "typescript": "^5.9.3",
+        "typescript-eslint": "^8.54.0",
+        "vite": "^7.3.1"
+    }
+}

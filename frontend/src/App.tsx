@@ -38,7 +38,12 @@ export default function App() {
     const urlInitialised = useRef(false);
 
     const loading = search.loading || browse.loading || stats.loading || featured.loading;
-    const error = search.error || browse.error || stats.error || featured.error;
+    const error =
+        (viewMode === "search" && search.error) ||
+        (viewMode === "browse" && browse.error) ||
+        (viewMode === "stats" && stats.error) ||
+        ((viewMode === "featured" || viewMode === "quoteLookup") && featured.error) ||
+        null;
     const hasViewData =
         (viewMode === "search" && !!search.query) ||
         (viewMode === "browse" && !!browse.data) ||

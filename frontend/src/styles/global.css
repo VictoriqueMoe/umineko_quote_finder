@@ -529,6 +529,12 @@ body {
 .results-section {
     flex: 1;
     animation: fadeInUp 1s 0.4s var(--ease-out) both;
+    transition: opacity 0.2s var(--ease-out);
+}
+
+.results-loading {
+    opacity: 0.5;
+    pointer-events: none;
 }
 
 .results-header {

@@ -39,6 +39,11 @@ export default function App() {
 
     const loading = search.loading || browse.loading || stats.loading || featured.loading;
     const error = search.error || browse.error || stats.error || featured.error;
+    const hasViewData =
+        (viewMode === "search" && search.results.length > 0) ||
+        (viewMode === "browse" && !!browse.data) ||
+        ((viewMode === "featured" || viewMode === "quoteLookup") && !!featured.quote) ||
+        (viewMode === "stats" && !!stats.data);
 
     const doPushUrl = useCallback(
         (
@@ -300,10 +305,10 @@ export default function App() {
                     browseDisabled={!filters.character && !filters.truth}
                 />
 
-                <section className="results-section">
-                    {loading && <LoadingSpinner />}
+                <section className={`results-section${loading && hasViewData ? " results-loading" : ""}`}>
+                    {loading && !hasViewData && <LoadingSpinner />}
                     {!loading && error && <EmptyState message={error} />}
-                    {!loading && !error && viewMode === "search" && (
+                    {!error && viewMode === "search" && search.results.length > 0 && (
                         <QuoteList
                             results={search.results}
                             query={search.query}
@@ -314,17 +319,14 @@ export default function App() {
                             onContextQuoteClick={handleContextQuoteClick}
                         />
                     )}
-                    {!loading &&
-                        !error &&
-                        (viewMode === "featured" || viewMode === "quoteLookup") &&
-                        featured.quote && (
-                            <FeaturedQuote
-                                quote={featured.quote}
-                                audioPlayer={audioPlayer}
-                                onContextQuoteClick={handleContextQuoteClick}
-                            />
-                        )}
-                    {!loading && !error && viewMode === "browse" && browse.data && (
+                    {!error && (viewMode === "featured" || viewMode === "quoteLookup") && featured.quote && (
+                        <FeaturedQuote
+                            quote={featured.quote}
+                            audioPlayer={audioPlayer}
+                            onContextQuoteClick={handleContextQuoteClick}
+                        />
+                    )}
+                    {!error && viewMode === "browse" && browse.data && (
                         <BrowseView
                             data={browse.data}
                             offset={browse.offset}
@@ -335,7 +337,7 @@ export default function App() {
                             onContextQuoteClick={handleContextQuoteClick}
                         />
                     )}
-                    {!loading && !error && viewMode === "stats" && stats.data && (
+                    {!error && viewMode === "stats" && stats.data && (
                         <StatsView data={stats.data} episode={filters.episode} />
                     )}
                 </section>

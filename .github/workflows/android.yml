@@ -22,8 +22,12 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v5
 
-      - name: Build
-        run: cd android && ./gradlew assembleDebug
+      - name: Cache Android SDK packages
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.android/cache
+          key: android-sdk-${{ runner.os }}
 
-      - name: Test
-        run: cd android && ./gradlew test
+      - name: Build and Test
+        run: cd android && ./gradlew assembleDebug test

@@ -1,5 +1,6 @@
 package moe.auaurora.quotes.presentation.search
 
+import android.content.ClipData
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -15,9 +16,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 import moe.auaurora.quotes.presentation.components.FilterBar
 import moe.auaurora.quotes.presentation.components.PaginationControls
 import moe.auaurora.quotes.presentation.components.QuoteCard
@@ -37,6 +41,8 @@ fun SearchScreen(
     val characters by viewModel.characters.collectAsState()
     val currentAudioId by audioPlayer.currentAudioId.collectAsState()
     val isAudioPlaying by audioPlayer.isPlaying.collectAsState()
+    val clipboard = LocalClipboard.current
+    val scope = rememberCoroutineScope()
     var showFilters by remember { mutableStateOf(false) }
 
     Column(
@@ -143,18 +149,23 @@ fun SearchScreen(
                     ) {
                         items(
                             items = state.data.results,
-                            key = { it.quote.audioId.ifEmpty { it.hashCode().toString() } }
+                            key = { it.quote.firstAudioId.ifEmpty { it.hashCode().toString() } }
                         ) { result ->
                             QuoteCard(
                                 quote = result.quote,
-                                isPlaying = isAudioPlaying && currentAudioId == result.quote.audioId,
+                                isPlaying = isAudioPlaying && currentAudioId == result.quote.firstAudioId,
                                 onPlayAudio = { charId, audioId ->
                                     audioPlayer.playSingle(charId, audioId)
                                 },
                                 onStopAudio = { audioPlayer.stop() },
+                                onShare = { audioId ->
+                                    scope.launch {
+                                        clipboard.setClipEntry(ClipEntry(ClipData.newPlainText("url", "https://quotes.auaurora.moe/?quote=$audioId")))
+                                    }
+                                },
                                 onClick = {
-                                    if (result.quote.audioId.isNotEmpty()) {
-                                        onQuoteClick(result.quote.audioId)
+                                    if (result.quote.firstAudioId.isNotEmpty()) {
+                                        onQuoteClick(result.quote.firstAudioId)
                                     }
                                 }
                             )

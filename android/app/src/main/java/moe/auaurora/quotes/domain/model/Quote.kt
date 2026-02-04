@@ -10,7 +10,19 @@ data class Quote(
     val contentType: String,
     val hasRedTruth: Boolean = false,
     val hasBlueTruth: Boolean = false
-)
+) {
+    /** The first audio ID from the comma-separated list, or empty. */
+    val firstAudioId: String
+        get() = audioId.split(",").firstOrNull()?.trim() ?: ""
+
+    /** All audio IDs split from the comma-separated string. */
+    val audioIds: List<String>
+        get() = if (audioId.isEmpty()) {
+            emptyList()
+        } else {
+            audioId.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+        }
+}
 
 data class SearchData(
     val results: List<SearchResult>,

@@ -1,5 +1,6 @@
 package moe.auaurora.quotes.presentation.detail
 
+import android.content.ClipData
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -10,17 +11,19 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import moe.auaurora.quotes.ui.theme.*
 import moe.auaurora.quotes.util.AudioPlayerManager
 
@@ -112,12 +115,23 @@ fun QuoteDetailScreen(
                 }
 
                 // Action buttons
+                val clipboard = LocalClipboard.current
+                val scope = rememberCoroutineScope()
+                var shareLabel by remember { mutableStateOf("SHARE") }
+
+                LaunchedEffect(shareLabel) {
+                    if (shareLabel == "LINK COPIED") {
+                        delay(2000)
+                        shareLabel = "SHARE"
+                    }
+                }
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     if (config.hasAudio && quote.audioId.isNotEmpty()) {
-                        val playing = isAudioPlaying && currentAudioId == quote.audioId
+                        val playing = isAudioPlaying && currentAudioId == quote.firstAudioId
 
                         GothicActionButton(
                             text = if (playing) "STOP" else "PLAY AUDIO",
@@ -142,10 +156,21 @@ fun QuoteDetailScreen(
                         )
                     }
 
-                    if (quote.audioId.isNotEmpty()) {
+                    if (quote.firstAudioId.isNotEmpty()) {
                         GothicActionButton(
                             text = "VIEW CONTEXT",
-                            onClick = { onViewContext(quote.audioId) }
+                            onClick = { onViewContext(quote.firstAudioId) }
+                        )
+
+                        GothicActionButton(
+                            text = shareLabel,
+                            onClick = {
+                                val url = "https://quotes.auaurora.moe/?quote=${quote.firstAudioId}"
+                                scope.launch {
+                                    clipboard.setClipEntry(ClipEntry(ClipData.newPlainText("url", url)))
+                                }
+                                shareLabel = "LINK COPIED"
+                            }
                         )
                     }
                 }

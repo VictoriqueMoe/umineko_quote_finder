@@ -2,6 +2,7 @@ package moe.auaurora.quotes.presentation.context
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -28,6 +29,7 @@ import moe.auaurora.quotes.util.AudioPlayerManager
 fun ContextScreen(
     viewModel: ContextViewModel,
     audioPlayer: AudioPlayerManager,
+    onQuoteClick: (String) -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -75,8 +77,13 @@ fun ContextScreen(
                         ContextQuoteLine(
                             quote = quote,
                             isHighlighted = false,
-                            isPlaying = isAudioPlaying && currentAudioId == quote.audioId,
-                            audioPlayer = audioPlayer
+                            isPlaying = isAudioPlaying && currentAudioId == quote.firstAudioId,
+                            audioPlayer = audioPlayer,
+                            onClick = if (quote.firstAudioId.isNotEmpty()) {
+                                { onQuoteClick(quote.firstAudioId) }
+                            } else {
+                                null
+                            }
                         )
                     }
 
@@ -84,8 +91,9 @@ fun ContextScreen(
                         ContextQuoteLine(
                             quote = state.data.quote,
                             isHighlighted = true,
-                            isPlaying = isAudioPlaying && currentAudioId == state.data.quote.audioId,
-                            audioPlayer = audioPlayer
+                            isPlaying = isAudioPlaying && currentAudioId == state.data.quote.firstAudioId,
+                            audioPlayer = audioPlayer,
+                            onClick = null
                         )
                     }
 
@@ -93,8 +101,13 @@ fun ContextScreen(
                         ContextQuoteLine(
                             quote = quote,
                             isHighlighted = false,
-                            isPlaying = isAudioPlaying && currentAudioId == quote.audioId,
-                            audioPlayer = audioPlayer
+                            isPlaying = isAudioPlaying && currentAudioId == quote.firstAudioId,
+                            audioPlayer = audioPlayer,
+                            onClick = if (quote.firstAudioId.isNotEmpty()) {
+                                { onQuoteClick(quote.firstAudioId) }
+                            } else {
+                                null
+                            }
                         )
                     }
                 }
@@ -121,7 +134,8 @@ private fun ContextQuoteLine(
     quote: Quote,
     isHighlighted: Boolean,
     isPlaying: Boolean,
-    audioPlayer: AudioPlayerManager
+    audioPlayer: AudioPlayerManager,
+    onClick: (() -> Unit)? = null
 ) {
     val leftBorderColour = if (isHighlighted) Gold else PurpleMuted
     val bgColour = if (isHighlighted) Gold.copy(alpha = 0.08f) else BgCard.copy(alpha = 0.4f)
@@ -139,6 +153,13 @@ private fun ContextQuoteLine(
             }
             .background(bgColour)
             .border(width = 1.dp, color = if (isHighlighted) Gold.copy(alpha = 0.3f) else PurpleMuted.copy(alpha = 0.5f))
+            .then(
+                if (onClick != null) {
+                    Modifier.clickable(onClick = onClick)
+                } else {
+                    Modifier
+                }
+            )
             .padding(start = 6.dp)
             .padding(12.dp)
     ) {

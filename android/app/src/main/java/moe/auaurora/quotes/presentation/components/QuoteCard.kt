@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -33,6 +34,7 @@ fun QuoteCard(
     isPlaying: Boolean = false,
     onPlayAudio: ((String, String) -> Unit)? = null,
     onStopAudio: (() -> Unit)? = null,
+    onShare: ((String) -> Unit)? = null,
     onClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
@@ -124,30 +126,43 @@ fun QuoteCard(
                 overflow = TextOverflow.Ellipsis
             )
 
-            if (quote.audioId.isNotEmpty() && onPlayAudio != null) {
+            if (quote.firstAudioId.isNotEmpty()) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
                 ) {
-                    if (isPlaying) {
-                        IconButton(onClick = { onStopAudio?.invoke() }) {
+                    if (onShare != null) {
+                        IconButton(onClick = { onShare(quote.firstAudioId) }) {
                             Icon(
-                                Icons.Filled.Stop,
-                                contentDescription = "Stop",
-                                tint = Gold,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                    } else {
-                        IconButton(
-                            onClick = { onPlayAudio(quote.characterId, quote.audioId) }
-                        ) {
-                            Icon(
-                                Icons.Filled.PlayArrow,
-                                contentDescription = "Play",
+                                Icons.Filled.Share,
+                                contentDescription = "Share",
                                 tint = GoldDark,
                                 modifier = Modifier.size(20.dp)
                             )
+                        }
+                    }
+
+                    if (onPlayAudio != null) {
+                        if (isPlaying) {
+                            IconButton(onClick = { onStopAudio?.invoke() }) {
+                                Icon(
+                                    Icons.Filled.Stop,
+                                    contentDescription = "Stop",
+                                    tint = Gold,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        } else {
+                            IconButton(
+                                onClick = { onPlayAudio(quote.characterId, quote.audioId) }
+                            ) {
+                                Icon(
+                                    Icons.Filled.PlayArrow,
+                                    contentDescription = "Play",
+                                    tint = GoldDark,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
                         }
                     }
                 }

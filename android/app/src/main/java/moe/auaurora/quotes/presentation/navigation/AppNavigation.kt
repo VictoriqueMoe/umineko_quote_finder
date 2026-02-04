@@ -110,6 +110,9 @@ fun AppNavigation(
             ContextScreen(
                 viewModel = viewModel,
                 audioPlayer = audioPlayer,
+                onQuoteClick = { audioId ->
+                    navController.navigate(Screen.QuoteDetail.createRoute(audioId))
+                },
                 onBack = { navController.popBackStack() }
             )
         }

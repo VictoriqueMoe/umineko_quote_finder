@@ -35,8 +35,18 @@ class AudioPlayerManager(context: Context) {
     }
 
     fun playSingle(charId: String, audioId: String) {
-        val url = "${BuildConfig.BASE_URL}/api/v1/audio/$charId/$audioId"
-        _currentAudioId.value = audioId
+        val ids = audioId.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+        if (ids.isEmpty()) {
+            return
+        }
+
+        _currentAudioId.value = ids.first()
+
+        val url = if (ids.size == 1) {
+            "${BuildConfig.BASE_URL}/api/v1/audio/$charId/${ids.first()}"
+        } else {
+            "${BuildConfig.BASE_URL}/api/v1/audio/$charId/combined?ids=${ids.joinToString(",")}"
+        }
         play(url)
     }
 

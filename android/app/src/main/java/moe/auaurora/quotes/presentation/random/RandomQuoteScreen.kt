@@ -101,8 +101,8 @@ fun RandomQuoteScreen(
                             .background(BgCard)
                             .border(width = 1.dp, color = PurpleMuted)
                             .clickable {
-                                if (state.quote.audioId.isNotEmpty()) {
-                                    onQuoteClick(state.quote.audioId)
+                                if (state.quote.firstAudioId.isNotEmpty()) {
+                                    onQuoteClick(state.quote.firstAudioId)
                                 }
                             }
                             .padding(24.dp),

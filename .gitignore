@@ -114,3 +114,7 @@ static/
 
 # Frontend dependencies
 frontend/node_modules/
+
+# TypeScript build artefacts
+frontend/*.tsbuildinfo
+frontend/vite.config.d.ts

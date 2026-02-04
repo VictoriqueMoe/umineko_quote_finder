@@ -4,6 +4,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"unicode"
 
 	"umineko_quote/internal/lexar/ast"
 	"umineko_quote/internal/lexar/transformer"
@@ -81,7 +82,7 @@ func (e *QuoteExtractor) extractFromDialogue(d *ast.DialogueLine) *ExtractedQuot
 	voices := d.GetVoiceCommands()
 	truth := DetectTruth(d.Content, e.presets)
 
-	if len(voices) == 0 {
+	if len(voices) == 0 || hasWordsBeforeVoice(d.Content) {
 		return &ExtractedQuote{
 			Content:     d.Content,
 			CharacterID: "narrator",
@@ -115,6 +116,39 @@ func (e *QuoteExtractor) extractFromDialogue(d *ast.DialogueLine) *ExtractedQuot
 		Episode:     episode,
 		Truth:       truth,
 	}
+}
+
+// hasWordsBeforeVoice walks dialogue elements in document order and returns
+// true if actual word characters (letters) appear before the first voice
+// command. This detects narration lines that have embedded voice clips at the
+// end (e.g. omake commentary ending with "Mii, nipah~☆").
+// Lines where only dots/punctuation appear before the voice command (character
+// pauses like "............") are not treated as narration.
+func hasWordsBeforeVoice(elements []ast.DialogueElement) bool {
+	for _, elem := range elements {
+		switch el := elem.(type) {
+		case *ast.VoiceCommand:
+			return false
+		case *ast.PlainText:
+			if containsLetters(el.Text) {
+				return true
+			}
+		case *ast.FormatTag:
+			if result := hasWordsBeforeVoice(el.Content); result {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func containsLetters(s string) bool {
+	for _, r := range s {
+		if unicode.IsLetter(r) {
+			return true
+		}
+	}
+	return false
 }
 
 // Presets returns the preset context for use with transformers.

@@ -549,3 +549,48 @@ preset_define 2,1,-1,#39C6FF,0,0,0,0,0
 		})
 	}
 }
+
+func TestExtractQuotes_NarrationWithEmbeddedVoice(t *testing.T) {
+	// Narration text that has voiced audio clips at the end should be
+	// attributed to narrator, not the voiced character.
+	input := "preset_define 0,6,36,#FFFFFF,0,0,0,1,-1,#000000,0,-1,-1,#000000,1,-1\n" +
+		"*o4_16\n" +
+		"d `Furthermore, there are unused voice files left on the disc.`[@]` To our relief, they ultimately found this unnecessary.`[@][lv 0*\"28\"*\"92100173\"]` Mii,`[|][lv 0*\"28\"*\"92100174\"]` nipah~{p:0:" + "\u2606" + "}`[\\]"
+
+	extractor := NewQuoteExtractor()
+	quotes := extractor.ExtractQuotes(input)
+
+	if len(quotes) != 1 {
+		t.Fatalf("expected 1 quote, got %d", len(quotes))
+	}
+
+	q := quotes[0]
+	if q.CharacterID != "narrator" {
+		t.Errorf("characterID: got %q, want \"narrator\"", q.CharacterID)
+	}
+	if q.AudioID != "" {
+		t.Errorf("audioID: got %q, want empty", q.AudioID)
+	}
+}
+
+func TestExtractQuotes_DotsBeforeVoiceIsCharacter(t *testing.T) {
+	// Dots/ellipsis before a voice command represent character pauses,
+	// not narration. The character should still be detected.
+	input := `new_episode 3
+d ` + "`\"............ `[@][#][*][lv 0*\"01\"*\"31500076\"]`...I will bring some tea now.`[\\]"
+
+	extractor := NewQuoteExtractor()
+	quotes := extractor.ExtractQuotes(input)
+
+	if len(quotes) != 1 {
+		t.Fatalf("expected 1 quote, got %d", len(quotes))
+	}
+
+	q := quotes[0]
+	if q.CharacterID != "01" {
+		t.Errorf("characterID: got %q, want \"01\"", q.CharacterID)
+	}
+	if q.AudioID != "31500076" {
+		t.Errorf("audioID: got %q, want \"31500076\"", q.AudioID)
+	}
+}

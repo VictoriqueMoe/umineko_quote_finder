@@ -26,3 +26,8 @@ export function audioUrl(charId: string, audioId: string): string {
 export function combinedAudioUrl(charId: string, ids: string): string {
     return `${API_BASE}/audio/${charId}/combined?ids=${ids}`;
 }
+
+export function ogImageUrl(audioId: string, lang: string): string {
+    const langParam = lang && lang !== "en" ? `?lang=${lang}` : "";
+    return `${API_BASE}/og/${audioId}.png${langParam}`;
+}

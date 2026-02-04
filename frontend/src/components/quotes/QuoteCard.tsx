@@ -1,29 +1,13 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useAppContext } from "../../hooks/useAppContext";
+import { useCallback, useRef } from "react";
+import { episodeLabel, useQuoteDisplay } from "../../hooks/useQuoteDisplay";
 import { AudioPlayer } from "../audio/AudioPlayer";
 import { LangToggle } from "./LangToggle";
 import { ShareButton } from "./ShareButton";
+import { DownloadButton } from "./DownloadButton";
 import { ContextViewer } from "./ContextViewer";
 import type { Quote } from "../../types/api";
 import type { AudioPlayer as AudioPlayerType } from "../../hooks/useAudioPlayer";
 import type { Language } from "../../types/app";
-
-const CONTENT_TYPE_LABELS: Record<string, string> = {
-    tea: "Tea Party",
-    ura: "????",
-    omake: "Omake",
-};
-
-function episodeLabel(quote: Quote): string {
-    if (!quote.episode) {
-        return "";
-    }
-    let label = `Episode ${quote.episode}`;
-    if (quote.contentType && CONTENT_TYPE_LABELS[quote.contentType]) {
-        label += ` \u2014 ${CONTENT_TYPE_LABELS[quote.contentType]}`;
-    }
-    return label;
-}
 
 interface QuoteCardProps {
     quote: Quote;
@@ -34,22 +18,8 @@ interface QuoteCardProps {
 }
 
 export function QuoteCard({ quote, index, lineNumber, audioPlayer, onContextQuoteClick }: QuoteCardProps) {
-    const { language, hasAudio } = useAppContext();
-    const [displayHtml, setDisplayHtml] = useState(quote.textHtml || quote.text);
-    const [lang, setLang] = useState<Language>(language);
-
-    useEffect(() => {
-        setLang(language);
-    }, [language]);
+    const { displayHtml, lang, hasAudio, handleTextUpdate, handleLangChange } = useQuoteDisplay(quote);
     const contextRefreshRef = useRef<((lang: Language) => void) | null>(null);
-
-    const handleTextUpdate = useCallback((textHtml: string) => {
-        setDisplayHtml(textHtml);
-    }, []);
-
-    const handleLangChange = useCallback((newLang: Language) => {
-        setLang(newLang);
-    }, []);
 
     const handleContextRefresh = useCallback((lang: Language) => {
         contextRefreshRef.current?.(lang);
@@ -81,6 +51,7 @@ export function QuoteCard({ quote, index, lineNumber, audioPlayer, onContextQuot
                 <div className="quote-actions">
                     <ContextViewer audioId={quote.audioId} onQuoteClick={onContextQuoteClick} langOverride={lang} />
                     <ShareButton audioId={quote.audioId} lang={lang} />
+                    <DownloadButton audioId={quote.audioId} lang={lang} />
                 </div>
             )}
         </article>

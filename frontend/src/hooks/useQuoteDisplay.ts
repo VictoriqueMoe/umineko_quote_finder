@@ -26,6 +26,10 @@ export function useQuoteDisplay(quote: Quote) {
     const [lang, setLang] = useState<Language>(language);
 
     useEffect(() => {
+        setDisplayHtml(quote.textHtml || quote.text);
+    }, [quote]);
+
+    useEffect(() => {
         setLang(language);
     }, [language]);
 

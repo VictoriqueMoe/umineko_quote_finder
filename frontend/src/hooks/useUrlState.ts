@@ -13,6 +13,7 @@ interface UrlStateCallbacks {
     onBrowse: (character: string, offset: number, episode: string, truth: string, lang: Language) => void;
     onStats: (lang: Language) => void;
     onQuoteLookup: (audioId: string, lang: Language) => void;
+    onBuilder: (segments: string, lang: Language) => void;
     onDefault: (lang: Language) => void;
     setLanguage: (lang: Language) => void;
     setFilters: (filters: Partial<FilterState>) => void;
@@ -39,6 +40,12 @@ export function useUrlState(callbacks: UrlStateCallbacks) {
 
         if (params.get("stats") === "1") {
             cb.onStats(lang);
+            return;
+        }
+
+        const builderParam = params.get("builder");
+        if (builderParam) {
+            cb.onBuilder(builderParam, lang);
             return;
         }
 
@@ -79,7 +86,9 @@ export function useUrlState(callbacks: UrlStateCallbacks) {
 export function pushUrl(state: PushUrlParams, language: Language, searchQuery: string) {
     const params = new URLSearchParams();
 
-    if (state.viewMode === "stats") {
+    if (state.viewMode === "voiceBuilder") {
+        params.set("builder", "1");
+    } else if (state.viewMode === "stats") {
         params.set("stats", "1");
     } else if (state.viewMode === "browse") {
         params.set("browse", state.filters.character || "1");

@@ -19,7 +19,8 @@ type (
 		Content      []ast.DialogueElement
 		CharacterID  string
 		AudioID      string
-		AudioCharMap map[string]string // audioID → characterID, only for multi-character quotes
+		AudioCharMap map[string]string                // audioID → characterID, only for multi-character quotes
+		AudioTextMap map[string][]ast.DialogueElement // audioID → text fragment elements, only for multi-audio quotes
 		Episode      int
 		ContentType  string
 		Truth        TruthFlags
@@ -124,11 +125,17 @@ func (e *QuoteExtractor) extractFromDialogue(d *ast.DialogueLine) *ExtractedQuot
 		}
 	}
 
+	var audioTextMap map[string][]ast.DialogueElement
+	if len(audioIDs) > 1 {
+		audioTextMap = buildAudioTextMap(d.Content)
+	}
+
 	return &ExtractedQuote{
 		Content:      d.Content,
 		CharacterID:  characterID,
 		AudioID:      strings.Join(audioIDs, ", "),
 		AudioCharMap: audioCharMap,
+		AudioTextMap: audioTextMap,
 		Episode:      episode,
 		Truth:        truth,
 	}
@@ -162,6 +169,61 @@ func containsLetters(s string) bool {
 	for _, r := range s {
 		if unicode.IsLetter(r) {
 			return true
+		}
+	}
+	return false
+}
+
+// buildAudioTextMap walks dialogue elements in document order and maps each
+// audio ID to the text fragment that follows its voice command.
+func buildAudioTextMap(elements []ast.DialogueElement) map[string][]ast.DialogueElement {
+	result := make(map[string][]ast.DialogueElement)
+	var currentAudioID string
+	var currentFragment []ast.DialogueElement
+
+	var walk func(elems []ast.DialogueElement)
+	walk = func(elems []ast.DialogueElement) {
+		for _, elem := range elems {
+			switch el := elem.(type) {
+			case *ast.VoiceCommand:
+				if currentAudioID != "" && len(currentFragment) > 0 {
+					result[currentAudioID] = currentFragment
+				}
+				currentAudioID = el.AudioID
+				currentFragment = nil
+			case *ast.FormatTag:
+				if containsVoiceCommand(el.Content) {
+					walk(el.Content)
+				} else if currentAudioID != "" {
+					currentFragment = append(currentFragment, el)
+				}
+			default:
+				if currentAudioID != "" {
+					currentFragment = append(currentFragment, elem)
+				}
+			}
+		}
+	}
+	walk(elements)
+
+	if currentAudioID != "" && len(currentFragment) > 0 {
+		result[currentAudioID] = currentFragment
+	}
+
+	return result
+}
+
+// containsVoiceCommand checks whether any VoiceCommand exists within a set of
+// dialogue elements (including nested FormatTags).
+func containsVoiceCommand(elements []ast.DialogueElement) bool {
+	for _, elem := range elements {
+		switch el := elem.(type) {
+		case *ast.VoiceCommand:
+			return true
+		case *ast.FormatTag:
+			if containsVoiceCommand(el.Content) {
+				return true
+			}
 		}
 	}
 	return false

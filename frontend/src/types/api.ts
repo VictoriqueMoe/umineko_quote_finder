@@ -7,6 +7,7 @@ export interface Quote {
     contentType?: string;
     audioId?: string;
     audioCharMap?: Record<string, string>;
+    audioTextMap?: Record<string, string>;
 }
 
 export interface SearchResult {

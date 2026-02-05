@@ -71,6 +71,15 @@ func (p *scriptParser) ParseAll(lines []string) []ParsedQuote {
 		wg.Go(func() {
 			for i := start; i < end; i++ {
 				eq := &extracted[i]
+
+				var audioTextMap map[string]string
+				if len(eq.AudioTextMap) > 0 {
+					audioTextMap = make(map[string]string, len(eq.AudioTextMap))
+					for audioID, fragment := range eq.AudioTextMap {
+						audioTextMap[audioID] = plainText.Transform(fragment)
+					}
+				}
+
 				quotes[i] = ParsedQuote{
 					Text:         plainText.Transform(eq.Content),
 					TextHtml:     htmlText.Transform(eq.Content),
@@ -78,6 +87,7 @@ func (p *scriptParser) ParseAll(lines []string) []ParsedQuote {
 					Character:    CharacterNames.GetCharacterName(eq.CharacterID),
 					AudioID:      eq.AudioID,
 					AudioCharMap: eq.AudioCharMap,
+					AudioTextMap: audioTextMap,
 					Episode:      eq.Episode,
 					ContentType:  eq.ContentType,
 					HasRedTruth:  eq.Truth.HasRed,

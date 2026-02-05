@@ -18,6 +18,7 @@ import { QuoteList } from "./components/quotes/QuoteList";
 import { FeaturedQuote } from "./components/quotes/FeaturedQuote";
 import { BrowseView } from "./components/quotes/BrowseView";
 import { StatsView } from "./components/stats/StatsView";
+import { VoiceBuilderView } from "./components/builder/VoiceBuilderView";
 import { LoadingSpinner } from "./components/common/LoadingSpinner";
 import { EmptyState } from "./components/common/EmptyState";
 
@@ -35,6 +36,7 @@ export default function App() {
     const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
     const [searchInputValue, setSearchInputValue] = useState("");
     const [audioIdInputValue, setAudioIdInputValue] = useState("");
+    const [builderInitialSegments, setBuilderInitialSegments] = useState<string | null>(null);
     const urlInitialised = useRef(false);
 
     const loading = search.loading || browse.loading || stats.loading || featured.loading;
@@ -164,6 +166,26 @@ export default function App() {
         doPushUrl("stats", filters);
     }, [filters, audioPlayer, stats, doPushUrl]);
 
+    const handleHomeClick = useCallback(() => {
+        audioPlayer.stop();
+        setViewMode("featured");
+        featured.randomQuote(language, filters);
+        doPushUrl("featured", filters);
+    }, [audioPlayer, language, filters, featured, doPushUrl]);
+
+    const handleBuilderClick = useCallback(() => {
+        audioPlayer.stop();
+        setViewMode("voiceBuilder");
+        doPushUrl("voiceBuilder", filters);
+    }, [audioPlayer, filters, doPushUrl]);
+
+    const handleBuilderClose = useCallback(() => {
+        audioPlayer.stop();
+        setViewMode("featured");
+        featured.randomQuote(language, filters);
+        doPushUrl("featured", filters);
+    }, [audioPlayer, language, filters, featured, doPushUrl]);
+
     const handleClear = useCallback(() => {
         audioPlayer.stop();
         search.clear();
@@ -259,6 +281,11 @@ export default function App() {
                 urlInitialised.current = true;
             });
         },
+        onBuilder: (segments, _lang) => {
+            setBuilderInitialSegments(segments);
+            setViewMode("voiceBuilder");
+            urlInitialised.current = true;
+        },
         onDefault: lang => {
             featured.randomQuote(lang, filters).then(() => {
                 setViewMode("featured");
@@ -279,73 +306,86 @@ export default function App() {
     );
 
     const isStatsActive = viewMode === "stats";
+    const isBuilderActive = viewMode === "voiceBuilder";
 
     return (
         <>
             <Butterflies />
             <div className="bg-pattern" />
             <div className={`container${isStatsActive ? " stats-active" : ""}`}>
-                <Header language={language} onLanguageChange={handleLanguageChange} onStatsClick={handleLoadStats} />
-
-                <section className="search-section">
-                    <div className="search-container">
-                        <SearchBar
-                            value={searchInputValue}
-                            onChange={setSearchInputValue}
-                            onSubmit={handleSearchSubmit}
-                        />
-                        <AudioIdLookup
-                            value={audioIdInputValue}
-                            onChange={setAudioIdInputValue}
-                            onSubmit={handleAudioIdSubmit}
-                        />
-                        <ActionButtons onRandom={handleRandomQuote} onClear={handleClear} />
-                    </div>
-                </section>
-
-                <Filters
-                    filters={filters}
-                    onFilterChange={handleFilterChange}
-                    onBrowseClick={handleBrowseClick}
-                    browseDisabled={!filters.character && !filters.truth}
+                <Header
+                    language={language}
+                    onLanguageChange={handleLanguageChange}
+                    onHomeClick={handleHomeClick}
+                    onStatsClick={handleLoadStats}
+                    onBuilderClick={handleBuilderClick}
                 />
 
-                <section className={`results-section${loading && hasViewData ? " results-loading" : ""}`}>
-                    {loading && !hasViewData && <LoadingSpinner />}
-                    {!loading && error && <EmptyState message={error} />}
-                    {!error && viewMode === "search" && !!search.query && (
-                        <QuoteList
-                            results={search.results}
-                            query={search.query}
-                            total={search.total}
-                            offset={search.offset}
-                            onPaginate={handleSearchPaginate}
-                            audioPlayer={audioPlayer}
-                            onContextQuoteClick={handleContextQuoteClick}
-                        />
-                    )}
-                    {!error && (viewMode === "featured" || viewMode === "quoteLookup") && featured.quote && (
-                        <FeaturedQuote
-                            quote={featured.quote}
-                            audioPlayer={audioPlayer}
-                            onContextQuoteClick={handleContextQuoteClick}
-                        />
-                    )}
-                    {!error && viewMode === "browse" && browse.data && (
-                        <BrowseView
-                            data={browse.data}
-                            offset={browse.offset}
-                            total={browse.total}
-                            onPaginate={handleBrowsePaginate}
-                            audioPlayer={audioPlayer}
+                {isBuilderActive ? (
+                    <VoiceBuilderView onClose={handleBuilderClose} initialBuilder={builderInitialSegments} />
+                ) : (
+                    <>
+                        <section className="search-section">
+                            <div className="search-container">
+                                <SearchBar
+                                    value={searchInputValue}
+                                    onChange={setSearchInputValue}
+                                    onSubmit={handleSearchSubmit}
+                                />
+                                <AudioIdLookup
+                                    value={audioIdInputValue}
+                                    onChange={setAudioIdInputValue}
+                                    onSubmit={handleAudioIdSubmit}
+                                />
+                                <ActionButtons onRandom={handleRandomQuote} onClear={handleClear} />
+                            </div>
+                        </section>
+
+                        <Filters
                             filters={filters}
-                            onContextQuoteClick={handleContextQuoteClick}
+                            onFilterChange={handleFilterChange}
+                            onBrowseClick={handleBrowseClick}
+                            browseDisabled={!filters.character && !filters.truth}
                         />
-                    )}
-                    {!error && viewMode === "stats" && stats.data && (
-                        <StatsView data={stats.data} episode={filters.episode} />
-                    )}
-                </section>
+
+                        <section className={`results-section${loading && hasViewData ? " results-loading" : ""}`}>
+                            {loading && !hasViewData && <LoadingSpinner />}
+                            {!loading && error && <EmptyState message={error} />}
+                            {!error && viewMode === "search" && !!search.query && (
+                                <QuoteList
+                                    results={search.results}
+                                    query={search.query}
+                                    total={search.total}
+                                    offset={search.offset}
+                                    onPaginate={handleSearchPaginate}
+                                    audioPlayer={audioPlayer}
+                                    onContextQuoteClick={handleContextQuoteClick}
+                                />
+                            )}
+                            {!error && (viewMode === "featured" || viewMode === "quoteLookup") && featured.quote && (
+                                <FeaturedQuote
+                                    quote={featured.quote}
+                                    audioPlayer={audioPlayer}
+                                    onContextQuoteClick={handleContextQuoteClick}
+                                />
+                            )}
+                            {!error && viewMode === "browse" && browse.data && (
+                                <BrowseView
+                                    data={browse.data}
+                                    offset={browse.offset}
+                                    total={browse.total}
+                                    onPaginate={handleBrowsePaginate}
+                                    audioPlayer={audioPlayer}
+                                    filters={filters}
+                                    onContextQuoteClick={handleContextQuoteClick}
+                                />
+                            )}
+                            {!error && viewMode === "stats" && stats.data && (
+                                <StatsView data={stats.data} episode={filters.episode} />
+                            )}
+                        </section>
+                    </>
+                )}
 
                 <Footer />
             </div>

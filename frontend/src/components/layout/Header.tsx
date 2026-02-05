@@ -4,14 +4,18 @@ import { ThemeSelector } from "./ThemeSelector";
 interface HeaderProps {
     language: Language;
     onLanguageChange: (lang: Language) => void;
+    onHomeClick: () => void;
     onStatsClick: () => void;
+    onBuilderClick: () => void;
 }
 
-export function Header({ language, onLanguageChange, onStatsClick }: HeaderProps) {
+export function Header({ language, onLanguageChange, onHomeClick, onStatsClick, onBuilderClick }: HeaderProps) {
     return (
         <header className="header">
             <div className="ornament">{"\u2726 \u2726 \u2726"}</div>
-            <h1 className="title">Umineko Quotes</h1>
+            <h1 className="title" onClick={onHomeClick} style={{ cursor: "pointer" }}>
+                Umineko Quotes
+            </h1>
             <p className="subtitle">When the seagulls cry, none shall remain</p>
             <ThemeSelector />
             <div className="language-selector">
@@ -29,6 +33,12 @@ export function Header({ language, onLanguageChange, onStatsClick }: HeaderProps
                 </button>
             </div>
             <nav className="header-nav">
+                <button className="header-nav-btn" onClick={onHomeClick}>
+                    {"\u2302 Home"}
+                </button>
+                <button className="header-nav-btn" onClick={onBuilderClick}>
+                    {"\u266B Voice Builder"}
+                </button>
                 <button className="header-nav-btn" onClick={onStatsClick}>
                     {"\u2733 Statistics"}
                 </button>

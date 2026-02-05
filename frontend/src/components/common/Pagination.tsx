@@ -16,6 +16,10 @@ export function Pagination({ total, offset, onPaginate }: PaginationProps) {
     const hasPrev = offset > 0;
     const hasNext = offset + PAGE_SIZE < total;
 
+    const scrollGridToTop = () => {
+        document.querySelector(".quotes-grid")?.scrollTo({ top: 0, behavior: "smooth" });
+    };
+
     return (
         <div className="pagination">
             <button
@@ -23,6 +27,7 @@ export function Pagination({ total, offset, onPaginate }: PaginationProps) {
                 disabled={!hasPrev}
                 onClick={() => {
                     if (hasPrev) {
+                        scrollGridToTop();
                         onPaginate(offset - PAGE_SIZE);
                     }
                 }}
@@ -37,6 +42,7 @@ export function Pagination({ total, offset, onPaginate }: PaginationProps) {
                 disabled={!hasNext}
                 onClick={() => {
                     if (hasNext) {
+                        scrollGridToTop();
                         onPaginate(offset + PAGE_SIZE);
                     }
                 }}

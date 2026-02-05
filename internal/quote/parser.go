@@ -12,6 +12,7 @@ type (
 		Character    string            `json:"character"`
 		AudioID      string            `json:"audioId"`
 		AudioCharMap map[string]string `json:"audioCharMap,omitempty"`
+		AudioTextMap map[string]string `json:"audioTextMap,omitempty"`
 		Episode      int               `json:"episode"`
 		ContentType  string            `json:"contentType"`
 		HasRedTruth  bool              `json:"hasRedTruth,omitempty"`

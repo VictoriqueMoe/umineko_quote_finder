@@ -3,6 +3,7 @@ package og
 import (
 	"bytes"
 	"embed"
+	"fmt"
 	"image/color"
 	"image/png"
 	"strings"
@@ -66,6 +67,30 @@ func (g *ImageGenerator) boldOrFallback(lang string) *sfnt.Font {
 	return g.boldFont
 }
 
+func (g *ImageGenerator) finalise(dc *gg.Context, cacheKey string) ([]byte, error) {
+	brandFace, err := opentype.NewFace(g.regularFont, &opentype.FaceOptions{Size: 16, DPI: 72})
+	if err != nil {
+		return nil, err
+	}
+	dc.SetFontFace(brandFace)
+	dc.SetColor(mutedColor)
+	dc.DrawStringAnchored("Umineko Quote Search", float64(imgWidth)-40, float64(imgHeight)-30, 1, 0)
+
+	var buf bytes.Buffer
+	if err := png.Encode(&buf, dc.Image()); err != nil {
+		return nil, err
+	}
+
+	data := buf.Bytes()
+	g.cache.Store(cacheKey, data)
+	return data, nil
+}
+
+type DialogueLine struct {
+	Character string
+	Text      string
+}
+
 func (g *ImageGenerator) Generate(audioId, lang, text, textHtml, character string, episode int, contentType string) ([]byte, error) {
 	cacheKey := audioId + ":" + lang
 	if cached, ok := g.cache.Load(cacheKey); ok {
@@ -124,22 +149,102 @@ func (g *ImageGenerator) Generate(audioId, lang, text, textHtml, character strin
 		dc.DrawString(g.episodeName(episode, contentType), 60, float64(imgHeight)-88)
 	}
 
-	brandFace, err := opentype.NewFace(g.regularFont, &opentype.FaceOptions{Size: 16, DPI: 72})
+	return g.finalise(dc, cacheKey)
+}
+
+func (g *ImageGenerator) GenerateBuilder(segmentsParam, lang string, lines []DialogueLine) ([]byte, error) {
+	cacheKey := "builder:" + segmentsParam + ":" + lang
+	if cached, ok := g.cache.Load(cacheKey); ok {
+		return cached.([]byte), nil
+	}
+
+	dc := gg.NewContext(imgWidth, imgHeight)
+
+	dc.SetColor(bgColor)
+	dc.Clear()
+
+	dc.SetColor(accentBarColor)
+	dc.DrawRectangle(0, 0, 8, float64(imgHeight))
+	dc.Fill()
+
+	titleFace, err := opentype.NewFace(g.boldFont, &opentype.FaceOptions{Size: 36, DPI: 72})
 	if err != nil {
 		return nil, err
 	}
-	dc.SetFontFace(brandFace)
-	dc.SetColor(mutedColor)
-	dc.DrawStringAnchored("Umineko Quote Search", float64(imgWidth)-40, float64(imgHeight)-30, 1, 0)
+	dc.SetFontFace(titleFace)
+	dc.SetColor(goldColor)
+	dc.DrawString("\u266B Voice Build", 60, 60)
 
-	var buf bytes.Buffer
-	if err := png.Encode(&buf, dc.Image()); err != nil {
+	dc.SetColor(color.RGBA{R: 212, G: 168, B: 75, A: 80})
+	dc.DrawRectangle(60, 75, float64(imgWidth)-120, 1)
+	dc.Fill()
+
+	charFace, err := opentype.NewFace(g.boldOrFallback(lang), &opentype.FaceOptions{Size: 20, DPI: 72})
+	if err != nil {
 		return nil, err
 	}
+	defer func() { _ = charFace.Close() }()
+	textFace, err := opentype.NewFace(g.textFont(lang), &opentype.FaceOptions{Size: 20, DPI: 72})
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = textFace.Close() }()
 
-	data := buf.Bytes()
-	g.cache.Store(cacheKey, data)
-	return data, nil
+	maxWidth := float64(imgWidth) - 140
+	curY := 110.0
+	maxY := float64(imgHeight) - 80
+
+	for i, line := range lines {
+		if curY > maxY {
+			dc.SetFontFace(textFace)
+			dc.SetColor(mutedColor)
+			remaining := len(lines) - i
+			if remaining == 1 {
+				dc.DrawString("+ 1 more clip\u2026", 80, curY)
+			} else {
+				dc.DrawString(fmt.Sprintf("+ %d more clips\u2026", remaining), 80, curY)
+			}
+			break
+		}
+
+		dc.SetFontFace(charFace)
+		dc.SetColor(goldColor)
+		nameStr := line.Character + ":"
+		nameW, _ := dc.MeasureString(nameStr)
+		dc.DrawString(nameStr, 80, curY)
+
+		dc.SetFontFace(textFace)
+		dc.SetColor(creamColor)
+		quoteText := truncateText(line.Text, 120)
+
+		textX := 80 + nameW + 10
+		remainingWidth := maxWidth - nameW - 10
+		if remainingWidth < 200 {
+			curY += 30
+			dc.DrawStringWrapped(quoteText, 80, curY, 0, 0, maxWidth, 1.4, gg.AlignLeft)
+			_, textH := dc.MeasureString("Mg")
+			wrappedLines := dc.WordWrap(quoteText, maxWidth)
+			curY += textH * 1.4 * float64(len(wrappedLines))
+		} else {
+			wrappedLines := dc.WordWrap(quoteText, remainingWidth)
+			if len(wrappedLines) > 0 {
+				dc.DrawString(wrappedLines[0], textX, curY)
+			}
+			_, textH := dc.MeasureString("Mg")
+			for j := 1; j < len(wrappedLines); j++ {
+				curY += textH * 1.4
+				if curY > maxY {
+					break
+				}
+				dc.DrawString(wrappedLines[j], 80, curY)
+			}
+			curY += textH * 1.4
+		}
+
+		curY += 8
+	}
+
+	return g.finalise(dc, cacheKey)
 }
 
 func (*ImageGenerator) drawColouredText(dc *gg.Context, segments []textSegment, x, y, maxWidth, lineSpacing float64) {

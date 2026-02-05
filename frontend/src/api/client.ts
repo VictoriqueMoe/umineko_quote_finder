@@ -28,11 +28,7 @@ export function combinedAudioUrl(segments: Array<{ charId: string; audioId: stri
     return `${API_BASE}/audio/combined?segments=${param}`;
 }
 
-export function resolveCharId(
-    audioId: string,
-    defaultCharId: string,
-    audioCharMap?: Record<string, string>
-): string {
+export function resolveCharId(audioId: string, defaultCharId: string, audioCharMap?: Record<string, string>): string {
     return audioCharMap?.[audioId] ?? defaultCharId;
 }
 

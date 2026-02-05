@@ -185,7 +185,7 @@ private fun ContextQuoteLine(
                             if (isPlaying) {
                                 audioPlayer.stop()
                             } else {
-                                audioPlayer.playSingle(quote.characterId, quote.audioId)
+                                audioPlayer.playSingle(quote)
                             }
                         }
                     ) {

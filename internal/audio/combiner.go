@@ -7,8 +7,13 @@ import (
 
 type FilePathResolver func(charId, audioId string) string
 
+type AudioSegment struct {
+	CharID  string
+	AudioID string
+}
+
 type Combiner interface {
-	CombineOgg(charId string, ids []string, resolve FilePathResolver) ([]byte, error)
+	CombineOgg(segments []AudioSegment, resolve FilePathResolver) ([]byte, error)
 }
 
 type combiner struct{}
@@ -17,21 +22,21 @@ func NewCombiner() (Combiner, error) {
 	return &combiner{}, nil
 }
 
-func (c *combiner) CombineOgg(charId string, ids []string, resolve FilePathResolver) ([]byte, error) {
+func (c *combiner) CombineOgg(segments []AudioSegment, resolve FilePathResolver) ([]byte, error) {
 	var allFilePages [][]oggPage
 
-	for i := 0; i < len(ids); i++ {
-		filePath := resolve(charId, ids[i])
+	for i := 0; i < len(segments); i++ {
+		filePath := resolve(segments[i].CharID, segments[i].AudioID)
 		if filePath == "" {
-			return nil, fmt.Errorf("audio file not found: %s", ids[i])
+			return nil, fmt.Errorf("audio file not found: %s/%s", segments[i].CharID, segments[i].AudioID)
 		}
 		data, err := os.ReadFile(filePath)
 		if err != nil {
-			return nil, fmt.Errorf("failed to read audio file: %s", ids[i])
+			return nil, fmt.Errorf("failed to read audio file: %s", segments[i].AudioID)
 		}
 		pages, err := parseOggPages(data)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse OGG file %s: %v", ids[i], err)
+			return nil, fmt.Errorf("failed to parse OGG file %s: %v", segments[i].AudioID, err)
 		}
 		allFilePages = append(allFilePages, pages)
 	}

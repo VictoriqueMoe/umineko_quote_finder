@@ -23,7 +23,12 @@ export function FeaturedQuote({ quote, audioPlayer, onContextQuoteClick }: Featu
             <p className="featured-character">&mdash; {quote.character}</p>
             {quote.episode ? <p className="featured-episode">{episodeLabel(quote)}</p> : null}
             {hasAudio && quote.audioId && quote.characterId && (
-                <AudioPlayer audioId={quote.audioId} characterId={quote.characterId} audioPlayer={audioPlayer} />
+                <AudioPlayer
+                    audioId={quote.audioId}
+                    characterId={quote.characterId}
+                    audioCharMap={quote.audioCharMap}
+                    audioPlayer={audioPlayer}
+                />
             )}
             {quote.audioId && (
                 <LangToggle audioId={quote.audioId} onTextUpdate={handleTextUpdate} onLangChange={handleLangChange} />

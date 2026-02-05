@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import moe.auaurora.quotes.BuildConfig
+import moe.auaurora.quotes.domain.model.Quote
 
 class AudioPlayerManager(context: Context) {
 
@@ -34,8 +35,8 @@ class AudioPlayerManager(context: Context) {
         })
     }
 
-    fun playSingle(charId: String, audioId: String) {
-        val ids = audioId.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+    fun playSingle(quote: Quote) {
+        val ids = quote.audioIds
         if (ids.isEmpty()) {
             return
         }
@@ -43,16 +44,21 @@ class AudioPlayerManager(context: Context) {
         _currentAudioId.value = ids.first()
 
         val url = if (ids.size == 1) {
+            val charId = quote.resolveCharId(ids.first())
             "${BuildConfig.BASE_URL}/api/v1/audio/$charId/${ids.first()}"
         } else {
-            "${BuildConfig.BASE_URL}/api/v1/audio/$charId/combined?ids=${ids.joinToString(",")}"
+            val segments = ids.joinToString(",") { id ->
+                "${quote.resolveCharId(id)}:$id"
+            }
+            "${BuildConfig.BASE_URL}/api/v1/audio/combined?segments=$segments"
         }
         play(url)
     }
 
-    fun playCombined(charId: String, audioIds: List<String>) {
-        val url = "${BuildConfig.BASE_URL}/api/v1/audio/$charId/combined?ids=${audioIds.joinToString(",")}"
-        _currentAudioId.value = audioIds.firstOrNull()
+    fun playCombined(segments: List<Pair<String, String>>) {
+        val param = segments.joinToString(",") { (charId, audioId) -> "$charId:$audioId" }
+        val url = "${BuildConfig.BASE_URL}/api/v1/audio/combined?segments=$param"
+        _currentAudioId.value = segments.firstOrNull()?.second
         play(url)
     }
 

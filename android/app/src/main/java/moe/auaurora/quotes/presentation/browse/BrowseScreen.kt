@@ -109,8 +109,8 @@ fun BrowseScreen(
                             QuoteCard(
                                 quote = quote,
                                 isPlaying = isAudioPlaying && currentAudioId == quote.firstAudioId,
-                                onPlayAudio = { charId, audioId ->
-                                    audioPlayer.playSingle(charId, audioId)
+                                onPlayAudio = { q ->
+                                    audioPlayer.playSingle(q)
                                 },
                                 onStopAudio = { audioPlayer.stop() },
                                 onShare = { audioId ->

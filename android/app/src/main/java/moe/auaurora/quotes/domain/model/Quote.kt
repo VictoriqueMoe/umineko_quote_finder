@@ -6,6 +6,7 @@ data class Quote(
     val characterId: String,
     val character: String,
     val audioId: String,
+    val audioCharMap: Map<String, String>? = null,
     val episode: Int,
     val contentType: String,
     val hasRedTruth: Boolean = false,
@@ -22,6 +23,11 @@ data class Quote(
         } else {
             audioId.split(",").map { it.trim() }.filter { it.isNotEmpty() }
         }
+
+    /** Resolve the character ID for a specific audio ID. */
+    fun resolveCharId(audioId: String): String {
+        return audioCharMap?.get(audioId) ?: characterId
+    }
 }
 
 data class SearchData(

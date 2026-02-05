@@ -154,8 +154,8 @@ fun SearchScreen(
                             QuoteCard(
                                 quote = result.quote,
                                 isPlaying = isAudioPlaying && currentAudioId == result.quote.firstAudioId,
-                                onPlayAudio = { charId, audioId ->
-                                    audioPlayer.playSingle(charId, audioId)
+                                onPlayAudio = { q ->
+                                    audioPlayer.playSingle(q)
                                 },
                                 onStopAudio = { audioPlayer.stop() },
                                 onShare = { audioId ->

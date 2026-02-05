@@ -594,3 +594,53 @@ d ` + "`\"............ `[@][#][*][lv 0*\"01\"*\"31500076\"]`...I will bring some
 		t.Errorf("audioID: got %q, want \"31500076\"", q.AudioID)
 	}
 }
+
+func TestExtractQuotes_MultiCharacterAudioCharMap(t *testing.T) {
+	// Multiple voice commands from different characters should populate AudioCharMap.
+	input := `new_episode 3
+d2 [lv 6*"38"*"32300003"][lv 5*"39"*"32400003"][lv 4*"40"*"32500003"]` + "`\"Eeep!\"`" + `[\]`
+
+	extractor := NewQuoteExtractor()
+	quotes := extractor.ExtractQuotes(input)
+
+	if len(quotes) != 1 {
+		t.Fatalf("expected 1 quote, got %d", len(quotes))
+	}
+
+	q := quotes[0]
+	if q.CharacterID != "38" {
+		t.Errorf("primary character ID: got %q, want \"38\"", q.CharacterID)
+	}
+	if q.AudioID != "32300003, 32400003, 32500003" {
+		t.Errorf("audio ID: got %q, want \"32300003, 32400003, 32500003\"", q.AudioID)
+	}
+	if q.AudioCharMap == nil {
+		t.Fatal("AudioCharMap should not be nil for multi-character quote")
+	}
+	if q.AudioCharMap["32300003"] != "38" {
+		t.Errorf("AudioCharMap[32300003]: got %q, want \"38\"", q.AudioCharMap["32300003"])
+	}
+	if q.AudioCharMap["32400003"] != "39" {
+		t.Errorf("AudioCharMap[32400003]: got %q, want \"39\"", q.AudioCharMap["32400003"])
+	}
+	if q.AudioCharMap["32500003"] != "40" {
+		t.Errorf("AudioCharMap[32500003]: got %q, want \"40\"", q.AudioCharMap["32500003"])
+	}
+}
+
+func TestExtractQuotes_SingleCharacterNoAudioCharMap(t *testing.T) {
+	// Same character across multiple voice commands should NOT populate AudioCharMap.
+	input := `new_episode 1
+d [lv 0*"19"*"11900001"]` + "`\"First. `[@][lv 0*\"19\"*\"11900002\"]`Second.\"`" + `[\]`
+
+	extractor := NewQuoteExtractor()
+	quotes := extractor.ExtractQuotes(input)
+
+	if len(quotes) != 1 {
+		t.Fatalf("expected 1 quote, got %d", len(quotes))
+	}
+
+	if quotes[0].AudioCharMap != nil {
+		t.Errorf("AudioCharMap should be nil for single-character quote, got %v", quotes[0].AudioCharMap)
+	}
+}

@@ -9,6 +9,7 @@ data class QuoteDto(
     val characterId: String = "",
     val character: String = "",
     val audioId: String = "",
+    val audioCharMap: Map<String, String>? = null,
     val episode: Int = 0,
     val contentType: String = "",
     val hasRedTruth: Boolean = false,

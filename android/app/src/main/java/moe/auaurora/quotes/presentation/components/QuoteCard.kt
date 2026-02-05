@@ -32,7 +32,7 @@ import moe.auaurora.quotes.ui.theme.*
 fun QuoteCard(
     quote: Quote,
     isPlaying: Boolean = false,
-    onPlayAudio: ((String, String) -> Unit)? = null,
+    onPlayAudio: ((Quote) -> Unit)? = null,
     onStopAudio: (() -> Unit)? = null,
     onShare: ((String) -> Unit)? = null,
     onClick: (() -> Unit)? = null,
@@ -154,7 +154,7 @@ fun QuoteCard(
                             }
                         } else {
                             IconButton(
-                                onClick = { onPlayAudio(quote.characterId, quote.audioId) }
+                                onClick = { onPlayAudio(quote) }
                             ) {
                                 Icon(
                                     Icons.Filled.PlayArrow,

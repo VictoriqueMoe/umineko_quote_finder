@@ -16,12 +16,13 @@ type (
 	}
 
 	ExtractedQuote struct {
-		Content     []ast.DialogueElement
-		CharacterID string
-		AudioID     string
-		Episode     int
-		ContentType string
-		Truth       TruthFlags
+		Content      []ast.DialogueElement
+		CharacterID  string
+		AudioID      string
+		AudioCharMap map[string]string // audioID → characterID, only for multi-character quotes
+		Episode      int
+		ContentType  string
+		Truth        TruthFlags
 	}
 )
 
@@ -94,10 +95,24 @@ func (e *QuoteExtractor) extractFromDialogue(d *ast.DialogueLine) *ExtractedQuot
 
 	seen := make(map[string]bool)
 	var audioIDs []string
+	multiChar := false
 	for _, v := range voices {
 		if !seen[v.AudioID] {
 			seen[v.AudioID] = true
 			audioIDs = append(audioIDs, v.AudioID)
+			if v.CharacterID != characterID {
+				multiChar = true
+			}
+		}
+	}
+
+	var audioCharMap map[string]string
+	if multiChar {
+		audioCharMap = make(map[string]string, len(audioIDs))
+		for _, v := range voices {
+			if audioCharMap[v.AudioID] == "" {
+				audioCharMap[v.AudioID] = v.CharacterID
+			}
 		}
 	}
 
@@ -110,11 +125,12 @@ func (e *QuoteExtractor) extractFromDialogue(d *ast.DialogueLine) *ExtractedQuot
 	}
 
 	return &ExtractedQuote{
-		Content:     d.Content,
-		CharacterID: characterID,
-		AudioID:     strings.Join(audioIDs, ", "),
-		Episode:     episode,
-		Truth:       truth,
+		Content:      d.Content,
+		CharacterID:  characterID,
+		AudioID:      strings.Join(audioIDs, ", "),
+		AudioCharMap: audioCharMap,
+		Episode:      episode,
+		Truth:        truth,
 	}
 }
 

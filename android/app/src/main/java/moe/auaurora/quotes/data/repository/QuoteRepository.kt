@@ -185,6 +185,7 @@ private fun QuoteDto.toDomain() = Quote(
     characterId = characterId,
     character = character,
     audioId = audioId,
+    audioCharMap = audioCharMap,
     episode = episode,
     contentType = contentType,
     hasRedTruth = hasRedTruth,

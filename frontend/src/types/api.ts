@@ -6,6 +6,7 @@ export interface Quote {
     episode?: number;
     contentType?: string;
     audioId?: string;
+    audioCharMap?: Record<string, string>;
 }
 
 export interface SearchResult {

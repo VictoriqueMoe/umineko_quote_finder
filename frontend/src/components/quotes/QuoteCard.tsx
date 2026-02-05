@@ -45,7 +45,12 @@ export function QuoteCard({ quote, index, lineNumber, audioPlayer, onContextQuot
                 </div>
             </div>
             {hasAudio && quote.audioId && quote.characterId && (
-                <AudioPlayer audioId={quote.audioId} characterId={quote.characterId} audioPlayer={audioPlayer} />
+                <AudioPlayer
+                    audioId={quote.audioId}
+                    characterId={quote.characterId}
+                    audioCharMap={quote.audioCharMap}
+                    audioPlayer={audioPlayer}
+                />
             )}
             {quote.audioId && (
                 <div className="quote-actions">

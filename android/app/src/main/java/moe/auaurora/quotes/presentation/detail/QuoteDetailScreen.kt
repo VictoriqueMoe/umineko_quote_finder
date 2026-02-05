@@ -150,7 +150,7 @@ fun QuoteDetailScreen(
                                 if (playing) {
                                     audioPlayer.stop()
                                 } else {
-                                    audioPlayer.playSingle(quote.characterId, quote.audioId)
+                                    audioPlayer.playSingle(quote)
                                 }
                             }
                         )

@@ -77,6 +77,7 @@ func (p *scriptParser) ParseAll(lines []string) []ParsedQuote {
 					CharacterID:  eq.CharacterID,
 					Character:    CharacterNames.GetCharacterName(eq.CharacterID),
 					AudioID:      eq.AudioID,
+					AudioCharMap: eq.AudioCharMap,
 					Episode:      eq.Episode,
 					ContentType:  eq.ContentType,
 					HasRedTruth:  eq.Truth.HasRed,

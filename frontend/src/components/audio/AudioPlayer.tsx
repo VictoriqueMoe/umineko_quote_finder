@@ -1,28 +1,33 @@
 import { useState } from "react";
-import { audioUrl, combinedAudioUrl } from "../../api/client";
+import { audioUrl, combinedAudioUrl, resolveCharId } from "../../api/client";
 import { AudioControls } from "./AudioControls";
 import type { AudioPlayer as AudioPlayerType } from "../../hooks/useAudioPlayer";
 
 interface AudioPlayerProps {
     audioId: string;
     characterId: string;
+    audioCharMap?: Record<string, string>;
     audioPlayer: AudioPlayerType;
 }
 
-export function AudioPlayer({ audioId, characterId, audioPlayer }: AudioPlayerProps) {
+export function AudioPlayer({ audioId, characterId, audioCharMap, audioPlayer }: AudioPlayerProps) {
     const [showIndividual, setShowIndividual] = useState(false);
     const ids = audioId.split(", ");
     const hasMultiple = ids.length > 1;
 
     const handleClipClick = (id: string) => {
-        const url = audioUrl(characterId, id);
+        const charId = resolveCharId(id, characterId, audioCharMap);
+        const url = audioUrl(charId, id);
         audioPlayer.play(url, id);
     };
 
     const handleCombinedClick = () => {
-        const allIds = ids.join(",");
-        const url = combinedAudioUrl(characterId, allIds);
-        audioPlayer.play(url, `combined-${allIds}`);
+        const segments = ids.map(id => ({
+            charId: resolveCharId(id, characterId, audioCharMap),
+            audioId: id,
+        }));
+        const url = combinedAudioUrl(segments);
+        audioPlayer.play(url, `combined-${ids.join(",")}`);
     };
 
     const isActive = (id: string) => audioPlayer.state.activeId === id;

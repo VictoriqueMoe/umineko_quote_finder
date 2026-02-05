@@ -23,8 +23,17 @@ export function audioUrl(charId: string, audioId: string): string {
     return `${API_BASE}/audio/${charId}/${audioId}`;
 }
 
-export function combinedAudioUrl(charId: string, ids: string): string {
-    return `${API_BASE}/audio/${charId}/combined?ids=${ids}`;
+export function combinedAudioUrl(segments: Array<{ charId: string; audioId: string }>): string {
+    const param = segments.map(s => `${s.charId}:${s.audioId}`).join(",");
+    return `${API_BASE}/audio/combined?segments=${param}`;
+}
+
+export function resolveCharId(
+    audioId: string,
+    defaultCharId: string,
+    audioCharMap?: Record<string, string>
+): string {
+    return audioCharMap?.[audioId] ?? defaultCharId;
 }
 
 export function ogImageUrl(audioId: string, lang: string): string {

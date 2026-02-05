@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strings"
 
+	"umineko_quote/internal/audio"
 	"umineko_quote/internal/quote"
 	"umineko_quote/internal/utils"
 
@@ -165,7 +166,8 @@ func (s *Service) stats(ctx *fiber.Ctx) error {
 }
 
 func (s *Service) setupCombinedAudioRoute(routeGroup fiber.Router) {
-	routeGroup.Get("/audio/:charId/combined", s.combinedAudio)
+	routeGroup.Get("/audio/combined", s.combinedAudioSegments)
+	routeGroup.Get("/audio/:charId/combined", s.combinedAudioLegacy)
 }
 
 func (s *Service) setupAudioRoute(routeGroup fiber.Router) {
@@ -198,7 +200,51 @@ func (s *Service) audio(ctx *fiber.Ctx) error {
 	return utils.ServeAudio(ctx, data)
 }
 
-func (s *Service) combinedAudio(ctx *fiber.Ctx) error {
+func (s *Service) combinedAudioSegments(ctx *fiber.Ctx) error {
+	segmentsParam := ctx.Query("segments")
+	if segmentsParam == "" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "query parameter 'segments' is required",
+		})
+	}
+
+	parts := strings.Split(segmentsParam, ",")
+	if len(parts) > 20 {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "maximum 20 audio segments allowed",
+		})
+	}
+
+	segments := make([]audio.AudioSegment, 0, len(parts))
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		colonIdx := strings.IndexByte(part, ':')
+		if colonIdx < 1 || colonIdx >= len(part)-1 {
+			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "invalid segment format: " + part + " (expected charId:audioId)",
+			})
+		}
+		charId := part[:colonIdx]
+		audioId := part[colonIdx+1:]
+		if !audioIdPattern.MatchString(charId) || !audioIdPattern.MatchString(audioId) {
+			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "invalid segment: " + part,
+			})
+		}
+		segments = append(segments, audio.AudioSegment{CharID: charId, AudioID: audioId})
+	}
+
+	data, err := s.AudioCombiner.CombineOgg(segments, s.QuoteService.AudioFilePath)
+	if err != nil {
+		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return utils.ServeAudio(ctx, data)
+}
+
+func (s *Service) combinedAudioLegacy(ctx *fiber.Ctx) error {
 	charId := ctx.Params("charId")
 	if !audioIdPattern.MatchString(charId) {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -220,16 +266,18 @@ func (s *Service) combinedAudio(ctx *fiber.Ctx) error {
 		})
 	}
 
-	for i := 0; i < len(ids); i++ {
-		ids[i] = strings.TrimSpace(ids[i])
-		if !audioIdPattern.MatchString(ids[i]) {
+	segments := make([]audio.AudioSegment, 0, len(ids))
+	for _, id := range ids {
+		id = strings.TrimSpace(id)
+		if !audioIdPattern.MatchString(id) {
 			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"error": "invalid audio ID: " + ids[i],
+				"error": "invalid audio ID: " + id,
 			})
 		}
+		segments = append(segments, audio.AudioSegment{CharID: charId, AudioID: id})
 	}
 
-	data, err := s.AudioCombiner.CombineOgg(charId, ids, s.QuoteService.AudioFilePath)
+	data, err := s.AudioCombiner.CombineOgg(segments, s.QuoteService.AudioFilePath)
 	if err != nil {
 		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"error": err.Error(),

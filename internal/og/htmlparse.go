@@ -81,10 +81,16 @@ func parseHTMLSegments(htmlStr string, defaultColor color.RGBA) []textSegment {
 						buf.WriteRune('<')
 					case "&gt;":
 						buf.WriteRune('>')
-					case "&quot;", "&#34;":
+					case "&quot;":
 						buf.WriteRune('"')
+					case "&apos;":
+						buf.WriteRune('\'')
 					default:
-						buf.WriteString(entity)
+						if r, ok := decodeNumericEntity(entity); ok {
+							buf.WriteRune(r)
+						} else {
+							buf.WriteString(entity)
+						}
 					}
 				}
 			} else {
@@ -145,6 +151,28 @@ func truncateSegments(segments []textSegment, maxRunes int) []textSegment {
 	}
 
 	return result
+}
+
+func decodeNumericEntity(entity string) (rune, bool) {
+	if len(entity) < 4 || entity[0] != '&' || entity[len(entity)-1] != ';' {
+		return 0, false
+	}
+	inner := entity[1 : len(entity)-1]
+	if len(inner) < 2 || inner[0] != '#' {
+		return 0, false
+	}
+	inner = inner[1:]
+	var n uint64
+	var err error
+	if inner[0] == 'x' || inner[0] == 'X' {
+		n, err = strconv.ParseUint(inner[1:], 16, 32)
+	} else {
+		n, err = strconv.ParseUint(inner, 10, 32)
+	}
+	if err != nil || n == 0 {
+		return 0, false
+	}
+	return rune(n), true
 }
 
 func parseHexColor(s string) (color.RGBA, bool) {

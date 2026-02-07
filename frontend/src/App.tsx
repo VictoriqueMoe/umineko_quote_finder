@@ -1,31 +1,33 @@
-import { useCallback, useRef, useState } from "react";
-import type { FilterState, ViewMode } from "./types/app";
-import { useAppContext } from "./hooks/useAppContext";
-import { useAudioPlayer } from "./hooks/useAudioPlayer";
-import { useSearch } from "./hooks/useSearch";
-import { useBrowse } from "./hooks/useBrowse";
-import { useStats } from "./hooks/useStats";
-import { useFeaturedQuote } from "./hooks/useFeaturedQuote";
-import { pushUrl, useUrlState } from "./hooks/useUrlState";
-import { Header } from "./components/layout/Header";
-import { Footer } from "./components/layout/Footer";
-import { Butterflies } from "./components/layout/Butterflies";
-import { SearchBar } from "./components/search/SearchBar";
-import { AudioIdLookup } from "./components/search/AudioIdLookup";
-import { ActionButtons } from "./components/search/ActionButtons";
-import { Filters } from "./components/search/Filters";
-import { QuoteList } from "./components/quotes/QuoteList";
-import { FeaturedQuote } from "./components/quotes/FeaturedQuote";
-import { BrowseView } from "./components/quotes/BrowseView";
-import { StatsView } from "./components/stats/StatsView";
-import { VoiceBuilderView } from "./components/builder/VoiceBuilderView";
-import { LoadingSpinner } from "./components/common/LoadingSpinner";
-import { EmptyState } from "./components/common/EmptyState";
+import {useCallback, useRef, useState} from "react";
+import type {FilterState, ViewMode} from "./types/app";
+import {useAppContext} from "./hooks/useAppContext";
+import {useTheme} from "./hooks/useTheme";
+import {useAudioPlayer} from "./hooks/useAudioPlayer";
+import {useSearch} from "./hooks/useSearch";
+import {useBrowse} from "./hooks/useBrowse";
+import {useStats} from "./hooks/useStats";
+import {useFeaturedQuote} from "./hooks/useFeaturedQuote";
+import {pushUrl, useUrlState} from "./hooks/useUrlState";
+import {Header} from "./components/layout/Header";
+import {Footer} from "./components/layout/Footer";
+import {Butterflies} from "./components/layout/Butterflies";
+import {SearchBar} from "./components/search/SearchBar";
+import {AudioIdLookup} from "./components/search/AudioIdLookup";
+import {ActionButtons} from "./components/search/ActionButtons";
+import {Filters} from "./components/search/Filters";
+import {QuoteList} from "./components/quotes/QuoteList";
+import {FeaturedQuote} from "./components/quotes/FeaturedQuote";
+import {BrowseView} from "./components/quotes/BrowseView";
+import {StatsView} from "./components/stats/StatsView";
+import {VoiceBuilderView} from "./components/builder/VoiceBuilderView";
+import {LoadingSpinner} from "./components/common/LoadingSpinner";
+import {EmptyState} from "./components/common/EmptyState";
 
 const DEFAULT_FILTERS: FilterState = { character: "", episode: "0", truth: "" };
 
 export default function App() {
     const { language, setLanguage } = useAppContext();
+    const { particlesEnabled } = useTheme();
     const audioPlayer = useAudioPlayer();
     const search = useSearch();
     const browse = useBrowse();
@@ -310,7 +312,7 @@ export default function App() {
 
     return (
         <>
-            <Butterflies />
+            {particlesEnabled && <Butterflies />}
             <div className="bg-pattern" />
             <div className={`container${isStatsActive ? " stats-active" : ""}`}>
                 <Header

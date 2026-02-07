@@ -1,9 +1,10 @@
-import { type ReactNode, useCallback, useLayoutEffect, useState } from "react";
-import { Chart as ChartJS } from "chart.js";
-import type { ThemeType } from "../types/app";
-import { ThemeContext } from "./themeContextValue";
+import {type ReactNode, useCallback, useLayoutEffect, useState} from "react";
+import {Chart as ChartJS} from "chart.js";
+import type {ThemeType} from "../types/app";
+import {ThemeContext} from "./themeContextValue";
 
 const STORAGE_KEY = "uq-theme";
+const PARTICLES_KEY = "uq-particles";
 const DEFAULT_THEME: ThemeType = "featherine";
 
 const THEME_CHART_COLOURS: Record<ThemeType, string> = {
@@ -24,8 +25,21 @@ function getStoredTheme(): ThemeType {
     return DEFAULT_THEME;
 }
 
+function getStoredParticles(): boolean {
+    try {
+        const stored = localStorage.getItem(PARTICLES_KEY);
+        if (stored !== null) {
+            return stored === "true";
+        }
+    } catch {
+        // localStorage unavailable
+    }
+    return true;
+}
+
 export function ThemeProvider({ children }: { children: ReactNode }) {
     const [theme, setThemeState] = useState<ThemeType>(getStoredTheme);
+    const [particlesEnabled, setParticlesEnabledState] = useState(getStoredParticles);
 
     useLayoutEffect(() => {
         if (theme === DEFAULT_THEME) {
@@ -45,5 +59,18 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         }
     }, []);
 
-    return <ThemeContext.Provider value={{ theme, setTheme }}>{children}</ThemeContext.Provider>;
+    const setParticlesEnabled = useCallback((enabled: boolean) => {
+        setParticlesEnabledState(enabled);
+        try {
+            localStorage.setItem(PARTICLES_KEY, String(enabled));
+        } catch {
+            // localStorage unavailable
+        }
+    }, []);
+
+    return (
+        <ThemeContext.Provider value={{ theme, setTheme, particlesEnabled, setParticlesEnabled }}>
+            {children}
+        </ThemeContext.Provider>
+    );
 }

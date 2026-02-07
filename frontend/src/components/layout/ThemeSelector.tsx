@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from "react";
-import { useTheme } from "../../hooks/useTheme";
-import type { ThemeType } from "../../types/app";
+import {useEffect, useRef, useState} from "react";
+import {useTheme} from "../../hooks/useTheme";
+import type {ThemeType} from "../../types/app";
+import {ToggleSwitch} from "../common/ToggleSwitch";
 
 interface ThemeDefinition {
     id: ThemeType;
@@ -15,7 +16,7 @@ const THEMES: ThemeDefinition[] = [
 ];
 
 export function ThemeSelector() {
-    const { theme, setTheme } = useTheme();
+    const { theme, setTheme, particlesEnabled, setParticlesEnabled } = useTheme();
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -68,6 +69,13 @@ export function ThemeSelector() {
                             {t.id === theme && <span className="theme-check">{"\u2713"}</span>}
                         </button>
                     ))}
+                    <div className="theme-dropdown-divider" />
+                    <ToggleSwitch
+                        enabled={particlesEnabled}
+                        onChange={setParticlesEnabled}
+                        label="Particles"
+                        description="Floating butterflies & sparkles"
+                    />
                 </div>
             )}
         </div>

@@ -2,8 +2,8 @@ package main
 
 import (
 	"embed"
+	"io/fs"
 	"log"
-	"net/http"
 	"umineko_quote/internal/audio"
 	"umineko_quote/internal/controllers"
 	"umineko_quote/internal/og"
@@ -11,9 +11,9 @@ import (
 	"umineko_quote/internal/routes"
 	"umineko_quote/internal/utils"
 
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/filesystem"
-	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v3/middleware/logger"
+	"github.com/gofiber/fiber/v3/middleware/static"
 )
 
 //go:embed static/*
@@ -37,10 +37,9 @@ func main() {
 	service := controllers.NewService(quoteService, ogGen, audioCombiner, string(htmlBytes))
 	routes.PublicRoutes(service, app)
 
-	app.Use("/", filesystem.New(filesystem.Config{
-		Root:       http.FS(staticFiles),
-		PathPrefix: "static",
-		Browse:     false,
+	staticFS, _ := fs.Sub(staticFiles, "static")
+	app.Get("/*", static.New("", static.Config{
+		FS: staticFS,
 	}))
 
 	utils.StartServerWithGracefulShutdown(app, ":3000")

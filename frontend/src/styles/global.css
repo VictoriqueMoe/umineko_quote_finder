@@ -494,12 +494,28 @@ body {
     background: rgba(var(--gold-rgb), var(--hover-glow));
 }
 
-/* GitHub Link */
-.github-link {
+/* Footer Links */
+.footer-made-by {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 0.75rem;
+}
+
+.footer-author {
+    color: var(--gold);
+    text-decoration: none;
+    transition: opacity 0.2s;
+}
+
+.footer-author:hover {
+    opacity: 0.8;
+}
+
+.footer-link {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    margin-top: 1rem;
+    margin-top: 0.75rem;
     padding: 0.5rem 1rem;
     color: var(--text-muted);
     text-decoration: none;
@@ -510,12 +526,12 @@ body {
     transition: all 0.3s var(--ease-out);
 }
 
-.github-link:hover {
+.footer-link:hover {
     color: var(--gold);
     border-color: var(--gold);
 }
 
-.github-link svg {
+.footer-link svg {
     width: 16px;
     height: 16px;
     fill: currentColor;

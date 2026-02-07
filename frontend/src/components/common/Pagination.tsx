@@ -1,4 +1,4 @@
-import {PAGE_SIZE} from "../../api/endpoints";
+import { PAGE_SIZE } from "../../api/endpoints";
 
 interface PaginationProps {
     total: number;

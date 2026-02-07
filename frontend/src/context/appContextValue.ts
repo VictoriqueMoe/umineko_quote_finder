@@ -1,6 +1,6 @@
-import {createContext} from "react";
-import type {Language} from "../types/app";
-import type {CharactersResponse} from "../types/api";
+import { createContext } from "react";
+import type { Language } from "../types/app";
+import type { CharactersResponse } from "../types/api";
 
 export interface AppContextValue {
     language: Language;

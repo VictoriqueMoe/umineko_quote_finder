@@ -1,10 +1,10 @@
-import {StrictMode} from "react";
-import {createRoot} from "react-dom/client";
-import {BarElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, Title, Tooltip} from "chart.js";
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import { BarElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, Title, Tooltip } from "chart.js";
 import zoomPlugin from "chartjs-plugin-zoom";
 import App from "./App";
-import {AppProvider} from "./context/AppContext";
-import {ThemeProvider} from "./context/ThemeContext";
+import { AppProvider } from "./context/AppContext";
+import { ThemeProvider } from "./context/ThemeContext";
 import "./styles/variables.css";
 import "./styles/global.css";
 

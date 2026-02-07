@@ -1,8 +1,8 @@
-import {useSortable} from "@dnd-kit/sortable";
-import {CSS} from "@dnd-kit/utilities";
-import {audioUrl} from "../../api/client";
-import type {BuilderSegment as SegmentType} from "../../hooks/useVoiceBuilder";
-import type {AudioPlayer} from "../../hooks/useAudioPlayer";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { audioUrl } from "../../api/client";
+import type { BuilderSegment as SegmentType } from "../../hooks/useVoiceBuilder";
+import type { AudioPlayer } from "../../hooks/useAudioPlayer";
 
 interface BuilderSegmentProps {
     segment: SegmentType;

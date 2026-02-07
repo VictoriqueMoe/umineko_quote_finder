@@ -1,10 +1,10 @@
-import {useEffect, useRef} from "react";
-import {useAppContext} from "../../hooks/useAppContext";
-import {useAudioPlayer} from "../../hooks/useAudioPlayer";
-import {useVoiceBuilder, type VoiceBuilder} from "../../hooks/useVoiceBuilder";
-import {BuilderSearch} from "./BuilderSearch";
-import {BuilderTimeline} from "./BuilderTimeline";
-import {BuilderControls} from "./BuilderControls";
+import { useEffect, useRef } from "react";
+import { useAppContext } from "../../hooks/useAppContext";
+import { useAudioPlayer } from "../../hooks/useAudioPlayer";
+import { useVoiceBuilder, type VoiceBuilder } from "../../hooks/useVoiceBuilder";
+import { BuilderSearch } from "./BuilderSearch";
+import { BuilderTimeline } from "./BuilderTimeline";
+import { BuilderControls } from "./BuilderControls";
 
 interface VoiceBuilderViewProps {
     onClose: () => void;

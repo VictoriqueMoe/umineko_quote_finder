@@ -1,7 +1,7 @@
-import {useCallback, useState} from "react";
+import { useCallback, useState } from "react";
 import * as api from "../api/endpoints";
-import type {BrowseResponse} from "../types/api";
-import type {Language} from "../types/app";
+import type { BrowseResponse } from "../types/api";
+import type { Language } from "../types/app";
 
 export function useBrowse() {
     const [data, setData] = useState<BrowseResponse | null>(null);

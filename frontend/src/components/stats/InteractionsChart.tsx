@@ -1,8 +1,8 @@
-import {useEffect, useRef} from "react";
-import {Bar} from "react-chartjs-2";
-import {getGridColour, getThemeColours, zoomConfig} from "./chartConfig";
-import type {StatsResponse} from "../../types/api";
-import type {Chart} from "chart.js";
+import { useEffect, useRef } from "react";
+import { Bar } from "react-chartjs-2";
+import { getGridColour, getThemeColours, zoomConfig } from "./chartConfig";
+import type { StatsResponse } from "../../types/api";
+import type { Chart } from "chart.js";
 
 interface InteractionsChartProps {
     data: StatsResponse;

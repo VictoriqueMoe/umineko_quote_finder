@@ -1,7 +1,7 @@
-import {type ReactNode, useCallback, useLayoutEffect, useState} from "react";
-import {Chart as ChartJS} from "chart.js";
-import type {ThemeType} from "../types/app";
-import {ThemeContext} from "./themeContextValue";
+import { type ReactNode, useCallback, useLayoutEffect, useState } from "react";
+import { Chart as ChartJS } from "chart.js";
+import type { ThemeType } from "../types/app";
+import { ThemeContext } from "./themeContextValue";
 
 const STORAGE_KEY = "uq-theme";
 const PARTICLES_KEY = "uq-particles";

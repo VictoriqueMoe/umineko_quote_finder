@@ -1,5 +1,5 @@
-import {useCallback, useEffect, useRef} from "react";
-import type {FilterState, Language, PushUrlParams} from "../types/app";
+import { useCallback, useEffect, useRef } from "react";
+import type { FilterState, Language, PushUrlParams } from "../types/app";
 
 interface UrlStateCallbacks {
     onSearch: (

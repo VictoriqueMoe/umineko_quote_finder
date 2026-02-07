@@ -7,11 +7,11 @@ import {
     useSensor,
     useSensors,
 } from "@dnd-kit/core";
-import {SortableContext, verticalListSortingStrategy} from "@dnd-kit/sortable";
-import {restrictToParentElement, restrictToVerticalAxis} from "@dnd-kit/modifiers";
-import {BuilderSegment} from "./BuilderSegment";
-import type {VoiceBuilder} from "../../hooks/useVoiceBuilder";
-import type {AudioPlayer} from "../../hooks/useAudioPlayer";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { restrictToParentElement, restrictToVerticalAxis } from "@dnd-kit/modifiers";
+import { BuilderSegment } from "./BuilderSegment";
+import type { VoiceBuilder } from "../../hooks/useVoiceBuilder";
+import type { AudioPlayer } from "../../hooks/useAudioPlayer";
 
 interface BuilderTimelineProps {
     builder: VoiceBuilder;

@@ -1,9 +1,9 @@
-import {useCallback, useMemo, useState} from "react";
-import {combinedAudioUrl, resolveCharId} from "../api/client";
-import {getQuoteByAudioId} from "../api/endpoints";
-import type {Quote} from "../types/api";
-import type {Language} from "../types/app";
-import {arrayMove} from "@dnd-kit/sortable";
+import { useCallback, useMemo, useState } from "react";
+import { combinedAudioUrl, resolveCharId } from "../api/client";
+import { getQuoteByAudioId } from "../api/endpoints";
+import type { Quote } from "../types/api";
+import type { Language } from "../types/app";
+import { arrayMove } from "@dnd-kit/sortable";
 
 export interface BuilderSegment {
     id: string;

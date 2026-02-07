@@ -1,13 +1,13 @@
-import {useCallback, useRef} from "react";
-import {episodeLabel, useQuoteDisplay} from "../../hooks/useQuoteDisplay";
-import {AudioPlayer} from "../audio/AudioPlayer";
-import {LangToggle} from "./LangToggle";
-import {ShareButton} from "./ShareButton";
-import {DownloadButton} from "./DownloadButton";
-import {ContextViewer} from "./ContextViewer";
-import type {Quote} from "../../types/api";
-import type {AudioPlayer as AudioPlayerType} from "../../hooks/useAudioPlayer";
-import type {Language} from "../../types/app";
+import { useCallback, useRef } from "react";
+import { episodeLabel, useQuoteDisplay } from "../../hooks/useQuoteDisplay";
+import { AudioPlayer } from "../audio/AudioPlayer";
+import { LangToggle } from "./LangToggle";
+import { ShareButton } from "./ShareButton";
+import { DownloadButton } from "./DownloadButton";
+import { ContextViewer } from "./ContextViewer";
+import type { Quote } from "../../types/api";
+import type { AudioPlayer as AudioPlayerType } from "../../hooks/useAudioPlayer";
+import type { Language } from "../../types/app";
 
 interface QuoteCardProps {
     quote: Quote;

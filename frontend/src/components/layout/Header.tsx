@@ -1,5 +1,5 @@
-import type {Language} from "../../types/app";
-import {ThemeSelector} from "./ThemeSelector";
+import type { Language } from "../../types/app";
+import { ThemeSelector } from "./ThemeSelector";
 
 interface HeaderProps {
     language: Language;

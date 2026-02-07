@@ -1,4 +1,4 @@
-import type {KeyboardEvent} from "react";
+import type { KeyboardEvent } from "react";
 
 interface SearchBarProps {
     value: string;

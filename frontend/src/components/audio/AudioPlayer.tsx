@@ -1,7 +1,7 @@
-import {useState} from "react";
-import {audioUrl, combinedAudioUrl, resolveCharId} from "../../api/client";
-import {AudioControls} from "./AudioControls";
-import type {AudioPlayer as AudioPlayerType} from "../../hooks/useAudioPlayer";
+import { useState } from "react";
+import { audioUrl, combinedAudioUrl, resolveCharId } from "../../api/client";
+import { AudioControls } from "./AudioControls";
+import type { AudioPlayer as AudioPlayerType } from "../../hooks/useAudioPlayer";
 
 interface AudioPlayerProps {
     audioId: string;

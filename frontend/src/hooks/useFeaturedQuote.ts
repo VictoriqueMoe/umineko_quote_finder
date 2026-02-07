@@ -1,7 +1,7 @@
-import {useCallback, useState} from "react";
+import { useCallback, useState } from "react";
 import * as api from "../api/endpoints";
-import type {Quote} from "../types/api";
-import type {FilterState, Language} from "../types/app";
+import type { Quote } from "../types/api";
+import type { FilterState, Language } from "../types/app";
 
 export function useFeaturedQuote() {
     const [quote, setQuote] = useState<Quote | null>(null);

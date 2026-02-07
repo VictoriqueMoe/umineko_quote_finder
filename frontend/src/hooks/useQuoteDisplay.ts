@@ -1,7 +1,7 @@
-import {useCallback, useEffect, useState} from "react";
-import {useAppContext} from "./useAppContext";
-import type {Quote} from "../types/api";
-import type {Language} from "../types/app";
+import { useCallback, useEffect, useState } from "react";
+import { useAppContext } from "./useAppContext";
+import type { Quote } from "../types/api";
+import type { Language } from "../types/app";
 
 const CONTENT_TYPE_LABELS: Record<string, string> = {
     tea: "Tea Party",

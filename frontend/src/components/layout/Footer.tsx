@@ -6,12 +6,7 @@ export function Footer() {
             <p className="footer-credit">From the world of Umineko no Naku Koro ni by 07th Expansion</p>
             <p className="footer-made-by">
                 {"Made with \u2764 by "}
-                <a
-                    href="https://x.com/FeatherineFAA"
-                    target="_blank"
-                    rel="noopener"
-                    className="footer-author"
-                >
+                <a href="https://x.com/FeatherineFAA" target="_blank" rel="noopener" className="footer-author">
                     Featherine Augustus Aurora
                 </a>
             </p>

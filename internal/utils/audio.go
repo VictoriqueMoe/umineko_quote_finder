@@ -5,10 +5,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 )
 
-func ServeAudio(ctx *fiber.Ctx, data []byte) error {
+func ServeAudio(ctx fiber.Ctx, data []byte) error {
 	ctx.Set("Content-Type", "audio/ogg")
 	ctx.Set("Accept-Ranges", "bytes")
 

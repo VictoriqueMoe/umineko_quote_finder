@@ -6,7 +6,7 @@ import (
 
 	"umineko_quote/internal/og"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 )
 
 func (s *Service) getAllOGAPIRoutes() []FSetupRoute {
@@ -30,7 +30,7 @@ func (s *Service) setupOGBuilderImageRoute(routeGroup fiber.Router) {
 	routeGroup.Get("/og/builder.png", s.ogBuilderImage)
 }
 
-func (s *Service) ogImage(ctx *fiber.Ctx) error {
+func (s *Service) ogImage(ctx fiber.Ctx) error {
 	audioId := ctx.Params("audioId")
 	if !audioIdPattern.MatchString(audioId) {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -87,7 +87,7 @@ func (s *Service) replaceOGPlaceholders(title, description, twitterDesc, imageUR
 	return html
 }
 
-func (s *Service) baseURL(ctx *fiber.Ctx) string {
+func (s *Service) baseURL(ctx fiber.Ctx) string {
 	scheme := "https"
 	if strings.HasPrefix(ctx.Hostname(), "localhost") || strings.HasPrefix(ctx.Hostname(), "127.0.0.1") {
 		scheme = "http"
@@ -149,7 +149,7 @@ func (s *Service) parseBuilderSegments(param, lang string) []builderSegmentMeta 
 	return segments
 }
 
-func (s *Service) ogPage(ctx *fiber.Ctx) error {
+func (s *Service) ogPage(ctx fiber.Ctx) error {
 	audioId := ctx.Query("quote")
 	builderParam := ctx.Query("builder")
 
@@ -227,7 +227,7 @@ func (s *Service) ogPage(ctx *fiber.Ctx) error {
 	return ctx.SendString(html)
 }
 
-func (s *Service) ogBuilderImage(ctx *fiber.Ctx) error {
+func (s *Service) ogBuilderImage(ctx fiber.Ctx) error {
 	segmentsParam := ctx.Query("segments")
 	if segmentsParam == "" {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{

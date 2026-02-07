@@ -1,12 +1,12 @@
-import { useCallback, useRef } from "react";
-import type { StatsResponse } from "../../types/api";
-import { StatsCard } from "./StatsCard";
-import { TopSpeakersChart } from "./TopSpeakersChart";
-import { LinesPerEpisodeChart } from "./LinesPerEpisodeChart";
-import { TruthChart } from "./TruthChart";
-import { InteractionsChart } from "./InteractionsChart";
-import { PresenceChart } from "./PresenceChart";
-import type { Chart } from "chart.js";
+import {useCallback, useRef} from "react";
+import type {StatsResponse} from "../../types/api";
+import {StatsCard} from "./StatsCard";
+import {TopSpeakersChart} from "./TopSpeakersChart";
+import {LinesPerEpisodeChart} from "./LinesPerEpisodeChart";
+import {TruthChart} from "./TruthChart";
+import {InteractionsChart} from "./InteractionsChart";
+import {PresenceChart} from "./PresenceChart";
+import type {Chart} from "chart.js";
 
 interface StatsViewProps {
     data: StatsResponse;

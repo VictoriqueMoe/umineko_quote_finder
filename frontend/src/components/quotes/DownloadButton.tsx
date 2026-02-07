@@ -1,5 +1,5 @@
-import { useCallback, useState } from "react";
-import { ogImageUrl } from "../../api/client";
+import {useCallback, useState} from "react";
+import {ogImageUrl} from "../../api/client";
 
 interface DownloadButtonProps {
     audioId: string;

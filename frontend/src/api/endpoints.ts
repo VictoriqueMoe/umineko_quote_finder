@@ -1,4 +1,4 @@
-import { apiFetch, buildQueryString } from "./client";
+import {apiFetch, buildQueryString} from "./client";
 import type {
     BrowseResponse,
     CharactersResponse,
@@ -8,7 +8,7 @@ import type {
     SearchResponse,
     StatsResponse,
 } from "../types/api";
-import type { Language } from "../types/app";
+import type {Language} from "../types/app";
 
 const PAGE_SIZE = 30;
 

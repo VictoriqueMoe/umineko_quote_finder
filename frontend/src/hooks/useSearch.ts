@@ -1,7 +1,7 @@
-import { useCallback, useState } from "react";
+import {useCallback, useState} from "react";
 import * as api from "../api/endpoints";
-import type { SearchResult } from "../types/api";
-import type { FilterState, Language } from "../types/app";
+import type {SearchResult} from "../types/api";
+import type {FilterState, Language} from "../types/app";
 
 export function useSearch() {
     const [results, setResults] = useState<SearchResult[]>([]);

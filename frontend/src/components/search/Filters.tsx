@@ -1,5 +1,5 @@
-import { useAppContext } from "../../hooks/useAppContext";
-import type { FilterState } from "../../types/app";
+import {useAppContext} from "../../hooks/useAppContext";
+import type {FilterState} from "../../types/app";
 
 interface FiltersProps {
     filters: FilterState;

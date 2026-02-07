@@ -1,6 +1,6 @@
-import { useCallback, useRef, useState } from "react";
+import {useCallback, useRef, useState} from "react";
 import * as api from "../api/endpoints";
-import type { StatsResponse } from "../types/api";
+import type {StatsResponse} from "../types/api";
 
 export function useStats() {
     const [data, setData] = useState<StatsResponse | null>(null);

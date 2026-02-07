@@ -1,8 +1,8 @@
-import { QuoteCard } from "./QuoteCard";
-import { Pagination } from "../common/Pagination";
-import { EmptyState } from "../common/EmptyState";
-import type { SearchResult } from "../../types/api";
-import type { AudioPlayer } from "../../hooks/useAudioPlayer";
+import {QuoteCard} from "./QuoteCard";
+import {Pagination} from "../common/Pagination";
+import {EmptyState} from "../common/EmptyState";
+import type {SearchResult} from "../../types/api";
+import type {AudioPlayer} from "../../hooks/useAudioPlayer";
 
 interface QuoteListProps {
     results: SearchResult[];

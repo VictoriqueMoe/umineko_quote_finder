@@ -1,8 +1,8 @@
-import { type ReactNode, useEffect, useState } from "react";
-import type { Language } from "../types/app";
-import type { CharactersResponse } from "../types/api";
-import { getCharacters, getConfig } from "../api/endpoints";
-import { AppContext } from "./appContextValue";
+import {type ReactNode, useEffect, useState} from "react";
+import type {Language} from "../types/app";
+import type {CharactersResponse} from "../types/api";
+import {getCharacters, getConfig} from "../api/endpoints";
+import {AppContext} from "./appContextValue";
 
 export function AppProvider({ children }: { children: ReactNode }) {
     const [language, setLanguage] = useState<Language>("en");

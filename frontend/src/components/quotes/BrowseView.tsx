@@ -1,9 +1,9 @@
-import { QuoteCard } from "./QuoteCard";
-import { Pagination } from "../common/Pagination";
-import { EmptyState } from "../common/EmptyState";
-import type { BrowseResponse } from "../../types/api";
-import type { FilterState } from "../../types/app";
-import type { AudioPlayer } from "../../hooks/useAudioPlayer";
+import {QuoteCard} from "./QuoteCard";
+import {Pagination} from "../common/Pagination";
+import {EmptyState} from "../common/EmptyState";
+import type {BrowseResponse} from "../../types/api";
+import type {FilterState} from "../../types/app";
+import type {AudioPlayer} from "../../hooks/useAudioPlayer";
 
 interface BrowseViewProps {
     data: BrowseResponse;

@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useAppContext } from "../../hooks/useAppContext";
-import { getContext } from "../../api/endpoints";
-import type { ContextResponse } from "../../types/api";
-import type { Language } from "../../types/app";
+import {useCallback, useEffect, useRef, useState} from "react";
+import {useAppContext} from "../../hooks/useAppContext";
+import {getContext} from "../../api/endpoints";
+import type {ContextResponse} from "../../types/api";
+import type {Language} from "../../types/app";
 
 interface ContextViewerProps {
     audioId: string;

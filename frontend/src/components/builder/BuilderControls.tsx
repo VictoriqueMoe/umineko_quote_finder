@@ -1,7 +1,7 @@
-import { useCallback, useRef, useState } from "react";
-import { AudioControls } from "../audio/AudioControls";
-import type { VoiceBuilder } from "../../hooks/useVoiceBuilder";
-import type { AudioPlayer } from "../../hooks/useAudioPlayer";
+import {useCallback, useRef, useState} from "react";
+import {AudioControls} from "../audio/AudioControls";
+import type {VoiceBuilder} from "../../hooks/useVoiceBuilder";
+import type {AudioPlayer} from "../../hooks/useAudioPlayer";
 
 interface BuilderControlsProps {
     builder: VoiceBuilder;

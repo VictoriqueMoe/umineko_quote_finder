@@ -1,13 +1,13 @@
-import { type KeyboardEvent, useCallback, useState } from "react";
-import { useAppContext } from "../../hooks/useAppContext";
-import { useSearch } from "../../hooks/useSearch";
-import { audioUrl, resolveCharId } from "../../api/client";
-import { getRandomQuote, PAGE_SIZE } from "../../api/endpoints";
-import { episodeLabel } from "../../hooks/useQuoteDisplay";
-import { segmentFromQuote, type VoiceBuilder } from "../../hooks/useVoiceBuilder";
-import type { Quote } from "../../types/api";
-import type { AudioPlayer } from "../../hooks/useAudioPlayer";
-import type { FilterState } from "../../types/app";
+import {type KeyboardEvent, useCallback, useState} from "react";
+import {useAppContext} from "../../hooks/useAppContext";
+import {useSearch} from "../../hooks/useSearch";
+import {audioUrl, resolveCharId} from "../../api/client";
+import {getRandomQuote, PAGE_SIZE} from "../../api/endpoints";
+import {episodeLabel} from "../../hooks/useQuoteDisplay";
+import {segmentFromQuote, type VoiceBuilder} from "../../hooks/useVoiceBuilder";
+import type {Quote} from "../../types/api";
+import type {AudioPlayer} from "../../hooks/useAudioPlayer";
+import type {FilterState} from "../../types/app";
 
 interface BuilderSearchProps {
     builder: VoiceBuilder;

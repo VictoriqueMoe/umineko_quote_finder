@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef } from "react";
-import type { AudioPlayer } from "../../hooks/useAudioPlayer";
+import {useCallback, useEffect, useRef} from "react";
+import type {AudioPlayer} from "../../hooks/useAudioPlayer";
 
 interface AudioControlsProps {
     audioPlayer: AudioPlayer;

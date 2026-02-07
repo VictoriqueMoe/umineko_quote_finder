@@ -686,7 +686,7 @@ body {
 }
 
 .quote-episode::before {
-    content: "\u25C6";
+    content: "\25C6";
     color: var(--purple-light);
     font-size: 0.6rem;
 }
@@ -1684,7 +1684,9 @@ body {
     border: 1px solid var(--text-muted);
     flex-shrink: 0;
     margin-left: auto;
-    transition: background 0.2s, border-color 0.2s;
+    transition:
+        background 0.2s,
+        border-color 0.2s;
 }
 
 .toggle-switch.on {
@@ -1700,7 +1702,9 @@ body {
     height: 14px;
     background: var(--text-muted);
     border-radius: 50%;
-    transition: transform 0.2s, background 0.2s;
+    transition:
+        transform 0.2s,
+        background 0.2s;
 }
 
 .toggle-switch.on .toggle-switch-knob {

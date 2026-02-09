@@ -7,6 +7,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"umineko_quote/internal/dto"
 )
 
 const audioDir = "internal/quote/data/audio"
@@ -16,27 +18,26 @@ var dataFS embed.FS
 
 type (
 	Service interface {
-		Search(query string, lang string, limit int, offset int, characterID string, episode int, truth Truth) SearchResponse
-		Browse(lang string, characterID string, limit int, offset int, episode int, truth Truth) CharacterResponse
-		GetByCharacter(lang string, characterID string, limit int, offset int, episode int, truth Truth) CharacterResponse
-		GetByAudioID(lang string, audioID string) *ParsedQuote
-		GetContext(lang string, audioID string, lines int) *ContextResponse
-		Random(lang string, characterID string, episode int, truth Truth) *ParsedQuote
-		GetCharacters() map[string]string
+		Search(query string, lang string, limit int, offset int, character Character, episode int, truth Truth) dto.SearchResponse
+		Browse(lang string, character Character, limit int, offset int, episode int, truth Truth) dto.CharacterResponse
+		GetByAudioID(lang string, audioID string) *dto.ParsedQuote
+		GetContext(lang string, audioID string, lines int) *dto.ContextResponse
+		Random(lang string, character Character, episode int, truth Truth) *dto.ParsedQuote
+		GetCharacters() map[Character]string
 		AudioFilePath(characterId string, audioId string) string
 		GetStats() Stats
 		HasAudio() bool
 	}
 
 	service struct {
-		quotes  map[string][]ParsedQuote
+		quotes  map[string][]dto.ParsedQuote
 		indexer Indexer
 		stats   Stats
 	}
 
 	langParseResult struct {
 		lang   string
-		parsed []ParsedQuote
+		parsed []dto.ParsedQuote
 	}
 )
 
@@ -74,7 +75,7 @@ func NewService() Service {
 		close(results)
 	}()
 
-	quotes := make(map[string][]ParsedQuote)
+	quotes := make(map[string][]dto.ParsedQuote)
 
 	for r := range results {
 		quotes[r.lang] = r.parsed
@@ -95,7 +96,8 @@ func NewService() Service {
 	}
 }
 
-func (s *service) Search(query string, lang string, limit int, offset int, characterID string, episode int, truth Truth) SearchResponse {
+func (s *service) Search(query string, lang string, limit int, offset int, character Character, episode int, truth Truth) dto.SearchResponse {
+	characterID := character.ID()
 	if limit <= 0 {
 		limit = 30
 	}
@@ -112,7 +114,7 @@ func (s *service) Search(query string, lang string, limit int, offset int, chara
 		return NewSearchResponse(nil, limit, offset)
 	}
 
-	matchesFilter := func(q ParsedQuote) bool {
+	matchesFilter := func(q dto.ParsedQuote) bool {
 		if characterID != "" && q.CharacterID != characterID {
 			return false
 		}
@@ -132,7 +134,7 @@ func (s *service) Search(query string, lang string, limit int, offset int, chara
 
 	searchIndices := s.indexer.FilteredIndices(lang, characterID, episode)
 
-	var exactMatches []SearchResult
+	var exactMatches []dto.SearchResult
 	if searchIndices != nil {
 		if len(searchIndices) > 5000 {
 			exactMatches = concurrentExactSearch(searchIndices, lowerTexts, quotes, queryLower, matchesFilter)
@@ -156,7 +158,8 @@ func (s *service) Search(query string, lang string, limit int, offset int, chara
 	return NewSearchResponse(exactMatches, limit, offset)
 }
 
-func (s *service) Browse(lang string, characterID string, limit int, offset int, episode int, truth Truth) CharacterResponse {
+func (s *service) Browse(lang string, character Character, limit int, offset int, episode int, truth Truth) dto.CharacterResponse {
+	characterID := character.ID()
 	if limit <= 0 {
 		limit = 50
 	}
@@ -183,7 +186,7 @@ func (s *service) Browse(lang string, characterID string, limit int, offset int,
 		}
 	}
 
-	var all []ParsedQuote
+	var all []dto.ParsedQuote
 	for _, idx := range source {
 		q := quotes[idx]
 		if truth == TruthRed && !q.HasRedTruth {
@@ -198,46 +201,8 @@ func (s *service) Browse(lang string, characterID string, limit int, offset int,
 	return NewCharacterResponse(characterID, all, limit, offset)
 }
 
-func (s *service) GetByCharacter(lang string, characterID string, limit int, offset int, episode int, truth Truth) CharacterResponse {
-	if limit <= 0 {
-		limit = 50
-	}
-	if offset < 0 {
-		offset = 0
-	}
-	if lang == "" {
-		lang = "en"
-	}
-
-	quotes := s.quotes[lang]
-	if quotes == nil {
-		return NewCharacterResponse(characterID, nil, limit, offset)
-	}
-
-	indices := s.indexer.CharacterIndices(lang, characterID)
-	if len(indices) == 0 {
-		return NewCharacterResponse(characterID, nil, limit, offset)
-	}
-
-	var all []ParsedQuote
-	for _, idx := range indices {
-		q := quotes[idx]
-		if episode > 0 && q.Episode != episode {
-			continue
-		}
-		if truth == TruthRed && !q.HasRedTruth {
-			continue
-		}
-		if truth == TruthBlue && !q.HasBlueTruth {
-			continue
-		}
-		all = append(all, q)
-	}
-
-	return NewCharacterResponse(characterID, all, limit, offset)
-}
-
-func (s *service) Random(lang string, characterID string, episode int, truth Truth) *ParsedQuote {
+func (s *service) Random(lang string, character Character, episode int, truth Truth) *dto.ParsedQuote {
+	characterID := character.ID()
 	if lang == "" {
 		lang = "en"
 	}
@@ -247,7 +212,7 @@ func (s *service) Random(lang string, characterID string, episode int, truth Tru
 		return nil
 	}
 
-	matchesTruth := func(q ParsedQuote) bool {
+	matchesTruth := func(q dto.ParsedQuote) bool {
 		if truth == TruthRed && !q.HasRedTruth {
 			return false
 		}
@@ -332,7 +297,7 @@ func (s *service) Random(lang string, characterID string, episode int, truth Tru
 	return &quotes[pick]
 }
 
-func (s *service) GetByAudioID(lang string, audioID string) *ParsedQuote {
+func (s *service) GetByAudioID(lang string, audioID string) *dto.ParsedQuote {
 	if lang == "" {
 		lang = "en"
 	}
@@ -355,7 +320,7 @@ func (s *service) GetByAudioID(lang string, audioID string) *ParsedQuote {
 	return nil
 }
 
-func (s *service) GetContext(lang string, audioID string, lines int) *ContextResponse {
+func (s *service) GetContext(lang string, audioID string, lines int) *dto.ContextResponse {
 	if lang == "" {
 		lang = "en"
 	}
@@ -385,14 +350,14 @@ func (s *service) GetContext(lang string, audioID string, lines int) *ContextRes
 		end = len(quotes)
 	}
 
-	return &ContextResponse{
+	return &dto.ContextResponse{
 		Before: quotes[start:idx],
 		Quote:  quotes[idx],
 		After:  quotes[idx+1 : end],
 	}
 }
 
-func (s *service) GetCharacters() map[string]string {
+func (s *service) GetCharacters() map[Character]string {
 	return CharacterNames.GetAllCharacters()
 }
 

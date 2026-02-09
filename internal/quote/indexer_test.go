@@ -4,10 +4,12 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"umineko_quote/internal/dto"
 )
 
-func buildTestIndexer() (Indexer, map[string][]ParsedQuote) {
-	quotes := map[string][]ParsedQuote{
+func buildTestIndexer() (Indexer, map[string][]dto.ParsedQuote) {
+	quotes := map[string][]dto.ParsedQuote{
 		"en": {
 			{Text: "Hello World", CharacterID: "10", Episode: 1},
 			{Text: "Beatrice speaks", CharacterID: "27", Episode: 1},
@@ -186,7 +188,7 @@ func TestIndexer_AudioFilePath_EmptyDir(t *testing.T) {
 }
 
 func TestIndexer_AudioFilePath_NonexistentFile(t *testing.T) {
-	quotes := map[string][]ParsedQuote{
+	quotes := map[string][]dto.ParsedQuote{
 		"en": {{Text: "test", CharacterID: "10", Episode: 1}},
 	}
 	idx := NewIndexer(quotes, "/nonexistent/audio/dir")
@@ -198,7 +200,7 @@ func TestIndexer_AudioFilePath_NonexistentFile(t *testing.T) {
 }
 
 func TestIndexer_QuoteIndex_Found(t *testing.T) {
-	quotes := map[string][]ParsedQuote{
+	quotes := map[string][]dto.ParsedQuote{
 		"en": {
 			{Text: "First", CharacterID: "10", AudioID: "10100001"},
 			{Text: "Second", CharacterID: "27", AudioID: "12700001"},
@@ -226,7 +228,7 @@ func TestIndexer_QuoteIndex_NotFound(t *testing.T) {
 }
 
 func TestIndexer_QuoteIndex_CompositeIDs(t *testing.T) {
-	quotes := map[string][]ParsedQuote{
+	quotes := map[string][]dto.ParsedQuote{
 		"en": {
 			{Text: "Line one", CharacterID: "10", AudioID: "10100001, 10100002"},
 			{Text: "Line two", CharacterID: "27", AudioID: "12700001"},
@@ -261,7 +263,7 @@ func TestIndexer_QuoteIndex_UnknownLang(t *testing.T) {
 }
 
 func TestIndexer_MultipleLangs(t *testing.T) {
-	quotes := map[string][]ParsedQuote{
+	quotes := map[string][]dto.ParsedQuote{
 		"en": {
 			{Text: "English text", CharacterID: "10", Episode: 1},
 		},
@@ -303,7 +305,7 @@ func TestIndexer_HasAudio_EmptyDir(t *testing.T) {
 }
 
 func TestIndexer_HasAudio_NonexistentDir(t *testing.T) {
-	quotes := map[string][]ParsedQuote{
+	quotes := map[string][]dto.ParsedQuote{
 		"en": {{Text: "test", CharacterID: "10", Episode: 1}},
 	}
 	idx := NewIndexer(quotes, "/nonexistent/audio/dir")
@@ -316,7 +318,7 @@ func TestIndexer_HasAudio_NonexistentDir(t *testing.T) {
 
 func TestIndexer_HasAudio_EmptyExistingDir(t *testing.T) {
 	dir := t.TempDir()
-	quotes := map[string][]ParsedQuote{
+	quotes := map[string][]dto.ParsedQuote{
 		"en": {{Text: "test", CharacterID: "10", Episode: 1}},
 	}
 	idx := NewIndexer(quotes, dir)
@@ -338,7 +340,7 @@ func TestIndexer_HasAudio_WithFiles(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	quotes := map[string][]ParsedQuote{
+	quotes := map[string][]dto.ParsedQuote{
 		"en": {{Text: "test", CharacterID: "10", Episode: 1}},
 	}
 	idx := NewIndexer(quotes, dir)

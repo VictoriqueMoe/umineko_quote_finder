@@ -5,6 +5,7 @@ import (
 	"strings"
 	"sync"
 
+	"umineko_quote/internal/dto"
 	"umineko_quote/internal/lexar"
 	"umineko_quote/internal/lexar/transformer"
 )
@@ -16,7 +17,7 @@ type scriptParser struct {
 }
 
 // ParseAll parses all lines and returns quotes.
-func (p *scriptParser) ParseAll(lines []string) []ParsedQuote {
+func (p *scriptParser) ParseAll(lines []string) []dto.ParsedQuote {
 	// Pre-filter to only relevant lines (dialogue, presets, episode markers, labels)
 	filtered := make([]string, 0, len(lines)/8)
 	for _, line := range lines {
@@ -50,7 +51,7 @@ func (p *scriptParser) ParseAll(lines []string) []ParsedQuote {
 
 	extracted := p.extractor.ExtractQuotes(input)
 
-	quotes := make([]ParsedQuote, len(extracted))
+	quotes := make([]dto.ParsedQuote, len(extracted))
 
 	plainText := p.factory.MustGet(transformer.FormatPlainText)
 	htmlText := p.factory.MustGet(transformer.FormatHTML)
@@ -80,11 +81,11 @@ func (p *scriptParser) ParseAll(lines []string) []ParsedQuote {
 					}
 				}
 
-				quotes[i] = ParsedQuote{
+				quotes[i] = dto.ParsedQuote{
 					Text:         plainText.Transform(eq.Content),
 					TextHtml:     htmlText.Transform(eq.Content),
 					CharacterID:  eq.CharacterID,
-					Character:    CharacterNames.GetCharacterName(eq.CharacterID),
+					Character:    CharacterNames.GetCharacterName(CharacterFromID(eq.CharacterID)),
 					AudioID:      eq.AudioID,
 					AudioCharMap: eq.AudioCharMap,
 					AudioTextMap: audioTextMap,

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"umineko_quote/internal/audio"
+	_ "umineko_quote/internal/dto"
 	"umineko_quote/internal/quote"
 	"umineko_quote/internal/utils"
 
@@ -14,12 +15,20 @@ import (
 
 var audioIdPattern = regexp.MustCompile(`^[a-zA-Z0-9_]+$`)
 
+type browseParams struct {
+	lang      string
+	character quote.Character
+	limit     int
+	offset    int
+	episode   int
+	truth     quote.Truth
+}
+
 func (s *Service) getAllQuoteRoutes() []FSetupRoute {
 	return []FSetupRoute{
 		s.setupSearchRoute,
 		s.setupRandomRoute,
 		s.setupBrowseRoute,
-		s.setupByCharacterRoute,
 		s.setupByAudioIDRoute,
 		s.setupContextRoute,
 		s.setupCharactersRoute,
@@ -41,10 +50,6 @@ func (s *Service) setupBrowseRoute(routeGroup fiber.Router) {
 	routeGroup.Get("/browse", s.browse)
 }
 
-func (s *Service) setupByCharacterRoute(routeGroup fiber.Router) {
-	routeGroup.Get("/character/:id", s.byCharacter)
-}
-
 func (s *Service) setupByAudioIDRoute(routeGroup fiber.Router) {
 	routeGroup.Get("/quote/:audioId", s.byAudioID)
 }
@@ -53,6 +58,22 @@ func (s *Service) setupCharactersRoute(routeGroup fiber.Router) {
 	routeGroup.Get("/characters", s.characters)
 }
 
+// search godoc
+//
+//	@Summary		Search quotes
+//	@Description	Search for quotes by text query with optional filters
+//	@Tags			quotes
+//	@Produce		json
+//	@Param			q			query		string	true	"Search query"
+//	@Param			lang		query		string	false	"Language"	default(en)
+//	@Param			limit		query		int		false	"Maximum results"	default(30)
+//	@Param			offset		query		int		false	"Offset for pagination"	default(0)
+//	@Param			character	query		quote.Character	false	"Filter by character ID"
+//	@Param			episode		query		int		false	"Filter by episode (1-8)"
+//	@Param			truth		query		string	false	"Filter by truth type"	Enums(red, blue)
+//	@Success		200			{object}	dto.SearchAPIResponse
+//	@Failure		400			{object}	dto.ErrorResponse
+//	@Router			/search [get]
 func (s *Service) search(ctx fiber.Ctx) error {
 	query := ctx.Query("q")
 	if query == "" {
@@ -64,11 +85,11 @@ func (s *Service) search(ctx fiber.Ctx) error {
 	lang := ctx.Query("lang", "en")
 	limit := fiber.Query[int](ctx, "limit", 30)
 	offset := fiber.Query[int](ctx, "offset", 0)
-	characterID := ctx.Query("character")
+	character := quote.Character(ctx.Query("character"))
 	episode := fiber.Query[int](ctx, "episode", 0)
 	truth := quote.TruthAll.Parse(ctx.Query("truth"))
 
-	response := s.QuoteService.Search(query, lang, limit, offset, characterID, episode, truth)
+	response := s.QuoteService.Search(query, lang, limit, offset, character, episode, truth)
 	return ctx.JSON(fiber.Map{
 		"query":   query,
 		"results": response.Results,
@@ -78,12 +99,25 @@ func (s *Service) search(ctx fiber.Ctx) error {
 	})
 }
 
+// random godoc
+//
+//	@Summary		Get random quote
+//	@Description	Returns a random quote with optional filters
+//	@Tags			quotes
+//	@Produce		json
+//	@Param			lang		query		string	false	"Language"	default(en)
+//	@Param			character	query		quote.Character	false	"Filter by character ID"
+//	@Param			episode		query		int		false	"Filter by episode (1-8)"
+//	@Param			truth		query		string	false	"Filter by truth type"	Enums(red, blue)
+//	@Success		200			{object}	dto.ParsedQuote
+//	@Failure		404			{object}	dto.ErrorResponse
+//	@Router			/random [get]
 func (s *Service) random(ctx fiber.Ctx) error {
 	lang := ctx.Query("lang", "en")
-	characterID := ctx.Query("character")
+	character := quote.Character(ctx.Query("character"))
 	episode := fiber.Query[int](ctx, "episode", 0)
 	truth := quote.TruthAll.Parse(ctx.Query("truth"))
-	q := s.QuoteService.Random(lang, characterID, episode, truth)
+	q := s.QuoteService.Random(lang, character, episode, truth)
 	if q == nil {
 		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"error": "no quotes available",
@@ -92,39 +126,38 @@ func (s *Service) random(ctx fiber.Ctx) error {
 	return ctx.JSON(q)
 }
 
-type browseParams struct {
-	lang        string
-	characterID string
-	limit       int
-	offset      int
-	episode     int
-	truth       quote.Truth
-}
-
-func parseBrowseParams(ctx fiber.Ctx) browseParams {
-	return browseParams{
-		lang:    ctx.Query("lang", "en"),
-		limit:   fiber.Query[int](ctx, "limit", 50),
-		offset:  fiber.Query[int](ctx, "offset", 0),
-		episode: fiber.Query[int](ctx, "episode", 0),
-		truth:   quote.TruthAll.Parse(ctx.Query("truth")),
-	}
-}
-
+// browse godoc
+//
+//	@Summary		Browse quotes
+//	@Description	Browse all quotes with optional filters and pagination
+//	@Tags			quotes
+//	@Produce		json
+//	@Param			lang		query		string	false	"Language"	default(en)
+//	@Param			character	query		quote.Character	false	"Filter by character ID"
+//	@Param			limit		query		int		false	"Maximum results"	default(50)
+//	@Param			offset		query		int		false	"Offset for pagination"	default(0)
+//	@Param			episode		query		int		false	"Filter by episode (1-8)"
+//	@Param			truth		query		string	false	"Filter by truth type"	Enums(red, blue)
+//	@Success		200			{object}	dto.CharacterResponse
+//	@Router			/browse [get]
 func (s *Service) browse(ctx fiber.Ctx) error {
 	p := parseBrowseParams(ctx)
-	p.characterID = ctx.Query("character")
-	response := s.QuoteService.Browse(p.lang, p.characterID, p.limit, p.offset, p.episode, p.truth)
+	p.character = quote.Character(ctx.Query("character"))
+	response := s.QuoteService.Browse(p.lang, p.character, p.limit, p.offset, p.episode, p.truth)
 	return ctx.JSON(response)
 }
 
-func (s *Service) byCharacter(ctx fiber.Ctx) error {
-	p := parseBrowseParams(ctx)
-	p.characterID = ctx.Params("id")
-	response := s.QuoteService.GetByCharacter(p.lang, p.characterID, p.limit, p.offset, p.episode, p.truth)
-	return ctx.JSON(response)
-}
-
+// byAudioID godoc
+//
+//	@Summary		Get quote by audio ID
+//	@Description	Returns a specific quote identified by its audio ID
+//	@Tags			quotes
+//	@Produce		json
+//	@Param			audioId		path		string	true	"Audio ID of the quote"
+//	@Param			lang		query		string	false	"Language"	default(en)
+//	@Success		200			{object}	dto.ParsedQuote
+//	@Failure		404			{object}	dto.ErrorResponse
+//	@Router			/quote/{audioId} [get]
 func (s *Service) byAudioID(ctx fiber.Ctx) error {
 	lang := ctx.Query("lang", "en")
 	audioID := ctx.Params("audioId")
@@ -142,6 +175,19 @@ func (s *Service) setupContextRoute(routeGroup fiber.Router) {
 	routeGroup.Get("/context/:audioId", s.context)
 }
 
+// context godoc
+//
+//	@Summary		Get quote context
+//	@Description	Returns surrounding dialogue lines for a specific quote
+//	@Tags			quotes
+//	@Produce		json
+//	@Param			audioId		path		string	true	"Audio ID of the quote"
+//	@Param			lang		query		string	false	"Language"	default(en)
+//	@Param			lines		query		int		false	"Number of context lines before and after"	default(5)
+//	@Success		200			{object}	dto.ContextResponse
+//	@Failure		400			{object}	dto.ErrorResponse
+//	@Failure		404			{object}	dto.ErrorResponse
+//	@Router			/context/{audioId} [get]
 func (s *Service) context(ctx fiber.Ctx) error {
 	lang := ctx.Query("lang", "en")
 	audioID := ctx.Params("audioId")
@@ -161,6 +207,14 @@ func (s *Service) context(ctx fiber.Ctx) error {
 	return ctx.JSON(result)
 }
 
+// characters godoc
+//
+//	@Summary		List all characters
+//	@Description	Returns a map of character IDs to character names
+//	@Tags			quotes
+//	@Produce		json
+//	@Success		200	{object}	map[string]string
+//	@Router			/characters [get]
 func (s *Service) characters(ctx fiber.Ctx) error {
 	return ctx.JSON(s.QuoteService.GetCharacters())
 }
@@ -169,6 +223,15 @@ func (s *Service) setupStatsRoute(routeGroup fiber.Router) {
 	routeGroup.Get("/stats", s.stats)
 }
 
+// stats godoc
+//
+//	@Summary		Get quote statistics
+//	@Description	Returns statistics about quotes including top speakers, truth per episode, and character interactions
+//	@Tags			quotes
+//	@Produce		json
+//	@Param			episode		query		int		false	"Filter by episode (1-8), 0 for all"
+//	@Success		200			{object}	dto.StatsResult
+//	@Router			/stats [get]
 func (s *Service) stats(ctx fiber.Ctx) error {
 	episode := fiber.Query[int](ctx, "episode", 0)
 	return ctx.JSON(s.QuoteService.GetStats().Compute(episode))
@@ -294,4 +357,14 @@ func (s *Service) combinedAudioLegacy(ctx fiber.Ctx) error {
 	}
 
 	return utils.ServeAudio(ctx, data)
+}
+
+func parseBrowseParams(ctx fiber.Ctx) browseParams {
+	return browseParams{
+		lang:    ctx.Query("lang", "en"),
+		limit:   fiber.Query[int](ctx, "limit", 50),
+		offset:  fiber.Query[int](ctx, "offset", 0),
+		episode: fiber.Query[int](ctx, "episode", 0),
+		truth:   quote.TruthAll.Parse(ctx.Query("truth")),
+	}
 }

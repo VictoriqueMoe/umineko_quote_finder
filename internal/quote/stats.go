@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+
+	"umineko_quote/internal/dto"
 )
 
 type (
@@ -12,51 +14,9 @@ type (
 		Compute(episode int) any
 	}
 
-	speakerStat struct {
-		CharacterID string `json:"characterId"`
-		Name        string `json:"name"`
-		Count       int    `json:"count"`
-	}
-
-	episodeTruth struct {
-		Episode int `json:"episode"`
-		Red     int `json:"red"`
-		Blue    int `json:"blue"`
-	}
-
-	interactionPair struct {
-		CharA string `json:"charA"`
-		CharB string `json:"charB"`
-		NameA string `json:"nameA"`
-		NameB string `json:"nameB"`
-		Count int    `json:"count"`
-	}
-
-	episodeCharacterLines struct {
-		Episode     int            `json:"episode"`
-		EpisodeName string         `json:"episodeName"`
-		Characters  map[string]int `json:"characters"`
-	}
-
-	characterPresence struct {
-		CharacterID string `json:"characterId"`
-		Name        string `json:"name"`
-		Episodes    []int  `json:"episodes"`
-	}
-
-	statsResult struct {
-		TopSpeakers       []speakerStat           `json:"topSpeakers"`
-		LinesPerEpisode   []episodeCharacterLines `json:"linesPerEpisode"`
-		TruthPerEpisode   []episodeTruth          `json:"truthPerEpisode"`
-		Interactions      []interactionPair       `json:"interactions"`
-		CharacterPresence []characterPresence     `json:"characterPresence"`
-		CharacterNames    map[string]string       `json:"characterNames"`
-		EpisodeNames      map[int]string          `json:"episodeNames"`
-	}
-
 	statsComputer struct {
-		quotes []ParsedQuote
-		cached *statsResult
+		quotes []dto.ParsedQuote
+		cached *dto.StatsResult
 	}
 
 	tallies struct {
@@ -89,7 +49,7 @@ var (
 	}
 )
 
-func NewStats(quotes []ParsedQuote) Stats {
+func NewStats(quotes []dto.ParsedQuote) Stats {
 	s := &statsComputer{quotes: quotes}
 	s.cached = s.compute(AllEpisodes)
 	return s
@@ -102,11 +62,11 @@ func (s *statsComputer) Compute(episode int) any {
 	return s.cached
 }
 
-func (s *statsComputer) compute(episode int) *statsResult {
+func (s *statsComputer) compute(episode int) *dto.StatsResult {
 	t := s.tally(episode)
 	ranked := s.rankCharacters(t.charCounts)
 
-	result := &statsResult{
+	result := &dto.StatsResult{
 		TopSpeakers:    s.topSpeakers(ranked, 20),
 		Interactions:   s.topInteractions(t.interactions, 25),
 		CharacterNames: s.buildNameMap(t.charCounts),
@@ -188,22 +148,22 @@ func (*statsComputer) rankCharacters(charCounts map[string]int) []rankedChar {
 	return ranked
 }
 
-func (*statsComputer) topSpeakers(ranked []rankedChar, n int) []speakerStat {
+func (*statsComputer) topSpeakers(ranked []rankedChar, n int) []dto.SpeakerStat {
 	if len(ranked) < n {
 		n = len(ranked)
 	}
-	result := make([]speakerStat, n)
+	result := make([]dto.SpeakerStat, n)
 	for i := 0; i < n; i++ {
-		result[i] = speakerStat{
+		result[i] = dto.SpeakerStat{
 			CharacterID: ranked[i].id,
-			Name:        CharacterNames.GetCharacterName(ranked[i].id),
+			Name:        CharacterNames.GetCharacterName(CharacterFromID(ranked[i].id)),
 			Count:       ranked[i].count,
 		}
 	}
 	return result
 }
 
-func (*statsComputer) linesPerEpisode(charEpCounts map[string]map[int]int, ranked []rankedChar, topN int) []episodeCharacterLines {
+func (*statsComputer) linesPerEpisode(charEpCounts map[string]map[int]int, ranked []rankedChar, topN int) []dto.EpisodeCharacterLines {
 	if len(ranked) < topN {
 		topN = len(ranked)
 	}
@@ -212,7 +172,7 @@ func (*statsComputer) linesPerEpisode(charEpCounts map[string]map[int]int, ranke
 		topSet[ranked[i].id] = true
 	}
 
-	result := make([]episodeCharacterLines, 8)
+	result := make([]dto.EpisodeCharacterLines, 8)
 	for ep := 1; ep <= 8; ep++ {
 		chars := make(map[string]int)
 		for id, epMap := range charEpCounts {
@@ -224,7 +184,7 @@ func (*statsComputer) linesPerEpisode(charEpCounts map[string]map[int]int, ranke
 				}
 			}
 		}
-		result[ep-1] = episodeCharacterLines{
+		result[ep-1] = dto.EpisodeCharacterLines{
 			Episode:     ep,
 			EpisodeName: episodeNames[ep],
 			Characters:  chars,
@@ -233,11 +193,11 @@ func (*statsComputer) linesPerEpisode(charEpCounts map[string]map[int]int, ranke
 	return result
 }
 
-func (*statsComputer) truthPerEpisode(epTruth map[int][2]int) []episodeTruth {
-	result := make([]episodeTruth, 8)
+func (*statsComputer) truthPerEpisode(epTruth map[int][2]int) []dto.EpisodeTruth {
+	result := make([]dto.EpisodeTruth, 8)
 	for ep := 1; ep <= 8; ep++ {
 		counts := epTruth[ep]
-		result[ep-1] = episodeTruth{
+		result[ep-1] = dto.EpisodeTruth{
 			Episode: ep,
 			Red:     counts[0],
 			Blue:    counts[1],
@@ -246,7 +206,7 @@ func (*statsComputer) truthPerEpisode(epTruth map[int][2]int) []episodeTruth {
 	return result
 }
 
-func (*statsComputer) topInteractions(interactionCounts map[string]int, n int) []interactionPair {
+func (*statsComputer) topInteractions(interactionCounts map[string]int, n int) []dto.InteractionPair {
 	type pairCount struct {
 		key   string
 		count int
@@ -266,34 +226,34 @@ func (*statsComputer) topInteractions(interactionCounts map[string]int, n int) [
 		n = len(sorted)
 	}
 
-	result := make([]interactionPair, n)
+	result := make([]dto.InteractionPair, n)
 	for i := 0; i < n; i++ {
 		parts := strings.SplitN(sorted[i].key, "|", 2)
-		result[i] = interactionPair{
+		result[i] = dto.InteractionPair{
 			CharA: parts[0],
 			CharB: parts[1],
-			NameA: CharacterNames.GetCharacterName(parts[0]),
-			NameB: CharacterNames.GetCharacterName(parts[1]),
+			NameA: CharacterNames.GetCharacterName(CharacterFromID(parts[0])),
+			NameB: CharacterNames.GetCharacterName(CharacterFromID(parts[1])),
 			Count: sorted[i].count,
 		}
 	}
 	return result
 }
 
-func (*statsComputer) buildCharacterPresence(ranked []rankedChar, charEpCounts map[string]map[int]int, n int) []characterPresence {
+func (*statsComputer) buildCharacterPresence(ranked []rankedChar, charEpCounts map[string]map[int]int, n int) []dto.CharacterPresence {
 	if len(ranked) < n {
 		n = len(ranked)
 	}
-	result := make([]characterPresence, n)
+	result := make([]dto.CharacterPresence, n)
 	for i := 0; i < n; i++ {
 		id := ranked[i].id
 		episodes := make([]int, 8)
 		for ep := 1; ep <= 8; ep++ {
 			episodes[ep-1] = charEpCounts[id][ep]
 		}
-		result[i] = characterPresence{
+		result[i] = dto.CharacterPresence{
 			CharacterID: id,
-			Name:        CharacterNames.GetCharacterName(id),
+			Name:        CharacterNames.GetCharacterName(CharacterFromID(id)),
 			Episodes:    episodes,
 		}
 	}
@@ -303,7 +263,7 @@ func (*statsComputer) buildCharacterPresence(ranked []rankedChar, charEpCounts m
 func (*statsComputer) buildNameMap(charCounts map[string]int) map[string]string {
 	nameMap := make(map[string]string, len(charCounts))
 	for id := range charCounts {
-		nameMap[id] = CharacterNames.GetCharacterName(id)
+		nameMap[id] = CharacterNames.GetCharacterName(CharacterFromID(id))
 	}
 	return nameMap
 }

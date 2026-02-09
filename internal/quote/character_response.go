@@ -1,31 +1,24 @@
 package quote
 
-type CharacterResponse struct {
-	CharacterID string        `json:"characterId"`
-	Character   string        `json:"character"`
-	Quotes      []ParsedQuote `json:"quotes"`
-	Total       int           `json:"total"`
-	Limit       int           `json:"limit"`
-	Offset      int           `json:"offset"`
-}
+import "umineko_quote/internal/dto"
 
-func NewCharacterResponse(characterID string, quotes []ParsedQuote, limit int, offset int) CharacterResponse {
+func NewCharacterResponse(characterID string, quotes []dto.ParsedQuote, limit int, offset int) dto.CharacterResponse {
 	if quotes == nil {
-		quotes = []ParsedQuote{}
+		quotes = []dto.ParsedQuote{}
 	}
 
 	var characterName string
 	if characterID != "" {
-		characterName = CharacterNames.GetCharacterName(characterID)
+		characterName = CharacterNames.GetCharacterName(CharacterFromID(characterID))
 	}
 
 	total := len(quotes)
 
 	if offset >= total {
-		return CharacterResponse{
+		return dto.CharacterResponse{
 			CharacterID: characterID,
 			Character:   characterName,
-			Quotes:      []ParsedQuote{},
+			Quotes:      []dto.ParsedQuote{},
 			Total:       total,
 			Limit:       limit,
 			Offset:      offset,
@@ -37,7 +30,7 @@ func NewCharacterResponse(characterID string, quotes []ParsedQuote, limit int, o
 		end = total
 	}
 
-	return CharacterResponse{
+	return dto.CharacterResponse{
 		CharacterID: characterID,
 		Character:   characterName,
 		Quotes:      quotes[offset:end],

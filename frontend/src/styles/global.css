@@ -511,11 +511,17 @@ body {
     opacity: 0.8;
 }
 
+.footer-links {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 0.75rem;
+}
+
 .footer-link {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    margin-top: 0.75rem;
     padding: 0.5rem 1rem;
     color: var(--text-muted);
     text-decoration: none;

@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+
+	"umineko_quote/internal/dto"
 )
 
 type (
@@ -24,7 +26,7 @@ type (
 		episodeIndex     map[string]map[int][]int
 		nonNarratorIndex map[string][]int
 		audioIndex       map[string]map[string]int
-		quotes           map[string][]ParsedQuote
+		quotes           map[string][]dto.ParsedQuote
 		audioDir         string
 		hasAudio         bool
 	}
@@ -39,7 +41,7 @@ type (
 	}
 )
 
-func NewIndexer(quotes map[string][]ParsedQuote, audioDir string) Indexer {
+func NewIndexer(quotes map[string][]dto.ParsedQuote, audioDir string) Indexer {
 	results := make(chan langIndexResult, len(quotes))
 	var wg sync.WaitGroup
 

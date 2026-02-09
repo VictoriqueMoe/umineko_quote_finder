@@ -7,7 +7,11 @@
     "info": {
         "description": "API for searching and browsing Umineko no Naku Koro ni quotes",
         "title": "Umineko Quote API",
-        "contact": {},
+        "contact": {
+            "name": "Featherine Augustus Aurora",
+            "url": "https://x.com/FeatherineFAA",
+            "email": "FAA@auaurora.moe"
+        },
         "version": "1.0"
     },
     "basePath": "/api/v1",

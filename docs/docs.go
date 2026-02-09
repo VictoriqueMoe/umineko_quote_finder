@@ -9,7 +9,11 @@ const docTemplate = `{
     "info": {
         "description": "{{escape .Description}}",
         "title": "{{.Title}}",
-        "contact": {},
+        "contact": {
+            "name": "Featherine Augustus Aurora",
+            "url": "https://x.com/FeatherineFAA",
+            "email": "FAA@auaurora.moe"
+        },
         "version": "{{.Version}}"
     },
     "host": "{{.Host}}",

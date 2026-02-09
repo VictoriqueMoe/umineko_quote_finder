@@ -26,6 +26,9 @@ var staticFiles embed.FS
 // @title			Umineko Quote API
 // @version		1.0
 // @description	API for searching and browsing Umineko no Naku Koro ni quotes
+// @contact.name	Featherine Augustus Aurora
+// @contact.url	https://x.com/FeatherineFAA
+// @contact.email	FAA@auaurora.moe
 // @BasePath		/api/v1
 // @schemes		https http
 func main() {

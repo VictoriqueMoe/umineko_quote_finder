@@ -269,7 +269,10 @@ definitions:
         type: array
     type: object
 info:
-  contact: {}
+  contact:
+    email: FAA@auaurora.moe
+    name: Featherine Augustus Aurora
+    url: https://x.com/FeatherineFAA
   description: API for searching and browsing Umineko no Naku Koro ni quotes
   title: Umineko Quote API
   version: "1.0"

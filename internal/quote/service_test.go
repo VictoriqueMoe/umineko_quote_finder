@@ -10,7 +10,7 @@ var testService = NewService()
 func TestService_Search_ExactMatch(t *testing.T) {
 	svc := testService
 
-	resp := svc.Search("Beatrice", "en", 10, 0, "", 0, TruthAll)
+	resp := svc.Search("Beatrice", "en", 10, 0, Character(""), 0, TruthAll)
 
 	if resp.Total == 0 {
 		t.Fatal("expected search results for 'Beatrice'")
@@ -26,7 +26,7 @@ func TestService_Search_ExactMatch(t *testing.T) {
 func TestService_Search_DefaultValues(t *testing.T) {
 	svc := testService
 
-	resp := svc.Search("witch", "", 0, -1, "", 0, TruthAll)
+	resp := svc.Search("witch", "", 0, -1, Character(""), 0, TruthAll)
 
 	if resp.Limit != 30 {
 		t.Errorf("default limit: got %d, want 30", resp.Limit)
@@ -39,7 +39,7 @@ func TestService_Search_DefaultValues(t *testing.T) {
 func TestService_Search_WithCharacterFilter(t *testing.T) {
 	svc := testService
 
-	resp := svc.Search("witch", "en", 10, 0, "10", 0, TruthAll)
+	resp := svc.Search("witch", "en", 10, 0, Battler, 0, TruthAll)
 
 	for i := 0; i < len(resp.Results); i++ {
 		if resp.Results[i].Quote.CharacterID != "10" {
@@ -51,7 +51,7 @@ func TestService_Search_WithCharacterFilter(t *testing.T) {
 func TestService_Search_WithEpisodeFilter(t *testing.T) {
 	svc := testService
 
-	resp := svc.Search("witch", "en", 10, 0, "", 1, TruthAll)
+	resp := svc.Search("witch", "en", 10, 0, Character(""), 1, TruthAll)
 
 	for i := 0; i < len(resp.Results); i++ {
 		if resp.Results[i].Quote.Episode != 1 {
@@ -63,7 +63,7 @@ func TestService_Search_WithEpisodeFilter(t *testing.T) {
 func TestService_Search_RedTruthFilter(t *testing.T) {
 	svc := testService
 
-	resp := svc.Search("truth", "en", 10, 0, "", 0, TruthRed)
+	resp := svc.Search("truth", "en", 10, 0, Character(""), 0, TruthRed)
 
 	for i := 0; i < len(resp.Results); i++ {
 		if !strings.Contains(resp.Results[i].Quote.TextHtml, "red-truth") {
@@ -75,7 +75,7 @@ func TestService_Search_RedTruthFilter(t *testing.T) {
 func TestService_Search_NoResults(t *testing.T) {
 	svc := testService
 
-	resp := svc.Search("xyzzyxyzzyxyzzy", "en", 10, 0, "", 0, TruthAll)
+	resp := svc.Search("xyzzyxyzzyxyzzy", "en", 10, 0, Character(""), 0, TruthAll)
 
 	if resp.Total != 0 {
 		t.Errorf("Total: got %d, want 0", resp.Total)
@@ -88,7 +88,7 @@ func TestService_Search_NoResults(t *testing.T) {
 func TestService_Search_Japanese(t *testing.T) {
 	svc := testService
 
-	resp := svc.Search("ベアトリーチェ", "ja", 10, 0, "", 0, TruthAll)
+	resp := svc.Search("ベアトリーチェ", "ja", 10, 0, Character(""), 0, TruthAll)
 
 	if resp.Total == 0 {
 		t.Fatal("expected Japanese search results")
@@ -98,7 +98,7 @@ func TestService_Search_Japanese(t *testing.T) {
 func TestService_Search_UnknownLang(t *testing.T) {
 	svc := testService
 
-	resp := svc.Search("test", "fr", 10, 0, "", 0, TruthAll)
+	resp := svc.Search("test", "fr", 10, 0, Character(""), 0, TruthAll)
 
 	if resp.Total != 0 {
 		t.Errorf("Total for unknown lang: got %d, want 0", resp.Total)
@@ -108,7 +108,7 @@ func TestService_Search_UnknownLang(t *testing.T) {
 func TestService_Browse(t *testing.T) {
 	svc := testService
 
-	resp := svc.Browse("en", "10", 10, 0, 0, TruthAll)
+	resp := svc.Browse("en", Battler, 10, 0, 0, TruthAll)
 
 	if resp.Total == 0 {
 		t.Fatal("expected browse results for Battler")
@@ -116,8 +116,8 @@ func TestService_Browse(t *testing.T) {
 	if resp.CharacterID != "10" {
 		t.Errorf("CharacterID: got %q, want %q", resp.CharacterID, "10")
 	}
-	if resp.Character != CharacterNames["10"] {
-		t.Errorf("Character: got %q, want %q", resp.Character, CharacterNames["10"])
+	if resp.Character != CharacterNames[Battler] {
+		t.Errorf("Character: got %q, want %q", resp.Character, CharacterNames[Battler])
 	}
 	if len(resp.Quotes) > 10 {
 		t.Errorf("Quotes length exceeds limit: got %d", len(resp.Quotes))
@@ -127,7 +127,7 @@ func TestService_Browse(t *testing.T) {
 func TestService_Browse_WithEpisode(t *testing.T) {
 	svc := testService
 
-	resp := svc.Browse("en", "10", 10, 0, 1, TruthAll)
+	resp := svc.Browse("en", Battler, 10, 0, 1, TruthAll)
 
 	for i := 0; i < len(resp.Quotes); i++ {
 		if resp.Quotes[i].Episode != 1 {
@@ -139,7 +139,7 @@ func TestService_Browse_WithEpisode(t *testing.T) {
 func TestService_Browse_DefaultValues(t *testing.T) {
 	svc := testService
 
-	resp := svc.Browse("", "", 0, -1, 0, TruthAll)
+	resp := svc.Browse("", Character(""), 0, -1, 0, TruthAll)
 
 	if resp.Limit != 50 {
 		t.Errorf("default limit: got %d, want 50", resp.Limit)
@@ -152,63 +152,10 @@ func TestService_Browse_DefaultValues(t *testing.T) {
 func TestService_Browse_UnknownLang(t *testing.T) {
 	svc := testService
 
-	resp := svc.Browse("fr", "10", 10, 0, 0, TruthAll)
+	resp := svc.Browse("fr", Battler, 10, 0, 0, TruthAll)
 
 	if resp.Total != 0 {
 		t.Errorf("Total for unknown lang: got %d, want 0", resp.Total)
-	}
-}
-
-func TestService_GetByCharacter(t *testing.T) {
-	svc := testService
-
-	resp := svc.GetByCharacter("en", "27", 10, 0, 0, TruthAll)
-
-	if resp.Total == 0 {
-		t.Fatal("expected results for Beatrice")
-	}
-	if resp.Character != CharacterNames["27"] {
-		t.Errorf("Character: got %q, want %q", resp.Character, CharacterNames["27"])
-	}
-	for i := 0; i < len(resp.Quotes); i++ {
-		if resp.Quotes[i].CharacterID != "27" {
-			t.Errorf("quote %d CharacterID: got %q, want %q", i, resp.Quotes[i].CharacterID, "27")
-		}
-	}
-}
-
-func TestService_GetByCharacter_WithEpisode(t *testing.T) {
-	svc := testService
-
-	resp := svc.GetByCharacter("en", "10", 10, 0, 1, TruthAll)
-
-	for i := 0; i < len(resp.Quotes); i++ {
-		if resp.Quotes[i].Episode != 1 {
-			t.Errorf("quote %d Episode: got %d, want 1", i, resp.Quotes[i].Episode)
-		}
-		if resp.Quotes[i].CharacterID != "10" {
-			t.Errorf("quote %d CharacterID: got %q, want %q", i, resp.Quotes[i].CharacterID, "10")
-		}
-	}
-}
-
-func TestService_GetByCharacter_UnknownCharacter(t *testing.T) {
-	svc := testService
-
-	resp := svc.GetByCharacter("en", "999", 10, 0, 0, TruthAll)
-
-	if resp.Total != 0 {
-		t.Errorf("Total for unknown character: got %d, want 0", resp.Total)
-	}
-}
-
-func TestService_GetByCharacter_DefaultValues(t *testing.T) {
-	svc := testService
-
-	resp := svc.GetByCharacter("", "10", 0, -1, 0, TruthAll)
-
-	if resp.Limit != 50 {
-		t.Errorf("default limit: got %d, want 50", resp.Limit)
 	}
 }
 
@@ -258,7 +205,7 @@ func TestService_GetByAudioID_UnknownLang(t *testing.T) {
 func TestService_Random(t *testing.T) {
 	svc := testService
 
-	q := svc.Random("en", "", 0, TruthAll)
+	q := svc.Random("en", Character(""), 0, TruthAll)
 
 	if q == nil {
 		t.Fatal("expected a random quote")
@@ -272,7 +219,7 @@ func TestService_Random_WithCharacter(t *testing.T) {
 	svc := testService
 
 	for i := 0; i < 10; i++ {
-		q := svc.Random("en", "27", 0, TruthAll)
+		q := svc.Random("en", Beatrice, 0, TruthAll)
 		if q == nil {
 			t.Fatal("expected a random Beatrice quote")
 		}
@@ -286,7 +233,7 @@ func TestService_Random_WithEpisode(t *testing.T) {
 	svc := testService
 
 	for i := 0; i < 10; i++ {
-		q := svc.Random("en", "", 1, TruthAll)
+		q := svc.Random("en", Character(""), 1, TruthAll)
 		if q == nil {
 			t.Fatal("expected a random episode 1 quote")
 		}
@@ -300,7 +247,7 @@ func TestService_Random_WithCharacterAndEpisode(t *testing.T) {
 	svc := testService
 
 	for i := 0; i < 10; i++ {
-		q := svc.Random("en", "10", 1, TruthAll)
+		q := svc.Random("en", Battler, 1, TruthAll)
 		if q == nil {
 			t.Fatal("expected a random Battler ep1 quote")
 		}
@@ -317,7 +264,7 @@ func TestService_Random_RedTruth(t *testing.T) {
 	svc := testService
 
 	for i := 0; i < 10; i++ {
-		q := svc.Random("en", "", 0, TruthRed)
+		q := svc.Random("en", Character(""), 0, TruthRed)
 		if q == nil {
 			t.Fatal("expected a random red truth quote")
 		}
@@ -330,7 +277,7 @@ func TestService_Random_RedTruth(t *testing.T) {
 func TestService_Random_DefaultLang(t *testing.T) {
 	svc := testService
 
-	q := svc.Random("", "", 0, TruthAll)
+	q := svc.Random("", Character(""), 0, TruthAll)
 
 	if q == nil {
 		t.Fatal("expected a random quote with default lang")
@@ -340,7 +287,7 @@ func TestService_Random_DefaultLang(t *testing.T) {
 func TestService_Random_UnknownLang(t *testing.T) {
 	svc := testService
 
-	q := svc.Random("fr", "", 0, TruthAll)
+	q := svc.Random("fr", Character(""), 0, TruthAll)
 
 	if q != nil {
 		t.Errorf("expected nil for unknown lang, got %+v", q)
@@ -351,7 +298,7 @@ func TestService_GetContext(t *testing.T) {
 	svc := testService
 
 	// Use an audio ID that is not at the very start of the quotes slice
-	resp := svc.Search("Beatrice", "en", 10, 0, "", 0, TruthAll)
+	resp := svc.Search("Beatrice", "en", 10, 0, Character(""), 0, TruthAll)
 	if resp.Total == 0 {
 		t.Fatal("need search results to find a mid-slice audio ID")
 	}
@@ -477,11 +424,11 @@ func TestService_GetCharacters(t *testing.T) {
 	if len(chars) == 0 {
 		t.Fatal("expected characters map to be non-empty")
 	}
-	if chars["10"] != CharacterNames["10"] {
-		t.Errorf("chars[10]: got %q, want %q", chars["10"], CharacterNames["10"])
+	if chars[Battler] != CharacterNames[Battler] {
+		t.Errorf("chars[battler]: got %q, want %q", chars[Battler], CharacterNames[Battler])
 	}
-	if chars["27"] != CharacterNames["27"] {
-		t.Errorf("chars[27]: got %q, want %q", chars["27"], CharacterNames["27"])
+	if chars[Beatrice] != CharacterNames[Beatrice] {
+		t.Errorf("chars[beatrice]: got %q, want %q", chars[Beatrice], CharacterNames[Beatrice])
 	}
 }
 
@@ -503,7 +450,7 @@ func TestService_GetStats(t *testing.T) {
 func TestService_Browse_RedTruthFilter(t *testing.T) {
 	svc := testService
 
-	resp := svc.Browse("en", "", 10, 0, 0, TruthRed)
+	resp := svc.Browse("en", Character(""), 10, 0, 0, TruthRed)
 
 	for i := 0; i < len(resp.Quotes); i++ {
 		if !strings.Contains(resp.Quotes[i].TextHtml, "red-truth") {
@@ -512,10 +459,10 @@ func TestService_Browse_RedTruthFilter(t *testing.T) {
 	}
 }
 
-func TestService_GetByCharacter_BlueTruthFilter(t *testing.T) {
+func TestService_Browse_BlueTruthFilter(t *testing.T) {
 	svc := testService
 
-	resp := svc.GetByCharacter("en", "10", 100, 0, 0, TruthBlue)
+	resp := svc.Browse("en", Battler, 100, 0, 0, TruthBlue)
 
 	for i := 0; i < len(resp.Quotes); i++ {
 		if !strings.Contains(resp.Quotes[i].TextHtml, "blue-truth") {

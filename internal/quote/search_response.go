@@ -1,22 +1,17 @@
 package quote
 
-type SearchResponse struct {
-	Results []SearchResult `json:"results"`
-	Total   int            `json:"total"`
-	Limit   int            `json:"limit"`
-	Offset  int            `json:"offset"`
-}
+import "umineko_quote/internal/dto"
 
-func NewSearchResponse(results []SearchResult, limit int, offset int) SearchResponse {
+func NewSearchResponse(results []dto.SearchResult, limit int, offset int) dto.SearchResponse {
 	if results == nil {
-		results = []SearchResult{}
+		results = []dto.SearchResult{}
 	}
 
 	total := len(results)
 
 	if offset >= total {
-		return SearchResponse{
-			Results: []SearchResult{},
+		return dto.SearchResponse{
+			Results: []dto.SearchResult{},
 			Total:   total,
 			Limit:   limit,
 			Offset:  offset,
@@ -28,7 +23,7 @@ func NewSearchResponse(results []SearchResult, limit int, offset int) SearchResp
 		end = total
 	}
 
-	return SearchResponse{
+	return dto.SearchResponse{
 		Results: results[offset:end],
 		Total:   total,
 		Limit:   limit,

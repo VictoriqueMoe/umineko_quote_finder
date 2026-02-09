@@ -1,12 +1,16 @@
 package quote
 
-import "testing"
+import (
+	"testing"
+
+	"umineko_quote/internal/dto"
+)
 
 func TestNewSearchResult(t *testing.T) {
-	q := ParsedQuote{
+	q := dto.ParsedQuote{
 		Text:        "test quote",
 		CharacterID: "10",
-		Character:   CharacterNames["10"],
+		Character:   CharacterNames[Battler],
 		Episode:     1,
 	}
 
@@ -24,7 +28,7 @@ func TestNewSearchResult(t *testing.T) {
 }
 
 func TestNewSearchResult_ZeroScore(t *testing.T) {
-	q := ParsedQuote{Text: "something"}
+	q := dto.ParsedQuote{Text: "something"}
 	sr := NewSearchResult(q, 0)
 
 	if sr.Score != 0 {

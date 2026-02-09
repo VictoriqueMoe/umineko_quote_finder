@@ -1,0 +1,973 @@
+{
+    "schemes": [
+        "https",
+        "http"
+    ],
+    "swagger": "2.0",
+    "info": {
+        "description": "API for searching and browsing Umineko no Naku Koro ni quotes",
+        "title": "Umineko Quote API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "basePath": "/api/v1",
+    "paths": {
+        "/browse": {
+            "get": {
+                "description": "Browse all quotes with optional filters and pagination",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "quotes"
+                ],
+                "summary": "Browse quotes",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "en",
+                        "description": "Language",
+                        "name": "lang",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "group_voices",
+                            "kinzo",
+                            "krauss",
+                            "natsuhi",
+                            "jessica",
+                            "eva",
+                            "hideyoshi",
+                            "george",
+                            "rudolf",
+                            "kyrie",
+                            "battler",
+                            "ange",
+                            "rosa",
+                            "maria",
+                            "genji",
+                            "shannon",
+                            "kanon",
+                            "gohda",
+                            "kumasawa",
+                            "nanjo",
+                            "amakusa",
+                            "okonogi",
+                            "kasumi",
+                            "professor",
+                            "kawabata",
+                            "nanjo_son",
+                            "kumasawa_son",
+                            "beatrice",
+                            "bernkastel",
+                            "lambdadelta",
+                            "virgilia",
+                            "ronove",
+                            "gaap",
+                            "sakutarou",
+                            "eva_beatrice",
+                            "chiester_45",
+                            "chiester_410",
+                            "chiester_00",
+                            "lucifer",
+                            "leviathan",
+                            "satan",
+                            "belphegor",
+                            "mammon",
+                            "beelzebub",
+                            "asmodeus",
+                            "goat",
+                            "erika",
+                            "dlanor",
+                            "gertrude",
+                            "cornelia",
+                            "featherine",
+                            "zepar",
+                            "furfur",
+                            "lion",
+                            "will",
+                            "clair",
+                            "ikuko",
+                            "tohya",
+                            "kinzo_young",
+                            "bice",
+                            "beato_elder",
+                            "misc_voices",
+                            "narrator"
+                        ],
+                        "type": "string",
+                        "description": "Filter by character ID",
+                        "name": "character",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 50,
+                        "description": "Maximum results",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "Offset for pagination",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Filter by episode (1-8)",
+                        "name": "episode",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "red",
+                            "blue"
+                        ],
+                        "type": "string",
+                        "description": "Filter by truth type",
+                        "name": "truth",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.CharacterResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/characters": {
+            "get": {
+                "description": "Returns a map of character IDs to character names",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "quotes"
+                ],
+                "summary": "List all characters",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/config": {
+            "get": {
+                "description": "Returns service configuration flags",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "system"
+                ],
+                "summary": "Get configuration",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/context/{audioId}": {
+            "get": {
+                "description": "Returns surrounding dialogue lines for a specific quote",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "quotes"
+                ],
+                "summary": "Get quote context",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Audio ID of the quote",
+                        "name": "audioId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "default": "en",
+                        "description": "Language",
+                        "name": "lang",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 5,
+                        "description": "Number of context lines before and after",
+                        "name": "lines",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ContextResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/health": {
+            "get": {
+                "description": "Returns the health status of the service",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "system"
+                ],
+                "summary": "Health check",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/quote/{audioId}": {
+            "get": {
+                "description": "Returns a specific quote identified by its audio ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "quotes"
+                ],
+                "summary": "Get quote by audio ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Audio ID of the quote",
+                        "name": "audioId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "default": "en",
+                        "description": "Language",
+                        "name": "lang",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ParsedQuote"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/random": {
+            "get": {
+                "description": "Returns a random quote with optional filters",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "quotes"
+                ],
+                "summary": "Get random quote",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "en",
+                        "description": "Language",
+                        "name": "lang",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "group_voices",
+                            "kinzo",
+                            "krauss",
+                            "natsuhi",
+                            "jessica",
+                            "eva",
+                            "hideyoshi",
+                            "george",
+                            "rudolf",
+                            "kyrie",
+                            "battler",
+                            "ange",
+                            "rosa",
+                            "maria",
+                            "genji",
+                            "shannon",
+                            "kanon",
+                            "gohda",
+                            "kumasawa",
+                            "nanjo",
+                            "amakusa",
+                            "okonogi",
+                            "kasumi",
+                            "professor",
+                            "kawabata",
+                            "nanjo_son",
+                            "kumasawa_son",
+                            "beatrice",
+                            "bernkastel",
+                            "lambdadelta",
+                            "virgilia",
+                            "ronove",
+                            "gaap",
+                            "sakutarou",
+                            "eva_beatrice",
+                            "chiester_45",
+                            "chiester_410",
+                            "chiester_00",
+                            "lucifer",
+                            "leviathan",
+                            "satan",
+                            "belphegor",
+                            "mammon",
+                            "beelzebub",
+                            "asmodeus",
+                            "goat",
+                            "erika",
+                            "dlanor",
+                            "gertrude",
+                            "cornelia",
+                            "featherine",
+                            "zepar",
+                            "furfur",
+                            "lion",
+                            "will",
+                            "clair",
+                            "ikuko",
+                            "tohya",
+                            "kinzo_young",
+                            "bice",
+                            "beato_elder",
+                            "misc_voices",
+                            "narrator"
+                        ],
+                        "type": "string",
+                        "description": "Filter by character ID",
+                        "name": "character",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Filter by episode (1-8)",
+                        "name": "episode",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "red",
+                            "blue"
+                        ],
+                        "type": "string",
+                        "description": "Filter by truth type",
+                        "name": "truth",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ParsedQuote"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/search": {
+            "get": {
+                "description": "Search for quotes by text query with optional filters",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "quotes"
+                ],
+                "summary": "Search quotes",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Search query",
+                        "name": "q",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "default": "en",
+                        "description": "Language",
+                        "name": "lang",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 30,
+                        "description": "Maximum results",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "Offset for pagination",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "group_voices",
+                            "kinzo",
+                            "krauss",
+                            "natsuhi",
+                            "jessica",
+                            "eva",
+                            "hideyoshi",
+                            "george",
+                            "rudolf",
+                            "kyrie",
+                            "battler",
+                            "ange",
+                            "rosa",
+                            "maria",
+                            "genji",
+                            "shannon",
+                            "kanon",
+                            "gohda",
+                            "kumasawa",
+                            "nanjo",
+                            "amakusa",
+                            "okonogi",
+                            "kasumi",
+                            "professor",
+                            "kawabata",
+                            "nanjo_son",
+                            "kumasawa_son",
+                            "beatrice",
+                            "bernkastel",
+                            "lambdadelta",
+                            "virgilia",
+                            "ronove",
+                            "gaap",
+                            "sakutarou",
+                            "eva_beatrice",
+                            "chiester_45",
+                            "chiester_410",
+                            "chiester_00",
+                            "lucifer",
+                            "leviathan",
+                            "satan",
+                            "belphegor",
+                            "mammon",
+                            "beelzebub",
+                            "asmodeus",
+                            "goat",
+                            "erika",
+                            "dlanor",
+                            "gertrude",
+                            "cornelia",
+                            "featherine",
+                            "zepar",
+                            "furfur",
+                            "lion",
+                            "will",
+                            "clair",
+                            "ikuko",
+                            "tohya",
+                            "kinzo_young",
+                            "bice",
+                            "beato_elder",
+                            "misc_voices",
+                            "narrator"
+                        ],
+                        "type": "string",
+                        "description": "Filter by character ID",
+                        "name": "character",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Filter by episode (1-8)",
+                        "name": "episode",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "red",
+                            "blue"
+                        ],
+                        "type": "string",
+                        "description": "Filter by truth type",
+                        "name": "truth",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SearchAPIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/stats": {
+            "get": {
+                "description": "Returns statistics about quotes including top speakers, truth per episode, and character interactions",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "quotes"
+                ],
+                "summary": "Get quote statistics",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Filter by episode (1-8), 0 for all",
+                        "name": "episode",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.StatsResult"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "dto.CharacterPresence": {
+            "type": "object",
+            "properties": {
+                "characterId": {
+                    "description": "Numeric character identifier",
+                    "type": "string",
+                    "example": "10"
+                },
+                "episodes": {
+                    "description": "Line counts per episode (index 0 = ep 1)",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "name": {
+                    "description": "Display name of the character",
+                    "type": "string",
+                    "example": "Ushiromiya Battler"
+                }
+            }
+        },
+        "dto.CharacterResponse": {
+            "type": "object",
+            "properties": {
+                "character": {
+                    "description": "Display name of the character",
+                    "type": "string",
+                    "example": "Ushiromiya Battler"
+                },
+                "characterId": {
+                    "description": "Numeric character identifier",
+                    "type": "string",
+                    "example": "10"
+                },
+                "limit": {
+                    "description": "Maximum results per page",
+                    "type": "integer",
+                    "example": 50
+                },
+                "offset": {
+                    "description": "Pagination offset",
+                    "type": "integer",
+                    "example": 0
+                },
+                "quotes": {
+                    "description": "Paginated list of quotes",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.ParsedQuote"
+                    }
+                },
+                "total": {
+                    "description": "Total number of matching quotes",
+                    "type": "integer",
+                    "example": 4304
+                }
+            }
+        },
+        "dto.ContextResponse": {
+            "type": "object",
+            "properties": {
+                "after": {
+                    "description": "Dialogue lines after the target quote",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.ParsedQuote"
+                    }
+                },
+                "before": {
+                    "description": "Dialogue lines before the target quote",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.ParsedQuote"
+                    }
+                },
+                "quote": {
+                    "description": "The target quote",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/dto.ParsedQuote"
+                        }
+                    ]
+                }
+            }
+        },
+        "dto.EpisodeCharacterLines": {
+            "type": "object",
+            "properties": {
+                "characters": {
+                    "description": "Map of character ID to line count",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "integer"
+                    }
+                },
+                "episode": {
+                    "description": "Episode number (1-8)",
+                    "type": "integer",
+                    "example": 1
+                },
+                "episodeName": {
+                    "description": "Episode title",
+                    "type": "string",
+                    "example": "Legend"
+                }
+            }
+        },
+        "dto.EpisodeTruth": {
+            "type": "object",
+            "properties": {
+                "blue": {
+                    "description": "Number of blue truth statements",
+                    "type": "integer",
+                    "example": 0
+                },
+                "episode": {
+                    "description": "Episode number (1-8)",
+                    "type": "integer",
+                    "example": 2
+                },
+                "red": {
+                    "description": "Number of red truth statements",
+                    "type": "integer",
+                    "example": 38
+                }
+            }
+        },
+        "dto.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "description": "Error message",
+                    "type": "string",
+                    "example": "query parameter 'q' is required"
+                }
+            }
+        },
+        "dto.InteractionPair": {
+            "type": "object",
+            "properties": {
+                "charA": {
+                    "description": "First character ID",
+                    "type": "string",
+                    "example": "10"
+                },
+                "charB": {
+                    "description": "Second character ID",
+                    "type": "string",
+                    "example": "27"
+                },
+                "count": {
+                    "description": "Number of adjacent dialogue exchanges",
+                    "type": "integer",
+                    "example": 1701
+                },
+                "nameA": {
+                    "description": "First character name",
+                    "type": "string",
+                    "example": "Ushiromiya Battler"
+                },
+                "nameB": {
+                    "description": "Second character name",
+                    "type": "string",
+                    "example": "Beatrice"
+                }
+            }
+        },
+        "dto.ParsedQuote": {
+            "type": "object",
+            "properties": {
+                "audioCharMap": {
+                    "description": "Maps each audio ID to its character ID",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "example": {
+                        "30101088": "10",
+                        "30101089": "10"
+                    }
+                },
+                "audioId": {
+                    "description": "Comma-separated audio file IDs",
+                    "type": "string",
+                    "example": "30101088, 30101089"
+                },
+                "audioTextMap": {
+                    "description": "Maps each audio ID to its spoken text",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "example": {
+                        "30101088": "You're insane!!",
+                        "30101089": "Stop it already"
+                    }
+                },
+                "character": {
+                    "description": "Display name of the character",
+                    "type": "string",
+                    "example": "Ushiromiya Battler"
+                },
+                "characterId": {
+                    "description": "Numeric character identifier",
+                    "type": "string",
+                    "example": "10"
+                },
+                "contentType": {
+                    "description": "Content type marker",
+                    "type": "string",
+                    "example": ""
+                },
+                "episode": {
+                    "description": "Episode number (1-8)",
+                    "type": "integer",
+                    "example": 3
+                },
+                "hasBlueTruth": {
+                    "description": "Whether the quote contains blue truth",
+                    "type": "boolean",
+                    "example": false
+                },
+                "hasRedTruth": {
+                    "description": "Whether the quote contains red truth",
+                    "type": "boolean",
+                    "example": false
+                },
+                "text": {
+                    "description": "Plain text of the quote",
+                    "type": "string",
+                    "example": "You're insane!! Stop it already, damn iiiiiiiiit!!"
+                },
+                "textHtml": {
+                    "description": "HTML-formatted text with truth coloring",
+                    "type": "string",
+                    "example": "You\u0026#39;re insane!! Stop it already, damn iiiiiiiiit!!"
+                }
+            }
+        },
+        "dto.SearchAPIResponse": {
+            "type": "object",
+            "properties": {
+                "limit": {
+                    "description": "Maximum results per page",
+                    "type": "integer",
+                    "example": 30
+                },
+                "offset": {
+                    "description": "Pagination offset",
+                    "type": "integer",
+                    "example": 0
+                },
+                "query": {
+                    "description": "The search query that was used",
+                    "type": "string",
+                    "example": "without love"
+                },
+                "results": {
+                    "description": "Matching quotes with relevance scores",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.SearchResult"
+                    }
+                },
+                "total": {
+                    "description": "Total number of matches",
+                    "type": "integer",
+                    "example": 25
+                }
+            }
+        },
+        "dto.SearchResult": {
+            "type": "object",
+            "properties": {
+                "quote": {
+                    "description": "The matched quote",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/dto.ParsedQuote"
+                        }
+                    ]
+                },
+                "score": {
+                    "description": "Relevance score (100 = exact match)",
+                    "type": "integer",
+                    "example": 100
+                }
+            }
+        },
+        "dto.SpeakerStat": {
+            "type": "object",
+            "properties": {
+                "characterId": {
+                    "description": "Numeric character identifier",
+                    "type": "string",
+                    "example": "10"
+                },
+                "count": {
+                    "description": "Number of dialogue lines",
+                    "type": "integer",
+                    "example": 4304
+                },
+                "name": {
+                    "description": "Display name of the character",
+                    "type": "string",
+                    "example": "Ushiromiya Battler"
+                }
+            }
+        },
+        "dto.StatsResult": {
+            "type": "object",
+            "properties": {
+                "characterNames": {
+                    "description": "Map of character ID to display name",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "example": {
+                        "10": "Ushiromiya Battler",
+                        "27": "Beatrice"
+                    }
+                },
+                "characterPresence": {
+                    "description": "Top characters with per-episode line counts",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.CharacterPresence"
+                    }
+                },
+                "episodeNames": {
+                    "description": "Map of episode number to title",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "interactions": {
+                    "description": "Most frequent character dialogue pairings",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.InteractionPair"
+                    }
+                },
+                "linesPerEpisode": {
+                    "description": "Per-episode line breakdown by character",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.EpisodeCharacterLines"
+                    }
+                },
+                "topSpeakers": {
+                    "description": "Characters ranked by dialogue line count",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.SpeakerStat"
+                    }
+                },
+                "truthPerEpisode": {
+                    "description": "Red and blue truth counts per episode",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.EpisodeTruth"
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,9 +1,13 @@
 package quote
 
-import "testing"
+import (
+	"testing"
 
-func buildTestQuotes() []ParsedQuote {
-	return []ParsedQuote{
+	"umineko_quote/internal/dto"
+)
+
+func buildTestQuotes() []dto.ParsedQuote {
+	return []dto.ParsedQuote{
 		{Text: "Line 1", TextHtml: "Line 1", CharacterID: "10", Episode: 1},
 		{Text: "Line 2", TextHtml: "Line 2", CharacterID: "10", Episode: 1},
 		{Text: "Line 3", TextHtml: "Line 3", CharacterID: "27", Episode: 1},
@@ -22,7 +26,7 @@ func TestNewStats_Compute_AllEpisodes(t *testing.T) {
 	s := NewStats(quotes)
 
 	result := s.Compute(AllEpisodes)
-	sr, ok := result.(*statsResult)
+	sr, ok := result.(*dto.StatsResult)
 	if !ok {
 		t.Fatalf("Compute(AllEpisodes) returned unexpected type %T", result)
 	}
@@ -34,8 +38,8 @@ func TestNewStats_Compute_AllEpisodes(t *testing.T) {
 	if sr.TopSpeakers[0].CharacterID != "10" {
 		t.Errorf("TopSpeakers[0] should be Battler (10), got %q", sr.TopSpeakers[0].CharacterID)
 	}
-	if sr.TopSpeakers[0].Name != CharacterNames["10"] {
-		t.Errorf("TopSpeakers[0] name: got %q, want %q", sr.TopSpeakers[0].Name, CharacterNames["10"])
+	if sr.TopSpeakers[0].Name != CharacterNames[Battler] {
+		t.Errorf("TopSpeakers[0] name: got %q, want %q", sr.TopSpeakers[0].Name, CharacterNames[Battler])
 	}
 	if sr.TopSpeakers[0].Count != 5 {
 		t.Errorf("TopSpeakers[0] count: got %d, want 5", sr.TopSpeakers[0].Count)
@@ -45,7 +49,7 @@ func TestNewStats_Compute_AllEpisodes(t *testing.T) {
 func TestStats_TopSpeakers_Ranking(t *testing.T) {
 	quotes := buildTestQuotes()
 	s := NewStats(quotes)
-	result := s.Compute(AllEpisodes).(*statsResult)
+	result := s.Compute(AllEpisodes).(*dto.StatsResult)
 
 	if len(result.TopSpeakers) < 2 {
 		t.Fatalf("expected at least 2 top speakers, got %d", len(result.TopSpeakers))
@@ -60,7 +64,7 @@ func TestStats_TopSpeakers_Ranking(t *testing.T) {
 func TestStats_TopSpeakers_ExcludesNarrator(t *testing.T) {
 	quotes := buildTestQuotes()
 	s := NewStats(quotes)
-	result := s.Compute(AllEpisodes).(*statsResult)
+	result := s.Compute(AllEpisodes).(*dto.StatsResult)
 
 	for i := 0; i < len(result.TopSpeakers); i++ {
 		if result.TopSpeakers[i].CharacterID == "narrator" {
@@ -72,7 +76,7 @@ func TestStats_TopSpeakers_ExcludesNarrator(t *testing.T) {
 func TestStats_TruthPerEpisode(t *testing.T) {
 	quotes := buildTestQuotes()
 	s := NewStats(quotes)
-	result := s.Compute(AllEpisodes).(*statsResult)
+	result := s.Compute(AllEpisodes).(*dto.StatsResult)
 
 	if len(result.TruthPerEpisode) != 8 {
 		t.Fatalf("TruthPerEpisode length: got %d, want 8", len(result.TruthPerEpisode))
@@ -100,7 +104,7 @@ func TestStats_TruthPerEpisode(t *testing.T) {
 func TestStats_LinesPerEpisode(t *testing.T) {
 	quotes := buildTestQuotes()
 	s := NewStats(quotes)
-	result := s.Compute(AllEpisodes).(*statsResult)
+	result := s.Compute(AllEpisodes).(*dto.StatsResult)
 
 	if len(result.LinesPerEpisode) != 8 {
 		t.Fatalf("LinesPerEpisode length: got %d, want 8", len(result.LinesPerEpisode))
@@ -124,7 +128,7 @@ func TestStats_LinesPerEpisode(t *testing.T) {
 func TestStats_Interactions(t *testing.T) {
 	quotes := buildTestQuotes()
 	s := NewStats(quotes)
-	result := s.Compute(AllEpisodes).(*statsResult)
+	result := s.Compute(AllEpisodes).(*dto.StatsResult)
 
 	if len(result.Interactions) == 0 {
 		t.Fatal("Interactions should not be empty")
@@ -148,7 +152,7 @@ func TestStats_Interactions(t *testing.T) {
 func TestStats_CharacterPresence(t *testing.T) {
 	quotes := buildTestQuotes()
 	s := NewStats(quotes)
-	result := s.Compute(AllEpisodes).(*statsResult)
+	result := s.Compute(AllEpisodes).(*dto.StatsResult)
 
 	if len(result.CharacterPresence) == 0 {
 		t.Fatal("CharacterPresence should not be empty")
@@ -162,20 +166,20 @@ func TestStats_CharacterPresence(t *testing.T) {
 func TestStats_CharacterNames(t *testing.T) {
 	quotes := buildTestQuotes()
 	s := NewStats(quotes)
-	result := s.Compute(AllEpisodes).(*statsResult)
+	result := s.Compute(AllEpisodes).(*dto.StatsResult)
 
-	if result.CharacterNames["10"] != CharacterNames["10"] {
-		t.Errorf("CharacterNames[10]: got %q, want %q", result.CharacterNames["10"], CharacterNames["10"])
+	if result.CharacterNames["10"] != CharacterNames[Battler] {
+		t.Errorf("CharacterNames[10]: got %q, want %q", result.CharacterNames["10"], CharacterNames[Battler])
 	}
-	if result.CharacterNames["27"] != CharacterNames["27"] {
-		t.Errorf("CharacterNames[27]: got %q, want %q", result.CharacterNames["27"], CharacterNames["27"])
+	if result.CharacterNames["27"] != CharacterNames[Beatrice] {
+		t.Errorf("CharacterNames[27]: got %q, want %q", result.CharacterNames["27"], CharacterNames[Beatrice])
 	}
 }
 
 func TestStats_EpisodeNames(t *testing.T) {
 	quotes := buildTestQuotes()
 	s := NewStats(quotes)
-	result := s.Compute(AllEpisodes).(*statsResult)
+	result := s.Compute(AllEpisodes).(*dto.StatsResult)
 
 	expected := map[int]string{
 		1: "Legend", 2: "Turn", 3: "Banquet", 4: "Alliance",
@@ -193,7 +197,7 @@ func TestStats_ComputeSpecificEpisode(t *testing.T) {
 	quotes := buildTestQuotes()
 	s := NewStats(quotes)
 
-	result := s.Compute(1).(*statsResult)
+	result := s.Compute(1).(*dto.StatsResult)
 
 	for i := 0; i < len(result.TopSpeakers); i++ {
 		speaker := result.TopSpeakers[i]
@@ -226,8 +230,8 @@ func TestStats_ComputeCached(t *testing.T) {
 }
 
 func TestStats_EmptyQuotes(t *testing.T) {
-	s := NewStats([]ParsedQuote{})
-	result := s.Compute(AllEpisodes).(*statsResult)
+	s := NewStats([]dto.ParsedQuote{})
+	result := s.Compute(AllEpisodes).(*dto.StatsResult)
 
 	if len(result.TopSpeakers) != 0 {
 		t.Errorf("TopSpeakers should be empty, got %d", len(result.TopSpeakers))
@@ -238,12 +242,12 @@ func TestStats_EmptyQuotes(t *testing.T) {
 }
 
 func TestStats_InteractionPairOrdering(t *testing.T) {
-	quotes := []ParsedQuote{
+	quotes := []dto.ParsedQuote{
 		{Text: "Line 1", TextHtml: "Line 1", CharacterID: "27", Episode: 1},
 		{Text: "Line 2", TextHtml: "Line 2", CharacterID: "10", Episode: 1},
 	}
 	s := NewStats(quotes)
-	result := s.Compute(AllEpisodes).(*statsResult)
+	result := s.Compute(AllEpisodes).(*dto.StatsResult)
 
 	if len(result.Interactions) != 1 {
 		t.Fatalf("expected 1 interaction, got %d", len(result.Interactions))
@@ -255,13 +259,13 @@ func TestStats_InteractionPairOrdering(t *testing.T) {
 }
 
 func TestStats_NarratorBreaksInteraction(t *testing.T) {
-	quotes := []ParsedQuote{
+	quotes := []dto.ParsedQuote{
 		{Text: "Line 1", TextHtml: "Line 1", CharacterID: "10", Episode: 1},
 		{Text: "Narration", TextHtml: "Narration", CharacterID: "narrator", Episode: 1},
 		{Text: "Line 2", TextHtml: "Line 2", CharacterID: "27", Episode: 1},
 	}
 	s := NewStats(quotes)
-	result := s.Compute(AllEpisodes).(*statsResult)
+	result := s.Compute(AllEpisodes).(*dto.StatsResult)
 
 	if len(result.Interactions) != 0 {
 		t.Errorf("narrator should break interaction chain, got %d interactions", len(result.Interactions))

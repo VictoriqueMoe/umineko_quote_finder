@@ -4,9 +4,11 @@ import (
 	"runtime"
 	"strings"
 	"sync"
+
+	"umineko_quote/internal/dto"
 )
 
-func concurrentExactSearch(indices []int, lowerTexts []string, quotes []ParsedQuote, queryLower string, matchesFilter func(ParsedQuote) bool) []SearchResult {
+func concurrentExactSearch(indices []int, lowerTexts []string, quotes []dto.ParsedQuote, queryLower string, matchesFilter func(dto.ParsedQuote) bool) []dto.SearchResult {
 	numWorkers := runtime.NumCPU()
 	total := len(indices)
 	if total == 0 {
@@ -29,12 +31,12 @@ func concurrentExactSearch(indices []int, lowerTexts []string, quotes []ParsedQu
 		chunks = append(chunks, chunk{i, end})
 	}
 
-	resultSlices := make([][]SearchResult, len(chunks))
+	resultSlices := make([][]dto.SearchResult, len(chunks))
 	var wg sync.WaitGroup
 
 	for w, c := range chunks {
 		wg.Go(func() {
-			var local []SearchResult
+			var local []dto.SearchResult
 			for j := c.start; j < c.end; j++ {
 				idx := indices[j]
 				if strings.Contains(lowerTexts[idx], queryLower) {
@@ -49,7 +51,7 @@ func concurrentExactSearch(indices []int, lowerTexts []string, quotes []ParsedQu
 
 	wg.Wait()
 
-	var merged []SearchResult
+	var merged []dto.SearchResult
 	for _, s := range resultSlices {
 		merged = append(merged, s...)
 	}

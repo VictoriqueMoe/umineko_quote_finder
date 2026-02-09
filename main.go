@@ -11,14 +11,23 @@ import (
 	"umineko_quote/internal/routes"
 	"umineko_quote/internal/utils"
 
+	_ "umineko_quote/docs"
+
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/logger"
 	"github.com/gofiber/fiber/v3/middleware/static"
+
+	"github.com/gofiber/contrib/v3/swaggo"
 )
 
 //go:embed static/*
 var staticFiles embed.FS
 
+// @title			Umineko Quote API
+// @version		1.0
+// @description	API for searching and browsing Umineko no Naku Koro ni quotes
+// @BasePath		/api/v1
+// @schemes		https http
 func main() {
 	app := fiber.New()
 
@@ -36,6 +45,8 @@ func main() {
 	htmlBytes, _ := staticFiles.ReadFile("static/index.html")
 	service := controllers.NewService(quoteService, ogGen, audioCombiner, string(htmlBytes))
 	routes.PublicRoutes(service, app)
+
+	app.Get("/swagger/*", swaggo.HandlerDefault)
 
 	staticFS, _ := fs.Sub(staticFiles, "static")
 	app.Get("/*", static.New("", static.Config{

@@ -1,0 +1,735 @@
+basePath: /api/v1
+definitions:
+  dto.CharacterPresence:
+    properties:
+      characterId:
+        description: Numeric character identifier
+        example: "10"
+        type: string
+      episodes:
+        description: Line counts per episode (index 0 = ep 1)
+        items:
+          type: integer
+        type: array
+      name:
+        description: Display name of the character
+        example: Ushiromiya Battler
+        type: string
+    type: object
+  dto.CharacterResponse:
+    properties:
+      character:
+        description: Display name of the character
+        example: Ushiromiya Battler
+        type: string
+      characterId:
+        description: Numeric character identifier
+        example: "10"
+        type: string
+      limit:
+        description: Maximum results per page
+        example: 50
+        type: integer
+      offset:
+        description: Pagination offset
+        example: 0
+        type: integer
+      quotes:
+        description: Paginated list of quotes
+        items:
+          $ref: '#/definitions/dto.ParsedQuote'
+        type: array
+      total:
+        description: Total number of matching quotes
+        example: 4304
+        type: integer
+    type: object
+  dto.ContextResponse:
+    properties:
+      after:
+        description: Dialogue lines after the target quote
+        items:
+          $ref: '#/definitions/dto.ParsedQuote'
+        type: array
+      before:
+        description: Dialogue lines before the target quote
+        items:
+          $ref: '#/definitions/dto.ParsedQuote'
+        type: array
+      quote:
+        allOf:
+        - $ref: '#/definitions/dto.ParsedQuote'
+        description: The target quote
+    type: object
+  dto.EpisodeCharacterLines:
+    properties:
+      characters:
+        additionalProperties:
+          type: integer
+        description: Map of character ID to line count
+        type: object
+      episode:
+        description: Episode number (1-8)
+        example: 1
+        type: integer
+      episodeName:
+        description: Episode title
+        example: Legend
+        type: string
+    type: object
+  dto.EpisodeTruth:
+    properties:
+      blue:
+        description: Number of blue truth statements
+        example: 0
+        type: integer
+      episode:
+        description: Episode number (1-8)
+        example: 2
+        type: integer
+      red:
+        description: Number of red truth statements
+        example: 38
+        type: integer
+    type: object
+  dto.ErrorResponse:
+    properties:
+      error:
+        description: Error message
+        example: query parameter 'q' is required
+        type: string
+    type: object
+  dto.InteractionPair:
+    properties:
+      charA:
+        description: First character ID
+        example: "10"
+        type: string
+      charB:
+        description: Second character ID
+        example: "27"
+        type: string
+      count:
+        description: Number of adjacent dialogue exchanges
+        example: 1701
+        type: integer
+      nameA:
+        description: First character name
+        example: Ushiromiya Battler
+        type: string
+      nameB:
+        description: Second character name
+        example: Beatrice
+        type: string
+    type: object
+  dto.ParsedQuote:
+    properties:
+      audioCharMap:
+        additionalProperties:
+          type: string
+        description: Maps each audio ID to its character ID
+        example:
+          "30101088": "10"
+          "30101089": "10"
+        type: object
+      audioId:
+        description: Comma-separated audio file IDs
+        example: 30101088, 30101089
+        type: string
+      audioTextMap:
+        additionalProperties:
+          type: string
+        description: Maps each audio ID to its spoken text
+        example:
+          "30101088": You're insane!!
+          "30101089": Stop it already
+        type: object
+      character:
+        description: Display name of the character
+        example: Ushiromiya Battler
+        type: string
+      characterId:
+        description: Numeric character identifier
+        example: "10"
+        type: string
+      contentType:
+        description: Content type marker
+        example: ""
+        type: string
+      episode:
+        description: Episode number (1-8)
+        example: 3
+        type: integer
+      hasBlueTruth:
+        description: Whether the quote contains blue truth
+        example: false
+        type: boolean
+      hasRedTruth:
+        description: Whether the quote contains red truth
+        example: false
+        type: boolean
+      text:
+        description: Plain text of the quote
+        example: You're insane!! Stop it already, damn iiiiiiiiit!!
+        type: string
+      textHtml:
+        description: HTML-formatted text with truth coloring
+        example: You&#39;re insane!! Stop it already, damn iiiiiiiiit!!
+        type: string
+    type: object
+  dto.SearchAPIResponse:
+    properties:
+      limit:
+        description: Maximum results per page
+        example: 30
+        type: integer
+      offset:
+        description: Pagination offset
+        example: 0
+        type: integer
+      query:
+        description: The search query that was used
+        example: without love
+        type: string
+      results:
+        description: Matching quotes with relevance scores
+        items:
+          $ref: '#/definitions/dto.SearchResult'
+        type: array
+      total:
+        description: Total number of matches
+        example: 25
+        type: integer
+    type: object
+  dto.SearchResult:
+    properties:
+      quote:
+        allOf:
+        - $ref: '#/definitions/dto.ParsedQuote'
+        description: The matched quote
+      score:
+        description: Relevance score (100 = exact match)
+        example: 100
+        type: integer
+    type: object
+  dto.SpeakerStat:
+    properties:
+      characterId:
+        description: Numeric character identifier
+        example: "10"
+        type: string
+      count:
+        description: Number of dialogue lines
+        example: 4304
+        type: integer
+      name:
+        description: Display name of the character
+        example: Ushiromiya Battler
+        type: string
+    type: object
+  dto.StatsResult:
+    properties:
+      characterNames:
+        additionalProperties:
+          type: string
+        description: Map of character ID to display name
+        example:
+          "10": Ushiromiya Battler
+          "27": Beatrice
+        type: object
+      characterPresence:
+        description: Top characters with per-episode line counts
+        items:
+          $ref: '#/definitions/dto.CharacterPresence'
+        type: array
+      episodeNames:
+        additionalProperties:
+          type: string
+        description: Map of episode number to title
+        type: object
+      interactions:
+        description: Most frequent character dialogue pairings
+        items:
+          $ref: '#/definitions/dto.InteractionPair'
+        type: array
+      linesPerEpisode:
+        description: Per-episode line breakdown by character
+        items:
+          $ref: '#/definitions/dto.EpisodeCharacterLines'
+        type: array
+      topSpeakers:
+        description: Characters ranked by dialogue line count
+        items:
+          $ref: '#/definitions/dto.SpeakerStat'
+        type: array
+      truthPerEpisode:
+        description: Red and blue truth counts per episode
+        items:
+          $ref: '#/definitions/dto.EpisodeTruth'
+        type: array
+    type: object
+info:
+  contact: {}
+  description: API for searching and browsing Umineko no Naku Koro ni quotes
+  title: Umineko Quote API
+  version: "1.0"
+paths:
+  /browse:
+    get:
+      description: Browse all quotes with optional filters and pagination
+      parameters:
+      - default: en
+        description: Language
+        in: query
+        name: lang
+        type: string
+      - description: Filter by character ID
+        enum:
+        - group_voices
+        - kinzo
+        - krauss
+        - natsuhi
+        - jessica
+        - eva
+        - hideyoshi
+        - george
+        - rudolf
+        - kyrie
+        - battler
+        - ange
+        - rosa
+        - maria
+        - genji
+        - shannon
+        - kanon
+        - gohda
+        - kumasawa
+        - nanjo
+        - amakusa
+        - okonogi
+        - kasumi
+        - professor
+        - kawabata
+        - nanjo_son
+        - kumasawa_son
+        - beatrice
+        - bernkastel
+        - lambdadelta
+        - virgilia
+        - ronove
+        - gaap
+        - sakutarou
+        - eva_beatrice
+        - chiester_45
+        - chiester_410
+        - chiester_00
+        - lucifer
+        - leviathan
+        - satan
+        - belphegor
+        - mammon
+        - beelzebub
+        - asmodeus
+        - goat
+        - erika
+        - dlanor
+        - gertrude
+        - cornelia
+        - featherine
+        - zepar
+        - furfur
+        - lion
+        - will
+        - clair
+        - ikuko
+        - tohya
+        - kinzo_young
+        - bice
+        - beato_elder
+        - misc_voices
+        - narrator
+        in: query
+        name: character
+        type: string
+      - default: 50
+        description: Maximum results
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Offset for pagination
+        in: query
+        name: offset
+        type: integer
+      - description: Filter by episode (1-8)
+        in: query
+        name: episode
+        type: integer
+      - description: Filter by truth type
+        enum:
+        - red
+        - blue
+        in: query
+        name: truth
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.CharacterResponse'
+      summary: Browse quotes
+      tags:
+      - quotes
+  /characters:
+    get:
+      description: Returns a map of character IDs to character names
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: List all characters
+      tags:
+      - quotes
+  /config:
+    get:
+      description: Returns service configuration flags
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get configuration
+      tags:
+      - system
+  /context/{audioId}:
+    get:
+      description: Returns surrounding dialogue lines for a specific quote
+      parameters:
+      - description: Audio ID of the quote
+        in: path
+        name: audioId
+        required: true
+        type: string
+      - default: en
+        description: Language
+        in: query
+        name: lang
+        type: string
+      - default: 5
+        description: Number of context lines before and after
+        in: query
+        name: lines
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.ContextResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Get quote context
+      tags:
+      - quotes
+  /health:
+    get:
+      description: Returns the health status of the service
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Health check
+      tags:
+      - system
+  /quote/{audioId}:
+    get:
+      description: Returns a specific quote identified by its audio ID
+      parameters:
+      - description: Audio ID of the quote
+        in: path
+        name: audioId
+        required: true
+        type: string
+      - default: en
+        description: Language
+        in: query
+        name: lang
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.ParsedQuote'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Get quote by audio ID
+      tags:
+      - quotes
+  /random:
+    get:
+      description: Returns a random quote with optional filters
+      parameters:
+      - default: en
+        description: Language
+        in: query
+        name: lang
+        type: string
+      - description: Filter by character ID
+        enum:
+        - group_voices
+        - kinzo
+        - krauss
+        - natsuhi
+        - jessica
+        - eva
+        - hideyoshi
+        - george
+        - rudolf
+        - kyrie
+        - battler
+        - ange
+        - rosa
+        - maria
+        - genji
+        - shannon
+        - kanon
+        - gohda
+        - kumasawa
+        - nanjo
+        - amakusa
+        - okonogi
+        - kasumi
+        - professor
+        - kawabata
+        - nanjo_son
+        - kumasawa_son
+        - beatrice
+        - bernkastel
+        - lambdadelta
+        - virgilia
+        - ronove
+        - gaap
+        - sakutarou
+        - eva_beatrice
+        - chiester_45
+        - chiester_410
+        - chiester_00
+        - lucifer
+        - leviathan
+        - satan
+        - belphegor
+        - mammon
+        - beelzebub
+        - asmodeus
+        - goat
+        - erika
+        - dlanor
+        - gertrude
+        - cornelia
+        - featherine
+        - zepar
+        - furfur
+        - lion
+        - will
+        - clair
+        - ikuko
+        - tohya
+        - kinzo_young
+        - bice
+        - beato_elder
+        - misc_voices
+        - narrator
+        in: query
+        name: character
+        type: string
+      - description: Filter by episode (1-8)
+        in: query
+        name: episode
+        type: integer
+      - description: Filter by truth type
+        enum:
+        - red
+        - blue
+        in: query
+        name: truth
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.ParsedQuote'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Get random quote
+      tags:
+      - quotes
+  /search:
+    get:
+      description: Search for quotes by text query with optional filters
+      parameters:
+      - description: Search query
+        in: query
+        name: q
+        required: true
+        type: string
+      - default: en
+        description: Language
+        in: query
+        name: lang
+        type: string
+      - default: 30
+        description: Maximum results
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Offset for pagination
+        in: query
+        name: offset
+        type: integer
+      - description: Filter by character ID
+        enum:
+        - group_voices
+        - kinzo
+        - krauss
+        - natsuhi
+        - jessica
+        - eva
+        - hideyoshi
+        - george
+        - rudolf
+        - kyrie
+        - battler
+        - ange
+        - rosa
+        - maria
+        - genji
+        - shannon
+        - kanon
+        - gohda
+        - kumasawa
+        - nanjo
+        - amakusa
+        - okonogi
+        - kasumi
+        - professor
+        - kawabata
+        - nanjo_son
+        - kumasawa_son
+        - beatrice
+        - bernkastel
+        - lambdadelta
+        - virgilia
+        - ronove
+        - gaap
+        - sakutarou
+        - eva_beatrice
+        - chiester_45
+        - chiester_410
+        - chiester_00
+        - lucifer
+        - leviathan
+        - satan
+        - belphegor
+        - mammon
+        - beelzebub
+        - asmodeus
+        - goat
+        - erika
+        - dlanor
+        - gertrude
+        - cornelia
+        - featherine
+        - zepar
+        - furfur
+        - lion
+        - will
+        - clair
+        - ikuko
+        - tohya
+        - kinzo_young
+        - bice
+        - beato_elder
+        - misc_voices
+        - narrator
+        in: query
+        name: character
+        type: string
+      - description: Filter by episode (1-8)
+        in: query
+        name: episode
+        type: integer
+      - description: Filter by truth type
+        enum:
+        - red
+        - blue
+        in: query
+        name: truth
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.SearchAPIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Search quotes
+      tags:
+      - quotes
+  /stats:
+    get:
+      description: Returns statistics about quotes including top speakers, truth per
+        episode, and character interactions
+      parameters:
+      - description: Filter by episode (1-8), 0 for all
+        in: query
+        name: episode
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.StatsResult'
+      summary: Get quote statistics
+      tags:
+      - quotes
+schemes:
+- https
+- http
+swagger: "2.0"

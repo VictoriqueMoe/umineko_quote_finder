@@ -355,8 +355,8 @@ func TestParseAll_EpisodeAndContentTypes(t *testing.T) {
 			if en.CharacterID != tt.wantCharID {
 				t.Errorf("EN characterID: got %q, want %q", en.CharacterID, tt.wantCharID)
 			}
-			if en.Character != CharacterNames[tt.wantCharID] {
-				t.Errorf("EN character: got %q, want %q", en.Character, CharacterNames[tt.wantCharID])
+			if en.Character != CharacterNames[CharacterFromID(tt.wantCharID)] {
+				t.Errorf("EN character: got %q, want %q", en.Character, CharacterNames[CharacterFromID(tt.wantCharID)])
 			}
 			if en.AudioID != tt.wantAudioID {
 				t.Errorf("EN audioID: got %q, want %q", en.AudioID, tt.wantAudioID)
@@ -383,8 +383,8 @@ func TestParseAll_EpisodeAndContentTypes(t *testing.T) {
 				if ja.CharacterID != tt.wantCharID {
 					t.Errorf("JA characterID: got %q, want %q", ja.CharacterID, tt.wantCharID)
 				}
-				if ja.Character != CharacterNames[tt.wantCharID] {
-					t.Errorf("JA character: got %q, want %q", ja.Character, CharacterNames[tt.wantCharID])
+				if ja.Character != CharacterNames[CharacterFromID(tt.wantCharID)] {
+					t.Errorf("JA character: got %q, want %q", ja.Character, CharacterNames[CharacterFromID(tt.wantCharID)])
 				}
 				if ja.AudioID != tt.wantAudioID {
 					t.Errorf("JA audioID: got %q, want %q", ja.AudioID, tt.wantAudioID)
@@ -486,8 +486,8 @@ func TestParseAll_RedTruth(t *testing.T) {
 		if q.Episode != 2 {
 			t.Errorf("episode: got %d, want 2", q.Episode)
 		}
-		if q.CharacterID != "27" || q.Character != CharacterNames["27"] {
-			t.Errorf("character: got %q/%q, want 27/%s", q.CharacterID, q.Character, CharacterNames["27"])
+		if q.CharacterID != "27" || q.Character != CharacterNames[Beatrice] {
+			t.Errorf("character: got %q/%q, want 27/%s", q.CharacterID, q.Character, CharacterNames[Beatrice])
 		}
 		if !strings.Contains(q.Text, "Everything I speak in red is the truth") {
 			t.Errorf("plain text missing red truth content: %q", q.Text)
@@ -542,8 +542,8 @@ func TestParseAll_BlueTruth(t *testing.T) {
 		if q.Episode != 4 {
 			t.Errorf("episode: got %d, want 4", q.Episode)
 		}
-		if q.CharacterID != "10" || q.Character != CharacterNames["10"] {
-			t.Errorf("character: got %q/%q, want 10/%s", q.CharacterID, q.Character, CharacterNames["10"])
+		if q.CharacterID != "10" || q.Character != CharacterNames[Battler] {
+			t.Errorf("character: got %q/%q, want 10/%s", q.CharacterID, q.Character, CharacterNames[Battler])
 		}
 		if !strings.Contains(q.Text, "Ushiromiya Kinzo is already dead") {
 			t.Errorf("plain text missing blue truth content: %q", q.Text)
@@ -1264,8 +1264,8 @@ func TestParseAll_MixedRedBlueTruth(t *testing.T) {
 	if q.Episode != 5 || q.ContentType != "tea" {
 		t.Errorf("got ep=%d ct=%q, want ep=5 ct=tea", q.Episode, q.ContentType)
 	}
-	if q.CharacterID != "46" || q.Character != CharacterNames["46"] {
-		t.Errorf("character: got %q/%q, want 46/%s", q.CharacterID, q.Character, CharacterNames["46"])
+	if q.CharacterID != "46" || q.Character != CharacterNames[Erika] {
+		t.Errorf("character: got %q/%q, want 46/%s", q.CharacterID, q.Character, CharacterNames[Erika])
 	}
 
 	// Both red and blue truth should be present in HTML

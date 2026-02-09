@@ -11,12 +11,12 @@ FROM golang:1.25-alpine AS builder
 WORKDIR /app
 
 COPY go.mod go.sum ./
-RUN go mod download
+RUN go mod download && go install github.com/swaggo/swag/cmd/swag@latest
 
 COPY . .
 COPY --from=frontend-builder /app/static/ ./static/
 
-RUN CGO_ENABLED=0 GOOS=linux go build -o main .
+RUN swag init --parseDependency --parseInternal && CGO_ENABLED=0 GOOS=linux go build -o main .
 
 FROM alpine:latest
 

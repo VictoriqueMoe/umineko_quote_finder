@@ -1,6 +1,10 @@
 package quote
 
-import "testing"
+import (
+	"testing"
+
+	"umineko_quote/internal/dto"
+)
 
 func TestNewCharacterResponse_NilQuotes(t *testing.T) {
 	resp := NewCharacterResponse("10", nil, 10, 0)
@@ -14,8 +18,8 @@ func TestNewCharacterResponse_NilQuotes(t *testing.T) {
 	if resp.CharacterID != "10" {
 		t.Errorf("CharacterID: got %q, want %q", resp.CharacterID, "10")
 	}
-	if resp.Character != CharacterNames["10"] {
-		t.Errorf("Character: got %q, want %q", resp.Character, CharacterNames["10"])
+	if resp.Character != CharacterNames[Battler] {
+		t.Errorf("Character: got %q, want %q", resp.Character, CharacterNames[Battler])
 	}
 }
 
@@ -31,9 +35,9 @@ func TestNewCharacterResponse_EmptyCharacterID(t *testing.T) {
 }
 
 func TestNewCharacterResponse_Pagination(t *testing.T) {
-	quotes := make([]ParsedQuote, 25)
+	quotes := make([]dto.ParsedQuote, 25)
 	for i := 0; i < 25; i++ {
-		quotes[i] = ParsedQuote{Text: "quote", CharacterID: "27"}
+		quotes[i] = dto.ParsedQuote{Text: "quote", CharacterID: "27"}
 	}
 
 	resp := NewCharacterResponse("27", quotes, 10, 0)
@@ -44,15 +48,15 @@ func TestNewCharacterResponse_Pagination(t *testing.T) {
 	if resp.Total != 25 {
 		t.Errorf("Total: got %d, want 25", resp.Total)
 	}
-	if resp.Character != CharacterNames["27"] {
-		t.Errorf("Character: got %q, want %q", resp.Character, CharacterNames["27"])
+	if resp.Character != CharacterNames[Beatrice] {
+		t.Errorf("Character: got %q, want %q", resp.Character, CharacterNames[Beatrice])
 	}
 }
 
 func TestNewCharacterResponse_OffsetBeyondTotal(t *testing.T) {
-	quotes := make([]ParsedQuote, 5)
+	quotes := make([]dto.ParsedQuote, 5)
 	for i := 0; i < 5; i++ {
-		quotes[i] = ParsedQuote{Text: "quote"}
+		quotes[i] = dto.ParsedQuote{Text: "quote"}
 	}
 
 	resp := NewCharacterResponse("10", quotes, 10, 100)
@@ -66,9 +70,9 @@ func TestNewCharacterResponse_OffsetBeyondTotal(t *testing.T) {
 }
 
 func TestNewCharacterResponse_PartialLastPage(t *testing.T) {
-	quotes := make([]ParsedQuote, 25)
+	quotes := make([]dto.ParsedQuote, 25)
 	for i := 0; i < 25; i++ {
-		quotes[i] = ParsedQuote{Text: "quote"}
+		quotes[i] = dto.ParsedQuote{Text: "quote"}
 	}
 
 	resp := NewCharacterResponse("10", quotes, 10, 20)

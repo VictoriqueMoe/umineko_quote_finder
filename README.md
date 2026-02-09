@@ -11,6 +11,7 @@ A quote search engine for Umineko no Naku Koro ni. Search through thousands of l
 - [API Endpoints](#api-endpoints)
   - [Query Parameters](#query-parameters)
   - [Response Format](#response-format)
+- [Swagger](#swagger)
 - [Build](#build)
   - [Cross-compile](#cross-compile)
 - [Docker](#docker)
@@ -157,6 +158,19 @@ voice.zip
 
 The `contentType` field distinguishes content sections: `""` for main episodes, `"tea"` for tea parties, `"ura"` for ???? chapters, and `"omake"` for omakes (bonus content).
 
+## Swagger
+
+API documentation is served at `/swagger/index.html` via [swaggo/swag](https://github.com/swaggo/swag). The `docs/` package is generated from annotations in the controller files.
+
+To regenerate after changing annotations:
+
+```bash
+go install github.com/swaggo/swag/cmd/swag@latest
+swag init --parseDependency --parseInternal
+```
+
+Docker builds run `swag init` automatically, so committing the generated `docs/` directory is not required for deployment.
+
 ## Build
 
 The frontend must be built before the Go binary, as the Go binary embeds the `static/` directory.
@@ -167,11 +181,13 @@ cd frontend && npm ci && npm run build && cd ..
 
 ### Windows
 ```powershell
+swag init --parseDependency --parseInternal
 go build -o umineko_quote.exe .
 ```
 
 ### Linux
 ```bash
+swag init --parseDependency --parseInternal
 go build -o umineko_quote .
 ```
 

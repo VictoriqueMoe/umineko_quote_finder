@@ -1,14 +1,18 @@
 package quote
 
-import "testing"
+import (
+	"testing"
+
+	"umineko_quote/internal/dto"
+)
 
 func TestConcurrentExactSearch_EmptyIndices(t *testing.T) {
 	results := concurrentExactSearch(
 		[]int{},
 		[]string{},
-		[]ParsedQuote{},
+		[]dto.ParsedQuote{},
 		"test",
-		func(q ParsedQuote) bool { return true },
+		func(q dto.ParsedQuote) bool { return true },
 	)
 
 	if results != nil {
@@ -17,7 +21,7 @@ func TestConcurrentExactSearch_EmptyIndices(t *testing.T) {
 }
 
 func TestConcurrentExactSearch_FindsMatches(t *testing.T) {
-	quotes := []ParsedQuote{
+	quotes := []dto.ParsedQuote{
 		{Text: "Hello World"},
 		{Text: "Goodbye World"},
 		{Text: "Hello Again"},
@@ -36,7 +40,7 @@ func TestConcurrentExactSearch_FindsMatches(t *testing.T) {
 		lowerTexts,
 		quotes,
 		"hello",
-		func(q ParsedQuote) bool { return true },
+		func(q dto.ParsedQuote) bool { return true },
 	)
 
 	if len(results) != 2 {
@@ -50,7 +54,7 @@ func TestConcurrentExactSearch_FindsMatches(t *testing.T) {
 }
 
 func TestConcurrentExactSearch_RespectsFilter(t *testing.T) {
-	quotes := []ParsedQuote{
+	quotes := []dto.ParsedQuote{
 		{Text: "Hello World", CharacterID: "10"},
 		{Text: "Hello Again", CharacterID: "27"},
 		{Text: "Hello There", CharacterID: "10"},
@@ -67,7 +71,7 @@ func TestConcurrentExactSearch_RespectsFilter(t *testing.T) {
 		lowerTexts,
 		quotes,
 		"hello",
-		func(q ParsedQuote) bool { return q.CharacterID == "10" },
+		func(q dto.ParsedQuote) bool { return q.CharacterID == "10" },
 	)
 
 	if len(results) != 2 {
@@ -81,7 +85,7 @@ func TestConcurrentExactSearch_RespectsFilter(t *testing.T) {
 }
 
 func TestConcurrentExactSearch_NoMatches(t *testing.T) {
-	quotes := []ParsedQuote{
+	quotes := []dto.ParsedQuote{
 		{Text: "Hello World"},
 		{Text: "Goodbye World"},
 	}
@@ -96,7 +100,7 @@ func TestConcurrentExactSearch_NoMatches(t *testing.T) {
 		lowerTexts,
 		quotes,
 		"beatrice",
-		func(q ParsedQuote) bool { return true },
+		func(q dto.ParsedQuote) bool { return true },
 	)
 
 	if len(results) != 0 {
@@ -105,7 +109,7 @@ func TestConcurrentExactSearch_NoMatches(t *testing.T) {
 }
 
 func TestConcurrentExactSearch_SubsetIndices(t *testing.T) {
-	quotes := []ParsedQuote{
+	quotes := []dto.ParsedQuote{
 		{Text: "Hello World"},
 		{Text: "Hello Again"},
 		{Text: "Hello There"},
@@ -122,7 +126,7 @@ func TestConcurrentExactSearch_SubsetIndices(t *testing.T) {
 		lowerTexts,
 		quotes,
 		"hello",
-		func(q ParsedQuote) bool { return true },
+		func(q dto.ParsedQuote) bool { return true },
 	)
 
 	if len(results) != 2 {
@@ -131,7 +135,7 @@ func TestConcurrentExactSearch_SubsetIndices(t *testing.T) {
 }
 
 func TestConcurrentExactSearch_CaseInsensitive(t *testing.T) {
-	quotes := []ParsedQuote{
+	quotes := []dto.ParsedQuote{
 		{Text: "Hello WORLD"},
 	}
 	lowerTexts := []string{
@@ -144,7 +148,7 @@ func TestConcurrentExactSearch_CaseInsensitive(t *testing.T) {
 		lowerTexts,
 		quotes,
 		"world",
-		func(q ParsedQuote) bool { return true },
+		func(q dto.ParsedQuote) bool { return true },
 	)
 
 	if len(results) != 1 {

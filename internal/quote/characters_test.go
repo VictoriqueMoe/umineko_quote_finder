@@ -5,76 +5,76 @@ import (
 )
 
 func TestGetCharacterName_AllEntries(t *testing.T) {
-	expect := map[string]string{
-		"00":       "Group Voices",
-		"01":       "Ushiromiya Kinzo",
-		"02":       "Ushiromiya Krauss",
-		"03":       "Ushiromiya Natsuhi",
-		"04":       "Ushiromiya Jessica",
-		"05":       "Ushiromiya Eva",
-		"06":       "Ushiromiya Hideyoshi",
-		"07":       "Ushiromiya George",
-		"08":       "Ushiromiya Rudolf",
-		"09":       "Ushiromiya Kyrie",
-		"10":       "Ushiromiya Battler",
-		"11":       "Ushiromiya Ange",
-		"12":       "Ushiromiya Rosa",
-		"13":       "Ushiromiya Maria",
-		"14":       "Ronoue Genji",
-		"15":       "Shannon",
-		"16":       "Kanon",
-		"17":       "Gohda Toshiro",
-		"18":       "Kumasawa Chiyo",
-		"19":       "Nanjo Terumasa",
-		"20":       "Amakusa Juuza",
-		"21":       "Okonogi Tetsuro",
-		"22":       "Sumadera Kasumi",
-		"23":       "Professor Ootsuki",
-		"24":       "Captain Kawabata",
-		"25":       "Nanjo Masayuki",
-		"26":       "Kumasawa Sabakichi",
-		"27":       "Beatrice",
-		"28":       "Bernkastel",
-		"29":       "Lambdadelta",
-		"30":       "Virgilia",
-		"31":       "Ronove",
-		"32":       "Gaap",
-		"33":       "Sakutarou",
-		"34":       "Eva Beatrice",
-		"35":       "Chiester 45",
-		"36":       "Chiester 410",
-		"37":       "Chiester 00",
-		"38":       "Lucifer",
-		"39":       "Leviathan",
-		"40":       "Satan",
-		"41":       "Belphegor",
-		"42":       "Mammon",
-		"43":       "Beelzebub",
-		"44":       "Asmodeus",
-		"45":       "Goat",
-		"46":       "Furudo Erika",
-		"47":       "Dlanor A. Knox",
-		"48":       "Gertrude",
-		"49":       "Cornelia",
-		"50":       "Featherine",
-		"51":       "Zepar",
-		"52":       "Furfur",
-		"53":       "Ushiromiya Lion",
-		"54":       "Willard H. Wright",
-		"55":       "Clair",
-		"56":       "Hachijo Ikuko",
-		"57":       "Hachijo Tohya",
-		"58":       "Ushiromiya Kinzo",
-		"59":       "Bice",
-		"60":       "Beato the Elder",
-		"99":       "Misc Voices",
-		"narrator": "Narrator",
+	expect := map[Character]string{
+		GroupVoices: "Group Voices",
+		Kinzo:       "Ushiromiya Kinzo",
+		Krauss:      "Ushiromiya Krauss",
+		Natsuhi:     "Ushiromiya Natsuhi",
+		Jessica:     "Ushiromiya Jessica",
+		Eva:         "Ushiromiya Eva",
+		Hideyoshi:   "Ushiromiya Hideyoshi",
+		George:      "Ushiromiya George",
+		Rudolf:      "Ushiromiya Rudolf",
+		Kyrie:       "Ushiromiya Kyrie",
+		Battler:     "Ushiromiya Battler",
+		Ange:        "Ushiromiya Ange",
+		Rosa:        "Ushiromiya Rosa",
+		Maria:       "Ushiromiya Maria",
+		Genji:       "Ronoue Genji",
+		Shannon:     "Shannon",
+		Kanon:       "Kanon",
+		Gohda:       "Gohda Toshiro",
+		Kumasawa:    "Kumasawa Chiyo",
+		Nanjo:       "Nanjo Terumasa",
+		Amakusa:     "Amakusa Juuza",
+		Okonogi:     "Okonogi Tetsuro",
+		Kasumi:      "Sumadera Kasumi",
+		Professor:   "Professor Ootsuki",
+		Kawabata:    "Captain Kawabata",
+		NanjoSon:    "Nanjo Masayuki",
+		KumasawaSon: "Kumasawa Sabakichi",
+		Beatrice:    "Beatrice",
+		Bernkastel:  "Bernkastel",
+		Lambdadelta: "Lambdadelta",
+		Virgilia:    "Virgilia",
+		Ronove:      "Ronove",
+		Gaap:        "Gaap",
+		Sakutarou:   "Sakutarou",
+		EvaBeatrice: "Eva Beatrice",
+		Chiester45:  "Chiester 45",
+		Chiester410: "Chiester 410",
+		Chiester00:  "Chiester 00",
+		Lucifer:     "Lucifer",
+		Leviathan:   "Leviathan",
+		Satan:       "Satan",
+		Belphegor:   "Belphegor",
+		Mammon:      "Mammon",
+		Beelzebub:   "Beelzebub",
+		Asmodeus:    "Asmodeus",
+		Goat:        "Goat",
+		Erika:       "Furudo Erika",
+		Dlanor:      "Dlanor A. Knox",
+		Gertrude:    "Gertrude",
+		Cornelia:    "Cornelia",
+		Featherine:  "Featherine",
+		Zepar:       "Zepar",
+		Furfur:      "Furfur",
+		Lion:        "Ushiromiya Lion",
+		Will:        "Willard H. Wright",
+		Clair:       "Clair",
+		Ikuko:       "Hachijo Ikuko",
+		Tohya:       "Hachijo Tohya",
+		KinzoYoung:  "Ushiromiya Kinzo",
+		Bice:        "Bice",
+		BeatoElder:  "Beato the Elder",
+		MiscVoices:  "Misc Voices",
+		Narrator:    "Narrator",
 	}
 
-	for id, wantName := range expect {
-		got := CharacterNames.GetCharacterName(id)
+	for ch, wantName := range expect {
+		got := CharacterNames.GetCharacterName(ch)
 		if got != wantName {
-			t.Errorf("GetCharacterName(%q): got %q, want %q", id, got, wantName)
+			t.Errorf("GetCharacterName(%q): got %q, want %q", ch, got, wantName)
 		}
 	}
 
@@ -84,11 +84,11 @@ func TestGetCharacterName_AllEntries(t *testing.T) {
 }
 
 func TestGetCharacterName_UnknownID(t *testing.T) {
-	unknowns := []string{"", "100", "abc", "-1", "61"}
-	for _, id := range unknowns {
-		got := CharacterNames.GetCharacterName(id)
+	unknowns := []Character{"", Character("100"), Character("abc"), Character("-1"), Character("61")}
+	for _, ch := range unknowns {
+		got := CharacterNames.GetCharacterName(ch)
 		if got != "Unknown" {
-			t.Errorf("GetCharacterName(%q): got %q, want \"Unknown\"", id, got)
+			t.Errorf("GetCharacterName(%q): got %q, want \"Unknown\"", ch, got)
 		}
 	}
 }
@@ -99,14 +99,29 @@ func TestGetAllCharacters_ReturnsCopy(t *testing.T) {
 	if len(all) != len(CharacterNames) {
 		t.Fatalf("GetAllCharacters returned %d entries, want %d", len(all), len(CharacterNames))
 	}
-	for id, wantName := range CharacterNames {
-		if all[id] != wantName {
-			t.Errorf("GetAllCharacters()[%q]: got %q, want %q", id, all[id], wantName)
+	for ch, wantName := range CharacterNames {
+		if all[ch] != wantName {
+			t.Errorf("GetAllCharacters()[%q]: got %q, want %q", ch, all[ch], wantName)
 		}
 	}
 
-	all["test_mutation"] = "should not leak"
-	if _, exists := CharacterNames["test_mutation"]; exists {
+	all[Character("test_mutation")] = "should not leak"
+	if _, exists := CharacterNames[Character("test_mutation")]; exists {
 		t.Error("GetAllCharacters did not return a copy — mutation leaked into CharacterNames")
+	}
+}
+
+func TestCharacterFromID(t *testing.T) {
+	if CharacterFromID("10") != Battler {
+		t.Errorf("CharacterFromID(\"10\"): got %q, want %q", CharacterFromID("10"), Battler)
+	}
+	if CharacterFromID("27") != Beatrice {
+		t.Errorf("CharacterFromID(\"27\"): got %q, want %q", CharacterFromID("27"), Beatrice)
+	}
+	if CharacterFromID("narrator") != Narrator {
+		t.Errorf("CharacterFromID(\"narrator\"): got %q, want %q", CharacterFromID("narrator"), Narrator)
+	}
+	if CharacterFromID("unknown") != Character("unknown") {
+		t.Errorf("CharacterFromID(\"unknown\"): got %q, want %q", CharacterFromID("unknown"), Character("unknown"))
 	}
 }

@@ -1,18 +1,22 @@
 package quote
 
-import "testing"
+import (
+	"testing"
+
+	"umineko_quote/internal/dto"
+)
 
 func TestContextResponse_Construction(t *testing.T) {
-	before := []ParsedQuote{
+	before := []dto.ParsedQuote{
 		{Text: "Before line 1", CharacterID: "10"},
 		{Text: "Before line 2", CharacterID: "27"},
 	}
-	target := ParsedQuote{Text: "Target quote", CharacterID: "10", AudioID: "10100001"}
-	after := []ParsedQuote{
+	target := dto.ParsedQuote{Text: "Target quote", CharacterID: "10", AudioID: "10100001"}
+	after := []dto.ParsedQuote{
 		{Text: "After line 1", CharacterID: "27"},
 	}
 
-	resp := ContextResponse{
+	resp := dto.ContextResponse{
 		Before: before,
 		Quote:  target,
 		After:  after,
@@ -30,9 +34,9 @@ func TestContextResponse_Construction(t *testing.T) {
 }
 
 func TestContextResponse_EmptyBeforeAndAfter(t *testing.T) {
-	resp := ContextResponse{
+	resp := dto.ContextResponse{
 		Before: nil,
-		Quote:  ParsedQuote{Text: "Only quote", CharacterID: "10"},
+		Quote:  dto.ParsedQuote{Text: "Only quote", CharacterID: "10"},
 		After:  nil,
 	}
 

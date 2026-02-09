@@ -1,12 +1,9 @@
 package quote
 
-type SearchResult struct {
-	Quote ParsedQuote `json:"quote"`
-	Score int         `json:"score"`
-}
+import "umineko_quote/internal/dto"
 
-func NewSearchResult(quote ParsedQuote, score int) SearchResult {
-	return SearchResult{
+func NewSearchResult(quote dto.ParsedQuote, score int) dto.SearchResult {
+	return dto.SearchResult{
 		Quote: quote,
 		Score: score,
 	}

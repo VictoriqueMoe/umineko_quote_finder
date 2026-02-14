@@ -16,6 +16,16 @@ type scriptParser struct {
 	factory   *transformer.Factory
 }
 
+// NewScriptParser creates a new parser using the script package.
+func NewScriptParser() Parser {
+	extractor := lexar.NewQuoteExtractor()
+
+	return &scriptParser{
+		extractor: extractor,
+		factory:   transformer.NewFactory(extractor.Presets()),
+	}
+}
+
 // ParseAll parses all lines and returns quotes.
 func (p *scriptParser) ParseAll(lines []string) []dto.ParsedQuote {
 	// Pre-filter to only relevant lines (dialogue, presets, episode markers, labels)
@@ -100,14 +110,4 @@ func (p *scriptParser) ParseAll(lines []string) []dto.ParsedQuote {
 	wg.Wait()
 
 	return quotes
-}
-
-// NewScriptParser creates a new parser using the script package.
-func NewScriptParser() Parser {
-	extractor := lexar.NewQuoteExtractor()
-
-	return &scriptParser{
-		extractor: extractor,
-		factory:   transformer.NewFactory(extractor.Presets()),
-	}
 }

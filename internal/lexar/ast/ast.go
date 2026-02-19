@@ -177,6 +177,19 @@ type (
 		Duration  int
 		Pos       Token
 	}
+
+	StraliasLine struct {
+		Name  string
+		Value string
+		Pos   Token
+	}
+
+	SsaLoadLine struct {
+		Channel  int
+		SubAlias string
+		Rate     int
+		Pos      Token
+	}
 )
 
 // Marker methods to restrict interface implementations.
@@ -208,6 +221,10 @@ func (c *ClickWait) nodeType() string         { return "ClickWait" }
 func (c *ClickWait) dialogueElement()         {}
 func (t *TimedWait) nodeType() string         { return "TimedWait" }
 func (t *TimedWait) dialogueElement()         {}
+func (s *StraliasLine) nodeType() string      { return "StraliasLine" }
+func (s *StraliasLine) lineNode()             {}
+func (s *SsaLoadLine) nodeType() string       { return "SsaLoadLine" }
+func (s *SsaLoadLine) lineNode()              {}
 
 // Helper methods
 

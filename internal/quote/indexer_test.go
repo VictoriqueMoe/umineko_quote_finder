@@ -199,6 +199,149 @@ func TestIndexer_AudioFilePath_NonexistentFile(t *testing.T) {
 	}
 }
 
+func TestIndexer_AudioFilePath_SubtitleSuffixStrip(t *testing.T) {
+	dir := t.TempDir()
+	subDir := filepath.Join(dir, "00")
+	if err := os.MkdirAll(subDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(subDir, "end_all00.ogg"), []byte("test"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	quotes := map[string][]dto.ParsedQuote{
+		"en": {{Text: "test", CharacterID: "00", Episode: 8}},
+	}
+	idx := NewIndexer(quotes, dir)
+
+	path := idx.AudioFilePath("00", "end_all00_s0")
+	if path == "" {
+		t.Fatal("AudioFilePath should strip _s0 suffix and find end_all00.ogg")
+	}
+	expected := filepath.Join(dir, "00", "end_all00.ogg")
+	if path != expected {
+		t.Errorf("AudioFilePath: got %q, want %q", path, expected)
+	}
+
+	path = idx.AudioFilePath("00", "end_all00_s15")
+	if path == "" {
+		t.Fatal("AudioFilePath should strip _s15 suffix and find end_all00.ogg")
+	}
+	if path != expected {
+		t.Errorf("AudioFilePath: got %q, want %q", path, expected)
+	}
+}
+
+func TestIndexer_AudioFilePath_SubtitleSuffixNoBase(t *testing.T) {
+	dir := t.TempDir()
+	subDir := filepath.Join(dir, "00")
+	if err := os.MkdirAll(subDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	quotes := map[string][]dto.ParsedQuote{
+		"en": {{Text: "test", CharacterID: "00", Episode: 8}},
+	}
+	idx := NewIndexer(quotes, dir)
+
+	path := idx.AudioFilePath("00", "end_all00_s5")
+	if path != "" {
+		t.Errorf("AudioFilePath should return empty when base file also missing: got %q", path)
+	}
+}
+
+func TestIndexer_AudioFilePath_ExactMatchPreferred(t *testing.T) {
+	dir := t.TempDir()
+	subDir := filepath.Join(dir, "00")
+	if err := os.MkdirAll(subDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(subDir, "end_all00_s0.ogg"), []byte("exact"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(subDir, "end_all00.ogg"), []byte("base"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	quotes := map[string][]dto.ParsedQuote{
+		"en": {{Text: "test", CharacterID: "00", Episode: 8}},
+	}
+	idx := NewIndexer(quotes, dir)
+
+	path := idx.AudioFilePath("00", "end_all00_s0")
+	expected := filepath.Join(dir, "00", "end_all00_s0.ogg")
+	if path != expected {
+		t.Errorf("AudioFilePath should prefer exact match: got %q, want %q", path, expected)
+	}
+}
+
+func TestIndexer_QuoteIndex_SubtitleIDs(t *testing.T) {
+	quotes := map[string][]dto.ParsedQuote{
+		"en": {
+			{Text: "Normal quote", CharacterID: "10", AudioID: "10100001"},
+			{Text: "Welcome back, sir.", CharacterID: "00", AudioID: "end_all00_s0"},
+			{Text: "It took me a while.", CharacterID: "10", AudioID: "end_all00_s1"},
+			{Text: "Goodbye.", CharacterID: "00", AudioID: "end_all00_s2"},
+		},
+	}
+	idx := NewIndexer(quotes, "")
+
+	i, ok := idx.QuoteIndex("en", "end_all00_s0")
+	if !ok {
+		t.Fatal("QuoteIndex: expected to find end_all00_s0")
+	}
+	if i != 1 {
+		t.Errorf("QuoteIndex end_all00_s0: got %d, want 1", i)
+	}
+
+	i, ok = idx.QuoteIndex("en", "end_all00_s2")
+	if !ok {
+		t.Fatal("QuoteIndex: expected to find end_all00_s2")
+	}
+	if i != 3 {
+		t.Errorf("QuoteIndex end_all00_s2: got %d, want 3", i)
+	}
+}
+
+func TestIndexer_SubtitleQuotes_EpisodeIndex(t *testing.T) {
+	quotes := map[string][]dto.ParsedQuote{
+		"en": {
+			{Text: "Episode 1 line", CharacterID: "10", Episode: 1},
+			{Text: "Subtitle line 1", CharacterID: "00", Episode: 8, AudioID: "end_all00_s0"},
+			{Text: "Subtitle line 2", CharacterID: "10", Episode: 8, AudioID: "end_all00_s1"},
+			{Text: "Episode 3 line", CharacterID: "27", Episode: 3},
+		},
+	}
+	idx := NewIndexer(quotes, "")
+
+	ep8 := idx.FilteredIndices("en", "", 8)
+	if len(ep8) != 2 {
+		t.Fatalf("FilteredIndices episode 8: got %d, want 2", len(ep8))
+	}
+	if ep8[0] != 1 || ep8[1] != 2 {
+		t.Errorf("FilteredIndices episode 8: got %v, want [1 2]", ep8)
+	}
+}
+
+func TestIndexer_SubtitleQuotes_NonNarrator(t *testing.T) {
+	quotes := map[string][]dto.ParsedQuote{
+		"en": {
+			{Text: "Narrator line", CharacterID: "narrator", Episode: 1},
+			{Text: "Sub line", CharacterID: "00", Episode: 8, AudioID: "end_all00_s0"},
+			{Text: "Battler sub line", CharacterID: "10", Episode: 8, AudioID: "end_all00_s1"},
+		},
+	}
+	idx := NewIndexer(quotes, "")
+
+	nonNarr := idx.NonNarratorIndices("en")
+	if len(nonNarr) != 2 {
+		t.Fatalf("NonNarratorIndices: got %d, want 2", len(nonNarr))
+	}
+	if nonNarr[0] != 1 || nonNarr[1] != 2 {
+		t.Errorf("NonNarratorIndices: got %v, want [1 2]", nonNarr)
+	}
+}
+
 func TestIndexer_QuoteIndex_Found(t *testing.T) {
 	quotes := map[string][]dto.ParsedQuote{
 		"en": {

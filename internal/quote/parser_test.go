@@ -1524,3 +1524,78 @@ func TestParseAll_CleanupPatterns(t *testing.T) {
 		})
 	}
 }
+
+func TestParseAll_SubtitleRefsCollected(t *testing.T) {
+	p := NewParser()
+
+	lines := []string{
+		`stralias end_all00_subs,"video\sub\end_all00_eng.ass"`,
+		"new_episode 8",
+		`lv 0,"00","end_all00"`,
+		"ssa_load 8,end_all00_subs,30",
+	}
+
+	p.ParseAll(lines)
+	refs := p.SubtitleRefs()
+
+	if len(refs) != 1 {
+		t.Fatalf("expected 1 subtitle ref, got %d", len(refs))
+	}
+
+	ref := refs[0]
+	if ref.SubPath != `video\sub\end_all00_eng.ass` {
+		t.Errorf("SubPath: got %q, want %q", ref.SubPath, `video\sub\end_all00_eng.ass`)
+	}
+	if ref.AudioID != "end_all00" {
+		t.Errorf("AudioID: got %q, want 'end_all00'", ref.AudioID)
+	}
+	if ref.CharacterID != "00" {
+		t.Errorf("CharacterID: got %q, want '00'", ref.CharacterID)
+	}
+	if ref.Episode != 8 {
+		t.Errorf("Episode: got %d, want 8", ref.Episode)
+	}
+}
+
+func TestParseAll_SubtitleRefsEmpty(t *testing.T) {
+	p := NewParser()
+
+	lines := []string{
+		"new_episode 1",
+		`d [lv 0*"10"*"10100001"]` + "`\"Just regular dialogue.\"`" + `[\]`,
+	}
+
+	p.ParseAll(lines)
+	refs := p.SubtitleRefs()
+
+	if len(refs) != 0 {
+		t.Errorf("expected 0 subtitle refs for regular dialogue, got %d", len(refs))
+	}
+}
+
+func TestParseAll_PreFilterIncludesSubtitleLines(t *testing.T) {
+	p := NewParser()
+
+	lines := []string{
+		`stralias end_all00_subs,"video\sub\end_all00_eng.ass"`,
+		"some_other_command that should be filtered out",
+		"new_episode 8",
+		`lv 0,"00","end_all00"`,
+		"another_random_line",
+		"ssa_load 8,end_all00_subs,30",
+		`d [lv 0*"10"*"80100001"]` + "`\"Dialogue after subtitle.\"`" + `[\]`,
+	}
+
+	quotes := p.ParseAll(lines)
+	refs := p.SubtitleRefs()
+
+	if len(refs) != 1 {
+		t.Fatalf("expected 1 subtitle ref, got %d", len(refs))
+	}
+	if len(quotes) != 1 {
+		t.Fatalf("expected 1 quote, got %d", len(quotes))
+	}
+	if quotes[0].Episode != 8 {
+		t.Errorf("quote episode: got %d, want 8", quotes[0].Episode)
+	}
+}

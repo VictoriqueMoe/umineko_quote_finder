@@ -644,3 +644,161 @@ d [lv 0*"19"*"11900001"]` + "`\"First. `[@][lv 0*\"19\"*\"11900002\"]`Second.\"`
 		t.Errorf("AudioCharMap should be nil for single-character quote, got %v", quotes[0].AudioCharMap)
 	}
 }
+
+func TestExtractQuotes_SubtitleRefs(t *testing.T) {
+	input := `new_episode 8
+lv 0,"00","end_all00"
+ssa_load 8,end_all00_subs,30
+stralias end_all00_subs,"video\sub\end_all00_eng.ass"`
+
+	extractor := NewQuoteExtractor()
+	extractor.ExtractQuotes(input)
+
+	refs := extractor.SubtitleRefs()
+	if len(refs) != 1 {
+		t.Fatalf("expected 1 subtitle ref, got %d", len(refs))
+	}
+
+	ref := refs[0]
+	if ref.SubPath != `video\sub\end_all00_eng.ass` {
+		t.Errorf("SubPath: got %q, want %q", ref.SubPath, `video\sub\end_all00_eng.ass`)
+	}
+	if ref.AudioID != "end_all00" {
+		t.Errorf("AudioID: got %q, want 'end_all00'", ref.AudioID)
+	}
+	if ref.CharacterID != "00" {
+		t.Errorf("CharacterID: got %q, want '00'", ref.CharacterID)
+	}
+	if ref.Episode != 8 {
+		t.Errorf("Episode: got %d, want 8", ref.Episode)
+	}
+}
+
+func TestExtractQuotes_SubtitleRefs_NoSsaLoad(t *testing.T) {
+	input := `stralias end_all00_subs,"video\sub\end_all00_eng.ass"
+new_episode 8
+lv 0,"00","end_all00"`
+
+	extractor := NewQuoteExtractor()
+	extractor.ExtractQuotes(input)
+
+	refs := extractor.SubtitleRefs()
+	if len(refs) != 0 {
+		t.Errorf("expected 0 subtitle refs without ssa_load, got %d", len(refs))
+	}
+}
+
+func TestExtractQuotes_SubtitleRefs_UnresolvedAlias(t *testing.T) {
+	input := `new_episode 8
+lv 0,"00","end_all00"
+ssa_load 8,nonexistent_alias,30`
+
+	extractor := NewQuoteExtractor()
+	extractor.ExtractQuotes(input)
+
+	refs := extractor.SubtitleRefs()
+	if len(refs) != 0 {
+		t.Errorf("expected 0 subtitle refs for unresolved alias, got %d", len(refs))
+	}
+}
+
+func TestExtractQuotes_SubtitleRefs_ContentType(t *testing.T) {
+	input := `stralias end_all00_subs,"video\sub\end_all00_eng.ass"
+new_tea 8
+lv 0,"00","end_all00"
+ssa_load 8,end_all00_subs,30`
+
+	extractor := NewQuoteExtractor()
+	extractor.ExtractQuotes(input)
+
+	refs := extractor.SubtitleRefs()
+	if len(refs) != 1 {
+		t.Fatalf("expected 1 subtitle ref, got %d", len(refs))
+	}
+
+	if refs[0].ContentType != "tea" {
+		t.Errorf("ContentType: got %q, want 'tea'", refs[0].ContentType)
+	}
+	if refs[0].Episode != 8 {
+		t.Errorf("Episode: got %d, want 8", refs[0].Episode)
+	}
+}
+
+func TestExtractQuotes_SubtitleRefs_NoLvBeforeSsaLoad(t *testing.T) {
+	input := `stralias end_all00_subs,"video\sub\end_all00_eng.ass"
+new_episode 8
+ssa_load 8,end_all00_subs,30`
+
+	extractor := NewQuoteExtractor()
+	extractor.ExtractQuotes(input)
+
+	refs := extractor.SubtitleRefs()
+	if len(refs) != 0 {
+		t.Errorf("expected 0 subtitle refs without preceding lv, got %d", len(refs))
+	}
+}
+
+func TestExtractQuotes_SubtitleRefs_MultipleRefs(t *testing.T) {
+	input := `stralias sub1,"video\sub\sub1_eng.ass"
+stralias sub2,"video\sub\sub2_eng.ass"
+new_episode 7
+lv 0,"10","audio1"
+ssa_load 8,sub1,30
+new_episode 8
+lv 0,"00","audio2"
+ssa_load 8,sub2,30`
+
+	extractor := NewQuoteExtractor()
+	extractor.ExtractQuotes(input)
+
+	refs := extractor.SubtitleRefs()
+	if len(refs) != 2 {
+		t.Fatalf("expected 2 subtitle refs, got %d", len(refs))
+	}
+
+	if refs[0].AudioID != "audio1" {
+		t.Errorf("ref[0] AudioID: got %q, want 'audio1'", refs[0].AudioID)
+	}
+	if refs[0].CharacterID != "10" {
+		t.Errorf("ref[0] CharacterID: got %q, want '10'", refs[0].CharacterID)
+	}
+	if refs[0].Episode != 7 {
+		t.Errorf("ref[0] Episode: got %d, want 7", refs[0].Episode)
+	}
+
+	if refs[1].AudioID != "audio2" {
+		t.Errorf("ref[1] AudioID: got %q, want 'audio2'", refs[1].AudioID)
+	}
+	if refs[1].CharacterID != "00" {
+		t.Errorf("ref[1] CharacterID: got %q, want '00'", refs[1].CharacterID)
+	}
+	if refs[1].Episode != 8 {
+		t.Errorf("ref[1] Episode: got %d, want 8", refs[1].Episode)
+	}
+}
+
+func TestExtractQuotes_SubtitleRefs_StraliasAfterUsage(t *testing.T) {
+	input := `new_episode 8
+lv 0,"00","end_all00"
+ssa_load 8,end_all00_subs,30
+d [lv 0*"10"*"80100001"]` + "`\"Regular dialogue here.\"`" + `[\]
+stralias end_all00_subs,"video\sub\end_all00_eng.ass"`
+
+	extractor := NewQuoteExtractor()
+	quotes := extractor.ExtractQuotes(input)
+
+	refs := extractor.SubtitleRefs()
+	if len(refs) != 1 {
+		t.Fatalf("expected 1 subtitle ref even with stralias after usage, got %d", len(refs))
+	}
+	if refs[0].SubPath != `video\sub\end_all00_eng.ass` {
+		t.Errorf("SubPath: got %q", refs[0].SubPath)
+	}
+
+	if len(quotes) != 1 {
+		t.Fatalf("expected 1 dialogue quote, got %d", len(quotes))
+	}
+	if quotes[0].CharacterID != "10" {
+		t.Errorf("dialogue CharacterID: got %q, want '10'", quotes[0].CharacterID)
+	}
+}

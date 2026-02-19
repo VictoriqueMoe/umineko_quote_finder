@@ -372,6 +372,51 @@ func TestParse_ConditionalNTag(t *testing.T) {
 	}
 }
 
+func TestParse_Stralias(t *testing.T) {
+	input := `stralias end_all00_subs,"video\sub\end_all00_eng.ass"`
+	script := Parse(input)
+
+	if len(script.Lines) != 1 {
+		t.Fatalf("expected 1 line, got %d", len(script.Lines))
+	}
+
+	s, ok := script.Lines[0].(*ast.StraliasLine)
+	if !ok {
+		t.Fatalf("expected StraliasLine, got %T", script.Lines[0])
+	}
+
+	if s.Name != "end_all00_subs" {
+		t.Errorf("name: got %q, want 'end_all00_subs'", s.Name)
+	}
+	if s.Value != `video\sub\end_all00_eng.ass` {
+		t.Errorf("value: got %q, want %q", s.Value, `video\sub\end_all00_eng.ass`)
+	}
+}
+
+func TestParse_SsaLoad(t *testing.T) {
+	input := `ssa_load 8,end_all00_subs,30`
+	script := Parse(input)
+
+	if len(script.Lines) != 1 {
+		t.Fatalf("expected 1 line, got %d", len(script.Lines))
+	}
+
+	s, ok := script.Lines[0].(*ast.SsaLoadLine)
+	if !ok {
+		t.Fatalf("expected SsaLoadLine, got %T", script.Lines[0])
+	}
+
+	if s.Channel != 8 {
+		t.Errorf("channel: got %d, want 8", s.Channel)
+	}
+	if s.SubAlias != "end_all00_subs" {
+		t.Errorf("sub alias: got %q, want 'end_all00_subs'", s.SubAlias)
+	}
+	if s.Rate != 30 {
+		t.Errorf("rate: got %d, want 30", s.Rate)
+	}
+}
+
 func TestParse_LeadingSpaceAfterQuote(t *testing.T) {
 	// '" text' — the quote mark should be trimmed and so should the space after it.
 	input := `d ` + "`\" Everything I speak in red is the truth!\"`"

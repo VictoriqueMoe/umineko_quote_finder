@@ -31,27 +31,27 @@ func (p *scriptParser) ParseAll(lines []string) []dto.ParsedQuote {
 			continue
 		}
 		switch line[0] {
-		case 'd':
+		case 'd': // d, d2 dialogue lines
 			if line[1] == ' ' || (line[1] == '2' && len(line) > 2 && line[2] == ' ') {
 				filtered = append(filtered, line)
 			}
-		case 'p':
+		case 'p': // preset_define
 			if len(line) > 13 && line[:13] == "preset_define" {
 				filtered = append(filtered, line)
 			}
-		case 'n':
+		case 'n': // new_episode, new_tea, new_ura
 			if len(line) > 4 && line[:4] == "new_" {
 				filtered = append(filtered, line)
 			}
-		case '*':
+		case '*': // labels
 			filtered = append(filtered, line)
-		case 's':
+		case 's': // stralias, ssa_load (subtitle references)
 			if len(line) > 8 && line[:8] == "stralias" {
 				filtered = append(filtered, line)
 			} else if len(line) > 8 && line[:8] == "ssa_load" {
 				filtered = append(filtered, line)
 			}
-		case 'l':
+		case 'l': // lv (top-level voice/video commands)
 			if len(line) > 2 && line[:2] == "lv" && line[2] == ' ' {
 				filtered = append(filtered, line)
 			}

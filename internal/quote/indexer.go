@@ -3,11 +3,14 @@ package quote
 import (
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"sync"
 
 	"umineko_quote/internal/dto"
 )
+
+var subtitleAudioIDSuffix = regexp.MustCompile(`_s\d+$`)
 
 type (
 	Indexer interface {
@@ -140,6 +143,14 @@ func (idx *indexer) AudioFilePath(characterId string, audioId string) string {
 	}
 	path := filepath.Join(idx.audioDir, characterId, audioId+".ogg")
 	if _, err := os.Stat(path); err != nil {
+		base := subtitleAudioIDSuffix.ReplaceAllString(audioId, "")
+		if base != audioId {
+			path = filepath.Join(idx.audioDir, characterId, base+".ogg")
+			if _, err := os.Stat(path); err != nil {
+				return ""
+			}
+			return path
+		}
 		return ""
 	}
 	return path

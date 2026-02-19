@@ -96,6 +96,10 @@ func (p *Parser) parseCommand(tok ast.Token) ast.Line {
 		return p.parseEpisodeMarker(tok, "tea")
 	case "new_ura":
 		return p.parseEpisodeMarker(tok, "ura")
+	case "stralias":
+		return p.parseStralias(tok)
+	case "ssa_load":
+		return p.parseSsaLoad(tok)
 	default:
 		return p.parseGenericCommand(tok)
 	}
@@ -264,6 +268,58 @@ func (p *Parser) parseEpisodeMarker(tok ast.Token, markerType string) *ast.Episo
 	}
 
 	return marker
+}
+
+func (p *Parser) parseStralias(tok ast.Token) *ast.StraliasLine {
+	alias := &ast.StraliasLine{Pos: tok}
+
+	if p.peek().Type == ast.TokenCommand {
+		alias.Name = p.advance().Value
+	}
+
+	if p.peek().Type == ast.TokenComma {
+		p.advance()
+	}
+
+	if p.peek().Type == ast.TokenString {
+		alias.Value = p.advance().Value
+	}
+
+	for p.peek().Type != ast.TokenEOF && p.peek().Type != ast.TokenNewline {
+		p.advance()
+	}
+
+	return alias
+}
+
+func (p *Parser) parseSsaLoad(tok ast.Token) *ast.SsaLoadLine {
+	ssl := &ast.SsaLoadLine{Pos: tok}
+
+	if p.peek().Type == ast.TokenNumber {
+		ssl.Channel, _ = strconv.Atoi(p.advance().Value)
+	}
+
+	if p.peek().Type == ast.TokenComma {
+		p.advance()
+	}
+
+	if p.peek().Type == ast.TokenCommand || p.peek().Type == ast.TokenString {
+		ssl.SubAlias = p.advance().Value
+	}
+
+	if p.peek().Type == ast.TokenComma {
+		p.advance()
+	}
+
+	if p.peek().Type == ast.TokenNumber {
+		ssl.Rate, _ = strconv.Atoi(p.advance().Value)
+	}
+
+	for p.peek().Type != ast.TokenEOF && p.peek().Type != ast.TokenNewline {
+		p.advance()
+	}
+
+	return ssl
 }
 
 func (p *Parser) parseGenericCommand(tok ast.Token) *ast.CommandLine {

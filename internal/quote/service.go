@@ -2,19 +2,27 @@ package quote
 
 import (
 	"embed"
+	"fmt"
 	"log"
 	"math/rand/v2"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
 
 	"umineko_quote/internal/dto"
+	"umineko_quote/internal/lexar"
+	"umineko_quote/internal/subtitle"
 )
 
 const audioDir = "internal/quote/data/audio"
 
-//go:embed data/*.txt
+//go:embed data/*.txt data/sub/*.ass
 var dataFS embed.FS
+
+var subtitleStyleCharacter = map[string]string{
+	"Battler": "10",
+}
 
 type (
 	Service interface {
@@ -62,6 +70,12 @@ func NewService() Service {
 			start := time.Now()
 			parsed := p.ParseAll(lines)
 			log.Printf("[%s] parsed %d lines → %d quotes in %v", lang, len(lines), len(parsed), time.Since(start).Round(time.Millisecond))
+
+			subQuotes := resolveSubtitleRefs(p.SubtitleRefs())
+			if len(subQuotes) > 0 {
+				parsed = append(parsed, subQuotes...)
+				log.Printf("[%s] added %d subtitle quotes", lang, len(subQuotes))
+			}
 
 			results <- langParseResult{
 				lang:   lang,
@@ -371,4 +385,37 @@ func (s *service) GetStats() Stats {
 
 func (s *service) HasAudio() bool {
 	return s.indexer.HasAudio()
+}
+
+func resolveSubtitleRefs(refs []lexar.SubtitleRef) []dto.ParsedQuote {
+	var quotes []dto.ParsedQuote
+
+	for _, ref := range refs {
+		filename := filepath.Base(strings.ReplaceAll(ref.SubPath, `\`, "/"))
+		data, err := dataFS.ReadFile("data/sub/" + filename)
+		if err != nil {
+			log.Printf("[subtitle] could not read %s: %v", filename, err)
+			continue
+		}
+
+		entries := subtitle.ParseASS(data)
+		for i, entry := range entries {
+			charID := ref.CharacterID
+			if mapped, ok := subtitleStyleCharacter[entry.Style]; ok {
+				charID = mapped
+			}
+
+			quotes = append(quotes, dto.ParsedQuote{
+				Text:        entry.Text,
+				TextHtml:    entry.Text,
+				CharacterID: charID,
+				Character:   CharacterNames.GetCharacterName(CharacterFromID(charID)),
+				AudioID:     fmt.Sprintf("%s_s%d", ref.AudioID, i),
+				Episode:     ref.Episode,
+				ContentType: ref.ContentType,
+			})
+		}
+	}
+
+	return quotes
 }

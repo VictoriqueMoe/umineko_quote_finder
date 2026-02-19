@@ -228,3 +228,94 @@ func TestLexer_RealDialogueLine(t *testing.T) {
 		t.Errorf("click wait value: got %q", tokens[5].Value)
 	}
 }
+
+func TestLexer_Stralias(t *testing.T) {
+	input := `stralias end_all00_subs,"video\sub\end_all00_eng.ass"`
+	tokens := tokenize(input)
+
+	expected := []struct {
+		typ   ast.TokenType
+		value string
+	}{
+		{ast.TokenCommand, "stralias"},
+		{ast.TokenCommand, "end_all00_subs"},
+		{ast.TokenComma, ","},
+		{ast.TokenString, `video\sub\end_all00_eng.ass`},
+		{ast.TokenEOF, ""},
+	}
+
+	if len(tokens) != len(expected) {
+		t.Fatalf("token count: got %d, want %d\ntokens: %+v", len(tokens), len(expected), tokens)
+	}
+
+	for i, exp := range expected {
+		if tokens[i].Type != exp.typ {
+			t.Errorf("token[%d] type: got %v, want %v", i, tokens[i].Type, exp.typ)
+		}
+		if tokens[i].Value != exp.value {
+			t.Errorf("token[%d] value: got %q, want %q", i, tokens[i].Value, exp.value)
+		}
+	}
+}
+
+func TestLexer_SsaLoad(t *testing.T) {
+	input := `ssa_load 8,end_all00_subs,30`
+	tokens := tokenize(input)
+
+	expected := []struct {
+		typ   ast.TokenType
+		value string
+	}{
+		{ast.TokenCommand, "ssa_load"},
+		{ast.TokenNumber, "8"},
+		{ast.TokenComma, ","},
+		{ast.TokenCommand, "end_all00_subs"},
+		{ast.TokenComma, ","},
+		{ast.TokenNumber, "30"},
+		{ast.TokenEOF, ""},
+	}
+
+	if len(tokens) != len(expected) {
+		t.Fatalf("token count: got %d, want %d\ntokens: %+v", len(tokens), len(expected), tokens)
+	}
+
+	for i, exp := range expected {
+		if tokens[i].Type != exp.typ {
+			t.Errorf("token[%d] type: got %v, want %v", i, tokens[i].Type, exp.typ)
+		}
+		if tokens[i].Value != exp.value {
+			t.Errorf("token[%d] value: got %q, want %q", i, tokens[i].Value, exp.value)
+		}
+	}
+}
+
+func TestLexer_TopLevelLv(t *testing.T) {
+	input := `lv 0,"00","end_all00"`
+	tokens := tokenize(input)
+
+	expected := []struct {
+		typ   ast.TokenType
+		value string
+	}{
+		{ast.TokenCommand, "lv"},
+		{ast.TokenNumber, "0"},
+		{ast.TokenComma, ","},
+		{ast.TokenString, "00"},
+		{ast.TokenComma, ","},
+		{ast.TokenString, "end_all00"},
+		{ast.TokenEOF, ""},
+	}
+
+	if len(tokens) != len(expected) {
+		t.Fatalf("token count: got %d, want %d\ntokens: %+v", len(tokens), len(expected), tokens)
+	}
+
+	for i, exp := range expected {
+		if tokens[i].Type != exp.typ {
+			t.Errorf("token[%d] type: got %v, want %v", i, tokens[i].Type, exp.typ)
+		}
+		if tokens[i].Value != exp.value {
+			t.Errorf("token[%d] value: got %q, want %q", i, tokens[i].Value, exp.value)
+		}
+	}
+}

@@ -10,13 +10,11 @@ import (
 	"umineko_quote/internal/lexar/transformer"
 )
 
-// scriptParser implements Parser using the script lexer/parser.
 type scriptParser struct {
 	extractor *lexar.QuoteExtractor
 	factory   *transformer.Factory
 }
 
-// NewScriptParser creates a new parser using the script package.
 func NewScriptParser() Parser {
 	extractor := lexar.NewQuoteExtractor()
 
@@ -26,34 +24,37 @@ func NewScriptParser() Parser {
 	}
 }
 
-// ParseAll parses all lines and returns quotes.
 func (p *scriptParser) ParseAll(lines []string) []dto.ParsedQuote {
-	// Pre-filter to only relevant lines (dialogue, presets, episode markers, labels)
 	filtered := make([]string, 0, len(lines)/8)
 	for _, line := range lines {
 		if len(line) < 2 {
 			continue
 		}
-		// Fast prefix check without allocations
 		switch line[0] {
-		case 'd':
-			// d or d2 dialogue
+		case 'd': // d, d2 dialogue lines
 			if line[1] == ' ' || (line[1] == '2' && len(line) > 2 && line[2] == ' ') {
 				filtered = append(filtered, line)
 			}
-		case 'p':
-			// preset_define
+		case 'p': // preset_define
 			if len(line) > 13 && line[:13] == "preset_define" {
 				filtered = append(filtered, line)
 			}
-		case 'n':
-			// new_episode, new_tea, new_ura
+		case 'n': // new_episode, new_tea, new_ura
 			if len(line) > 4 && line[:4] == "new_" {
 				filtered = append(filtered, line)
 			}
-		case '*':
-			// labels (for omake detection)
+		case '*': // labels
 			filtered = append(filtered, line)
+		case 's': // stralias, ssa_load (subtitle references)
+			if len(line) > 8 && line[:8] == "stralias" {
+				filtered = append(filtered, line)
+			} else if len(line) > 8 && line[:8] == "ssa_load" {
+				filtered = append(filtered, line)
+			}
+		case 'l': // lv (top-level voice/video commands)
+			if len(line) > 2 && line[:2] == "lv" && line[2] == ' ' {
+				filtered = append(filtered, line)
+			}
 		}
 	}
 
@@ -110,4 +111,8 @@ func (p *scriptParser) ParseAll(lines []string) []dto.ParsedQuote {
 	wg.Wait()
 
 	return quotes
+}
+
+func (p *scriptParser) SubtitleRefs() []lexar.SubtitleRef {
+	return p.extractor.SubtitleRefs()
 }

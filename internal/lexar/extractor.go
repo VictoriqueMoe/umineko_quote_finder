@@ -12,7 +12,9 @@ import (
 
 type (
 	QuoteExtractor struct {
-		presets *transformer.PresetContext
+		presets      *transformer.PresetContext
+		strAliases   map[string]string
+		subtitleRefs []SubtitleRef
 	}
 
 	ExtractedQuote struct {
@@ -24,6 +26,19 @@ type (
 		Episode      int
 		ContentType  string
 		Truth        TruthFlags
+	}
+
+	SubtitleRef struct {
+		SubPath     string
+		AudioID     string
+		CharacterID string
+		Episode     int
+		ContentType string
+	}
+
+	topLevelVoice struct {
+		characterID string
+		audioID     string
 	}
 )
 
@@ -42,10 +57,21 @@ func (e *QuoteExtractor) ExtractQuotes(input string) []ExtractedQuote {
 
 func (e *QuoteExtractor) ExtractFromScript(script *ast.Script) []ExtractedQuote {
 	e.presets.CollectFromScript(script)
+	e.strAliases = make(map[string]string)
+	e.subtitleRefs = nil
+
+	for _, line := range script.Lines {
+		if l, ok := line.(*ast.StraliasLine); ok {
+			if l.Name != "" && l.Value != "" {
+				e.strAliases[l.Name] = l.Value
+			}
+		}
+	}
 
 	var quotes []ExtractedQuote
 	currentEpisode := 0
 	currentContentType := ""
+	var lastVoice *topLevelVoice
 
 	for _, line := range script.Lines {
 		switch l := line.(type) {
@@ -65,6 +91,29 @@ func (e *QuoteExtractor) ExtractFromScript(script *ast.Script) []ExtractedQuote 
 				}
 			}
 
+		case *ast.CommandLine:
+			if l.Command == "lv" && len(l.Args) >= 3 {
+				lastVoice = &topLevelVoice{
+					characterID: strings.Trim(l.Args[1].Value, `"`),
+					audioID:     strings.Trim(l.Args[2].Value, `"`),
+				}
+			}
+
+		case *ast.SsaLoadLine:
+			if l.SubAlias != "" && lastVoice != nil {
+				resolved, ok := e.strAliases[l.SubAlias]
+				if !ok {
+					break
+				}
+				e.subtitleRefs = append(e.subtitleRefs, SubtitleRef{
+					SubPath:     resolved,
+					AudioID:     lastVoice.audioID,
+					CharacterID: lastVoice.characterID,
+					Episode:     currentEpisode,
+					ContentType: currentContentType,
+				})
+			}
+
 		case *ast.DialogueLine:
 			quote := e.extractFromDialogue(l)
 			if quote != nil {
@@ -78,6 +127,10 @@ func (e *QuoteExtractor) ExtractFromScript(script *ast.Script) []ExtractedQuote 
 	}
 
 	return quotes
+}
+
+func (e *QuoteExtractor) SubtitleRefs() []SubtitleRef {
+	return e.subtitleRefs
 }
 
 func (e *QuoteExtractor) extractFromDialogue(d *ast.DialogueLine) *ExtractedQuote {

@@ -1,7 +1,7 @@
-import {useCallback, useEffect, useState} from "react";
-import {useAppContext} from "../../hooks/useAppContext";
-import {getQuoteByAudioId} from "../../api/endpoints";
-import type {Language} from "../../types/app";
+import { useCallback, useEffect, useState } from "react";
+import { useAppContext } from "../../hooks/useAppContext";
+import { getQuoteByAudioId } from "../../api/endpoints";
+import type { Language } from "../../types/app";
 
 interface LangToggleProps {
     audioId: string;

@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 jobs:
-  test-and-build:
+  frontend:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -29,6 +29,14 @@ jobs:
 
       - name: Build frontend
         run: cd frontend && npm run build
+
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Create static placeholder
+        run: mkdir -p static && touch static/.gitkeep
 
       - uses: actions/setup-go@v6
         with:

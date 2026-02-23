@@ -86791,7 +86791,7 @@ flush 10,167
 wait 1000
 msgwnd_kan
 *d12472
-d [lv 0*"46"*"20600528"]`"...She wants to kill everyone by any means necessary before the typhoon passes, so that she can have the Master's wealth all to herself.`[@][lv 0*"46"*"20600529"]` She told me that clearly."`[\]
+d [lv 0*"16"*"20600528"]`"...She wants to kill everyone by any means necessary before the typhoon passes, so that she can have the Master's wealth all to herself.`[@][lv 0*"16"*"20600529"]` She told me that clearly."`[\]
 textoff
 waits 167
 csp_slot s0_9
@@ -86819,7 +86819,7 @@ flush 6
 meplay 2,5,50
 msgwnd_kan
 *d12475
-d2 [lv 0*"46"*"20600530"]`"Genji‐sama, it isn't a question of whether you believe or not.`[@][lv 0*"46"*"20600531"]` She told me.`[@][lv 0*"46"*"20600532"]` I heard it.`[@][#][*][lv 0*"46"*"20600533"]` {f:5:Why} won't you believe me?"`[\]
+d2 [lv 0*"16"*"20600530"]`"Genji‐sama, it isn't a question of whether you believe or not.`[@][lv 0*"16"*"20600531"]` She told me.`[@][lv 0*"16"*"20600532"]` I heard it.`[@][#][*][lv 0*"16"*"20600533"]` {f:5:Why} won't you believe me?"`[\]
 wait_on_d 0
 seplay 1,38,100
 lss s0_8,"ka2","a13_fuman1" ;1
@@ -86846,7 +86846,7 @@ flush 22
 meplay 3,13,40
 msgwnd_kan
 *d12478
-d [lv 0*"46"*"20600534"]`"She will definitely kill all of us.`[@][lv 0*"46"*"20600535"]` She's surely killed all of the people in the parlor by now.`[@][lv 0*"46"*"20600536"]` If we don't kill her first, it will absolutely be us who are killed first.`[@][lv 0*"46"*"20600537"]` Just like how I was killed first, everyone else will also be killed first.`[@][lv 0*"46"*"20600538"]` Kill or be killed.`[@][lv 0*"46"*"20600539"]` Kill or be killed kill or be killed."`[\]
+d [lv 0*"16"*"20600534"]`"She will definitely kill all of us.`[@][lv 0*"16"*"20600535"]` She's surely killed all of the people in the parlor by now.`[@][lv 0*"16"*"20600536"]` If we don't kill her first, it will absolutely be us who are killed first.`[@][lv 0*"16"*"20600537"]` Just like how I was killed first, everyone else will also be killed first.`[@][lv 0*"16"*"20600538"]` Kill or be killed.`[@][lv 0*"16"*"20600539"]` Kill or be killed kill or be killed."`[\]
 seplay 1,35,71
 textoff
 waits 167
@@ -86862,7 +86862,7 @@ lbg s0_3,"blood_2b"
 flush 1
 msgwnd_kan
 *d12480
-d [lv 0*"46"*"20600540"]`"......Oh, this?`[@][lv 0*"46"*"20600541"]` It isn't a serious wound."`[\]
+d [lv 0*"16"*"20600540"]`"......Oh, this?`[@][lv 0*"16"*"20600541"]` It isn't a serious wound."`[\]
 seplay 3,35,71
 textoff
 waits 167
@@ -86873,7 +86873,7 @@ msgwnd_nan
 d [lv 0*"19"*"21900198"]`"Wh‐...what do you mean, not a serious wound, ...you......"`[\]
 msgwnd_kan
 *d12482
-d [lv 0*"46"*"20600542"]`"It really isn't a big deal.`[@][lv 0*"46"*"20600543"]` It doesn't hurt at all anymore—it really isn't a serious wound."`[\]
+d [lv 0*"16"*"20600542"]`"It really isn't a big deal.`[@][lv 0*"16"*"20600543"]` It doesn't hurt at all anymore—it really isn't a serious wound."`[\]
 msgwnd_non
 *d12483
 d `As Kanon said that, he began to untie his own bandages which had been painstakingly wrapped...`[\]

@@ -1,7 +1,7 @@
-import { useCallback, useState } from "react";
-import { useAppContext } from "../../hooks/useAppContext";
-import { getQuoteByAudioId } from "../../api/endpoints";
-import type { Language } from "../../types/app";
+import {useCallback, useState} from "react";
+import {useAppContext} from "../../hooks/useAppContext";
+import {getQuoteByAudioId} from "../../api/endpoints";
+import type {Language} from "../../types/app";
 
 interface LangToggleProps {
     audioId: string;
@@ -54,6 +54,13 @@ export function LangToggle({ audioId, onTextUpdate, onLangChange, onContextRefre
                 onClick={() => handleToggle("ja")}
             >
                 JA
+            </button>
+            <button
+                className={`lang-card-btn${activeLang === "es" ? " active" : ""}`}
+                disabled={loading}
+                onClick={() => handleToggle("es")}
+            >
+                ES
             </button>
         </span>
     );

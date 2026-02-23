@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from "react";
-import type { FilterState, ViewMode } from "./types/app";
+import type { FilterState, Language, ViewMode } from "./types/app";
 import { useAppContext } from "./hooks/useAppContext";
 import { useTheme } from "./hooks/useTheme";
 import { useAudioPlayer } from "./hooks/useAudioPlayer";
@@ -239,7 +239,7 @@ export default function App() {
     );
 
     const handleLanguageChange = useCallback(
-        (lang: "en" | "ja") => {
+        (lang: Language) => {
             setLanguage(lang);
             if (viewMode === "browse") {
                 browse.browse(filters.character, lang, browse.offset, filters.episode, filters.truth);

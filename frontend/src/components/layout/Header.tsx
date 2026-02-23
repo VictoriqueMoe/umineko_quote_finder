@@ -37,6 +37,12 @@ export function Header({ language, onLanguageChange, onHomeClick, onStatsClick, 
                 >
                     Español
                 </button>
+                <button
+                    className={`lang-btn${language === "pt" ? " active" : ""}`}
+                    onClick={() => onLanguageChange("pt")}
+                >
+                    Português
+                </button>
             </div>
             <nav className="header-nav">
                 <button className="header-nav-btn" onClick={onHomeClick}>

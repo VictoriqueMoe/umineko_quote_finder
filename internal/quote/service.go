@@ -54,6 +54,7 @@ func NewService() Service {
 		"en": "data/english.txt",
 		"ja": "data/japanese.txt",
 		"es": "data/spanish.txt",
+		"pt": "data/portuguese.txt",
 	}
 
 	results := make(chan langParseResult, len(langFiles))

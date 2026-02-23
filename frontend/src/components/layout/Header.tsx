@@ -1,5 +1,5 @@
-import type { Language } from "../../types/app";
-import { ThemeSelector } from "./ThemeSelector";
+import type {Language} from "../../types/app";
+import {ThemeSelector} from "./ThemeSelector";
 
 interface HeaderProps {
     language: Language;
@@ -36,6 +36,12 @@ export function Header({ language, onLanguageChange, onHomeClick, onStatsClick, 
                     onClick={() => onLanguageChange("es")}
                 >
                     Español
+                </button>
+                <button
+                    className={`lang-btn${language === "pt" ? " active" : ""}`}
+                    onClick={() => onLanguageChange("pt")}
+                >
+                    Português
                 </button>
             </div>
             <nav className="header-nav">

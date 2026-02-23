@@ -1,4 +1,4 @@
-export type Language = "en" | "ja" | "es";
+export type Language = "en" | "ja" | "es" | "pt";
 
 export type ThemeType = "featherine" | "bernkastel" | "lambdadelta";
 

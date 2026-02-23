@@ -86793,7 +86793,7 @@ flush 10,167
 wait 1000
 msgwnd_kan
 *d12472
-d [lv 0*"46"*"20600528"]`"Ella quiere matar a todo el mundo por cualquier medio necesario antes de que pase el tifón, para poder tener toda la riqueza del amo para ella sola.`[@][lv 0*"46"*"20600529"]` Ella me lo dijo claramente."`[\]
+d [lv 0*"16"*"20600528"]`"Ella quiere matar a todo el mundo por cualquier medio necesario antes de que pase el tifón, para poder tener toda la riqueza del amo para ella sola.`[@][lv 0*"16"*"20600529"]` Ella me lo dijo claramente."`[\]
 textoff
 waits 167
 csp_slot s0_9
@@ -86821,7 +86821,7 @@ flush 6
 meplay 2,5,50
 msgwnd_kan
 *d12475
-d2 [lv 0*"46"*"20600530"]`"Genji-sama, no se trata de si crees o no.`[@][lv 0*"46"*"20600531"]` Ella me lo dijo.`[@][lv 0*"46"*"20600532"]` Lo escuché.`[@][#][*][lv 0*"46"*"20600533"]` ¿{f:5:Por qué} no me crees?"`[\]
+d2 [lv 0*"16"*"20600530"]`"Genji-sama, no se trata de si crees o no.`[@][lv 0*"16"*"20600531"]` Ella me lo dijo.`[@][lv 0*"16"*"20600532"]` Lo escuché.`[@][#][*][lv 0*"16"*"20600533"]` ¿{f:5:Por qué} no me crees?"`[\]
 wait_on_d 0
 seplay 1,38,100
 lss s0_8,"ka2","a13_fuman1" ;1
@@ -86848,7 +86848,7 @@ flush 22
 meplay 3,13,40
 msgwnd_kan
 *d12478
-d [lv 0*"46"*"20600534"]`"Ella definitivamente nos matará a todos.`[@][lv 0*"46"*"20600535"]` Seguro que ya ha matado a todas las personas del salón.`[@][lv 0*"46"*"20600536"]` Si no la matamos primero, seremos nosotros los primeros en morir.`[@][lv 0*"46"*"20600537"]` Al igual que yo fui asesinado, todos los demás también serán asesinados.`[@][lv 0*"46"*"20600538"]` Asesinar o ser asesinado.`[@][lv 0*"46"*"20600539"]` Asesinar o ser asesinado, asesinar o ser asesinado."`[\]
+d [lv 0*"16"*"20600534"]`"Ella definitivamente nos matará a todos.`[@][lv 0*"16"*"20600535"]` Seguro que ya ha matado a todas las personas del salón.`[@][lv 0*"16"*"20600536"]` Si no la matamos primero, seremos nosotros los primeros en morir.`[@][lv 0*"16"*"20600537"]` Al igual que yo fui asesinado, todos los demás también serán asesinados.`[@][lv 0*"16"*"20600538"]` Asesinar o ser asesinado.`[@][lv 0*"16"*"20600539"]` Asesinar o ser asesinado, asesinar o ser asesinado."`[\]
 seplay 1,35,71
 textoff
 waits 167
@@ -86864,7 +86864,7 @@ lbg s0_3,"blood_2b"
 flush 1
 msgwnd_kan
 *d12480
-d [lv 0*"46"*"20600540"]`"Oh, ¿esto?`[@][lv 0*"46"*"20600541"]` Esto no es una herida grave."`[\]
+d [lv 0*"16"*"20600540"]`"Oh, ¿esto?`[@][lv 0*"16"*"20600541"]` Esto no es una herida grave."`[\]
 seplay 3,35,71
 textoff
 waits 167
@@ -86875,7 +86875,7 @@ msgwnd_nan
 d [lv 0*"19"*"21900198"]`"¿Q-Qué quieres decir con que no es una herida grave?..."`[\]
 msgwnd_kan
 *d12482
-d [lv 0*"46"*"20600542"]`"La verdad es que no es para tanto.`[@][lv 0*"46"*"20600543"]` Ya no me duele, no es una herida grave."`[\]
+d [lv 0*"16"*"20600542"]`"La verdad es que no es para tanto.`[@][lv 0*"16"*"20600543"]` Ya no me duele, no es una herida grave."`[\]
 msgwnd_non
 *d12483
 d `Mientras Kanon decía eso, comenzó a desatar sus propias vendas que habían sido cuidadosamente colocadas...`[\]

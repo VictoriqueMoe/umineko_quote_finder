@@ -86791,7 +86791,7 @@ flush 10,167
 wait 1000
 msgwnd_kan
 *d12472
-d [lv 0*"46"*"20600528"]`"...Ela quer matar a todos usando qualquer método necessário antes que o tufão passe, assim ela conseguiria toda a riqueza do Mestre para ela.`[@][lv 0*"46"*"20600529"]` Ela me disse claramente."`[\]
+d [lv 0*"16"*"20600528"]`"...Ela quer matar a todos usando qualquer método necessário antes que o tufão passe, assim ela conseguiria toda a riqueza do Mestre para ela.`[@][lv 0*"16"*"20600529"]` Ela me disse claramente."`[\]
 textoff
 waits 167
 csp_slot s0_9
@@ -86819,7 +86819,7 @@ flush 6
 meplay 2,5,50
 msgwnd_kan
 *d12475
-d2 [lv 0*"46"*"20600530"]`"Genji‐sama, não é uma questão de se você acredita ou não.`[@][lv 0*"46"*"20600531"]` Ela me disse.`[@][lv 0*"46"*"20600532"]` Eu ouvi isso.`[@][#][*][lv 0*"46"*"20600533"]` {f:5:Por que} você não acredita em mim?"`[\]
+d2 [lv 0*"16"*"20600530"]`"Genji‐sama, não é uma questão de se você acredita ou não.`[@][lv 0*"16"*"20600531"]` Ela me disse.`[@][lv 0*"16"*"20600532"]` Eu ouvi isso.`[@][#][*][lv 0*"16"*"20600533"]` {f:5:Por que} você não acredita em mim?"`[\]
 wait_on_d 0
 seplay 1,38,100
 lss s0_8,"ka2","a13_fuman1" ;1
@@ -86846,7 +86846,7 @@ flush 22
 meplay 3,13,40
 msgwnd_kan
 *d12478
-d [lv 0*"46"*"20600534"]`"Ela definitivamente vai matar a todos nós.`[@][lv 0*"46"*"20600535"]` Ela certamente já matou todas as pessoas na sala de visitas agora.`[@][lv 0*"46"*"20600536"]` Se não a matarmos primeiro, certamente seremos nós que vamos morrer primeiro.`[@][lv 0*"46"*"20600537"]` Assim como eu fui morto primeiro, todos vão ser mortos também.`[@][lv 0*"46"*"20600538"]` Matar ou ser morto.`[@][lv 0*"46"*"20600539"]` Matar ou ser morto matar ou ser morto."`[\]
+d [lv 0*"16"*"20600534"]`"Ela definitivamente vai matar a todos nós.`[@][lv 0*"16"*"20600535"]` Ela certamente já matou todas as pessoas na sala de visitas agora.`[@][lv 0*"16"*"20600536"]` Se não a matarmos primeiro, certamente seremos nós que vamos morrer primeiro.`[@][lv 0*"16"*"20600537"]` Assim como eu fui morto primeiro, todos vão ser mortos também.`[@][lv 0*"16"*"20600538"]` Matar ou ser morto.`[@][lv 0*"16"*"20600539"]` Matar ou ser morto matar ou ser morto."`[\]
 seplay 1,35,71
 textoff
 waits 167
@@ -86862,7 +86862,7 @@ lbg s0_3,"blood_2b"
 flush 1
 msgwnd_kan
 *d12480
-d [lv 0*"46"*"20600540"]`"......Ah, isso?`[@][lv 0*"46"*"20600541"]` Não é um machucado sério."`[\]
+d [lv 0*"16"*"20600540"]`"......Ah, isso?`[@][lv 0*"16"*"20600541"]` Não é um machucado sério."`[\]
 seplay 3,35,71
 textoff
 waits 167
@@ -86873,7 +86873,7 @@ msgwnd_nan
 d [lv 0*"19"*"21900198"]`"O‐O que você quer dizer sobre não é um machucado sério, ...você......"`[\]
 msgwnd_kan
 *d12482
-d [lv 0*"46"*"20600542"]`"Não é nada demais mesmo.`[@][lv 0*"46"*"20600543"]` Isso já não dói mais — não é um machucado sério."`[\]
+d [lv 0*"16"*"20600542"]`"Não é nada demais mesmo.`[@][lv 0*"16"*"20600543"]` Isso já não dói mais — não é um machucado sério."`[\]
 msgwnd_non
 *d12483
 d `Quando Kanon disse aquilo, ele começou a remover as ataduras na qual ele havia sido minuciosamente envolvido...`[\]

@@ -35,6 +35,9 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - name: Create static placeholder
+        run: mkdir -p static && touch static/.gitkeep
+
       - uses: actions/setup-go@v6
         with:
           go-version-file: go.mod

@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"umineko_quote/internal/og"
+	"umineko_quote/internal/quote/language"
 
 	"github.com/gofiber/fiber/v3"
 )
@@ -38,7 +39,7 @@ func (s *Service) ogImage(ctx fiber.Ctx) error {
 		})
 	}
 
-	lang := ctx.Query("lang", "en")
+	lang := language.English.Parse(ctx.Query("lang"))
 
 	q := s.QuoteService.GetByAudioID(lang, audioId)
 	if q == nil {
@@ -106,7 +107,7 @@ type builderSegmentMeta struct {
 	Text      string
 }
 
-func (s *Service) parseBuilderSegments(param, lang string) []builderSegmentMeta {
+func (s *Service) parseBuilderSegments(param string, lang language.Language) []builderSegmentMeta {
 	parts := strings.Split(param, ",")
 	if len(parts) > 20 {
 		parts = parts[:20]
@@ -159,7 +160,7 @@ func (s *Service) ogPage(ctx fiber.Ctx) error {
 		return ctx.SendString(html)
 	}
 
-	lang := ctx.Query("lang", "en")
+	lang := language.English.Parse(ctx.Query("lang"))
 	base := s.baseURL(ctx)
 
 	// Handle builder links
@@ -235,7 +236,7 @@ func (s *Service) ogBuilderImage(ctx fiber.Ctx) error {
 		})
 	}
 
-	lang := ctx.Query("lang", "en")
+	lang := language.English.Parse(ctx.Query("lang"))
 	segments := s.parseBuilderSegments(segmentsParam, lang)
 	if len(segments) == 0 {
 		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{

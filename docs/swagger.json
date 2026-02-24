@@ -28,6 +28,12 @@
                 "summary": "Browse quotes",
                 "parameters": [
                     {
+                        "enum": [
+                            "en",
+                            "ja",
+                            "es",
+                            "pt"
+                        ],
                         "type": "string",
                         "default": "en",
                         "description": "Language",
@@ -209,6 +215,12 @@
                         "required": true
                     },
                     {
+                        "enum": [
+                            "en",
+                            "ja",
+                            "es",
+                            "pt"
+                        ],
                         "type": "string",
                         "default": "en",
                         "description": "Language",
@@ -287,6 +299,12 @@
                         "required": true
                     },
                     {
+                        "enum": [
+                            "en",
+                            "ja",
+                            "es",
+                            "pt"
+                        ],
                         "type": "string",
                         "default": "en",
                         "description": "Language",
@@ -322,6 +340,12 @@
                 "summary": "Get random quote",
                 "parameters": [
                     {
+                        "enum": [
+                            "en",
+                            "ja",
+                            "es",
+                            "pt"
+                        ],
                         "type": "string",
                         "default": "en",
                         "description": "Language",
@@ -451,6 +475,12 @@
                         "required": true
                     },
                     {
+                        "enum": [
+                            "en",
+                            "ja",
+                            "es",
+                            "pt"
+                        ],
                         "type": "string",
                         "default": "en",
                         "description": "Language",

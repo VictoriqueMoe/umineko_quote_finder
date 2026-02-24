@@ -1,6 +1,9 @@
 package quote
 
-import "umineko_quote/internal/dto"
+import (
+	"umineko_quote/internal/dto"
+	"umineko_quote/internal/quote/character"
+)
 
 func NewCharacterResponse(characterID string, quotes []dto.ParsedQuote, limit int, offset int) dto.CharacterResponse {
 	if quotes == nil {
@@ -9,7 +12,7 @@ func NewCharacterResponse(characterID string, quotes []dto.ParsedQuote, limit in
 
 	var characterName string
 	if characterID != "" {
-		characterName = CharacterNames.GetCharacterName(CharacterFromID(characterID))
+		characterName = character.CharacterNames.GetCharacterName(character.CharacterFromID(characterID))
 	}
 
 	total := len(quotes)

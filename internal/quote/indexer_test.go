@@ -6,11 +6,12 @@ import (
 	"testing"
 
 	"umineko_quote/internal/dto"
+	"umineko_quote/internal/quote/language"
 )
 
-func buildTestIndexer() (Indexer, map[string][]dto.ParsedQuote) {
-	quotes := map[string][]dto.ParsedQuote{
-		"en": {
+func buildTestIndexer() (Indexer, map[language.Language][]dto.ParsedQuote) {
+	quotes := map[language.Language][]dto.ParsedQuote{
+		language.English: {
 			{Text: "Hello World", CharacterID: "10", Episode: 1},
 			{Text: "Beatrice speaks", CharacterID: "27", Episode: 1},
 			{Text: "Narrator text here", CharacterID: "narrator", Episode: 2},
@@ -24,7 +25,7 @@ func buildTestIndexer() (Indexer, map[string][]dto.ParsedQuote) {
 func TestIndexer_LowerTexts(t *testing.T) {
 	idx, _ := buildTestIndexer()
 
-	texts := idx.LowerTexts("en")
+	texts := idx.LowerTexts(language.English)
 	if len(texts) != 5 {
 		t.Fatalf("LowerTexts length: got %d, want 5", len(texts))
 	}
@@ -39,7 +40,7 @@ func TestIndexer_LowerTexts(t *testing.T) {
 func TestIndexer_LowerTexts_UnknownLang(t *testing.T) {
 	idx, _ := buildTestIndexer()
 
-	texts := idx.LowerTexts("fr")
+	texts := idx.LowerTexts(language.Language("fr"))
 	if texts != nil {
 		t.Errorf("LowerTexts for unknown lang: got %v, want nil", texts)
 	}
@@ -48,7 +49,7 @@ func TestIndexer_LowerTexts_UnknownLang(t *testing.T) {
 func TestIndexer_CharacterIndices(t *testing.T) {
 	idx, _ := buildTestIndexer()
 
-	battlerIdx := idx.CharacterIndices("en", "10")
+	battlerIdx := idx.CharacterIndices(language.English, "10")
 	if len(battlerIdx) != 2 {
 		t.Fatalf("CharacterIndices for Battler: got %d entries, want 2", len(battlerIdx))
 	}
@@ -56,12 +57,12 @@ func TestIndexer_CharacterIndices(t *testing.T) {
 		t.Errorf("CharacterIndices for Battler: got %v, want [0 3]", battlerIdx)
 	}
 
-	beatriceIdx := idx.CharacterIndices("en", "27")
+	beatriceIdx := idx.CharacterIndices(language.English, "27")
 	if len(beatriceIdx) != 2 {
 		t.Fatalf("CharacterIndices for Beatrice: got %d entries, want 2", len(beatriceIdx))
 	}
 
-	narratorIdx := idx.CharacterIndices("en", "narrator")
+	narratorIdx := idx.CharacterIndices(language.English, "narrator")
 	if len(narratorIdx) != 1 {
 		t.Fatalf("CharacterIndices for narrator: got %d entries, want 1", len(narratorIdx))
 	}
@@ -73,7 +74,7 @@ func TestIndexer_CharacterIndices(t *testing.T) {
 func TestIndexer_CharacterIndices_UnknownLang(t *testing.T) {
 	idx, _ := buildTestIndexer()
 
-	result := idx.CharacterIndices("fr", "10")
+	result := idx.CharacterIndices(language.Language("fr"), "10")
 	if result != nil {
 		t.Errorf("CharacterIndices for unknown lang: got %v, want nil", result)
 	}
@@ -82,7 +83,7 @@ func TestIndexer_CharacterIndices_UnknownLang(t *testing.T) {
 func TestIndexer_CharacterIndices_UnknownCharacter(t *testing.T) {
 	idx, _ := buildTestIndexer()
 
-	result := idx.CharacterIndices("en", "99")
+	result := idx.CharacterIndices(language.English, "99")
 	if result != nil {
 		t.Errorf("CharacterIndices for unknown character: got %v, want nil", result)
 	}
@@ -91,7 +92,7 @@ func TestIndexer_CharacterIndices_UnknownCharacter(t *testing.T) {
 func TestIndexer_NonNarratorIndices(t *testing.T) {
 	idx, _ := buildTestIndexer()
 
-	indices := idx.NonNarratorIndices("en")
+	indices := idx.NonNarratorIndices(language.English)
 	if len(indices) != 4 {
 		t.Fatalf("NonNarratorIndices: got %d entries, want 4", len(indices))
 	}
@@ -105,7 +106,7 @@ func TestIndexer_NonNarratorIndices(t *testing.T) {
 func TestIndexer_NonNarratorIndices_UnknownLang(t *testing.T) {
 	idx, _ := buildTestIndexer()
 
-	result := idx.NonNarratorIndices("fr")
+	result := idx.NonNarratorIndices(language.Language("fr"))
 	if result != nil {
 		t.Errorf("NonNarratorIndices for unknown lang: got %v, want nil", result)
 	}
@@ -114,7 +115,7 @@ func TestIndexer_NonNarratorIndices_UnknownLang(t *testing.T) {
 func TestIndexer_FilteredIndices_CharacterOnly(t *testing.T) {
 	idx, _ := buildTestIndexer()
 
-	indices := idx.FilteredIndices("en", "10", 0)
+	indices := idx.FilteredIndices(language.English, "10", 0)
 	if len(indices) != 2 {
 		t.Fatalf("FilteredIndices (char only): got %d, want 2", len(indices))
 	}
@@ -123,7 +124,7 @@ func TestIndexer_FilteredIndices_CharacterOnly(t *testing.T) {
 func TestIndexer_FilteredIndices_EpisodeOnly(t *testing.T) {
 	idx, _ := buildTestIndexer()
 
-	indices := idx.FilteredIndices("en", "", 1)
+	indices := idx.FilteredIndices(language.English, "", 1)
 	if len(indices) != 2 {
 		t.Fatalf("FilteredIndices (ep only): got %d, want 2", len(indices))
 	}
@@ -132,7 +133,7 @@ func TestIndexer_FilteredIndices_EpisodeOnly(t *testing.T) {
 func TestIndexer_FilteredIndices_CharacterAndEpisode(t *testing.T) {
 	idx, _ := buildTestIndexer()
 
-	indices := idx.FilteredIndices("en", "10", 1)
+	indices := idx.FilteredIndices(language.English, "10", 1)
 	if len(indices) != 1 {
 		t.Fatalf("FilteredIndices (char+ep): got %d, want 1", len(indices))
 	}
@@ -144,7 +145,7 @@ func TestIndexer_FilteredIndices_CharacterAndEpisode(t *testing.T) {
 func TestIndexer_FilteredIndices_CharacterAndEpisode_NoMatch(t *testing.T) {
 	idx, _ := buildTestIndexer()
 
-	indices := idx.FilteredIndices("en", "10", 3)
+	indices := idx.FilteredIndices(language.English, "10", 3)
 	if len(indices) != 0 {
 		t.Errorf("FilteredIndices (no match): got %d, want 0", len(indices))
 	}
@@ -153,7 +154,7 @@ func TestIndexer_FilteredIndices_CharacterAndEpisode_NoMatch(t *testing.T) {
 func TestIndexer_FilteredIndices_Neither(t *testing.T) {
 	idx, _ := buildTestIndexer()
 
-	result := idx.FilteredIndices("en", "", 0)
+	result := idx.FilteredIndices(language.English, "", 0)
 	if result != nil {
 		t.Errorf("FilteredIndices (neither): got %v, want nil", result)
 	}
@@ -162,17 +163,17 @@ func TestIndexer_FilteredIndices_Neither(t *testing.T) {
 func TestIndexer_FilteredIndices_UnknownLang(t *testing.T) {
 	idx, _ := buildTestIndexer()
 
-	result := idx.FilteredIndices("fr", "10", 0)
+	result := idx.FilteredIndices(language.Language("fr"), "10", 0)
 	if len(result) != 0 {
 		t.Errorf("FilteredIndices unknown lang (char): got %v, want empty", result)
 	}
 
-	result = idx.FilteredIndices("fr", "", 1)
+	result = idx.FilteredIndices(language.Language("fr"), "", 1)
 	if len(result) != 0 {
 		t.Errorf("FilteredIndices unknown lang (ep): got %v, want empty", result)
 	}
 
-	result = idx.FilteredIndices("fr", "10", 1)
+	result = idx.FilteredIndices(language.Language("fr"), "10", 1)
 	if len(result) != 0 {
 		t.Errorf("FilteredIndices unknown lang (both): got %v, want empty", result)
 	}
@@ -188,8 +189,8 @@ func TestIndexer_AudioFilePath_EmptyDir(t *testing.T) {
 }
 
 func TestIndexer_AudioFilePath_NonexistentFile(t *testing.T) {
-	quotes := map[string][]dto.ParsedQuote{
-		"en": {{Text: "test", CharacterID: "10", Episode: 1}},
+	quotes := map[language.Language][]dto.ParsedQuote{
+		language.English: {{Text: "test", CharacterID: "10", Episode: 1}},
 	}
 	idx := NewIndexer(quotes, "/nonexistent/audio/dir")
 
@@ -209,8 +210,8 @@ func TestIndexer_AudioFilePath_SubtitleSuffixStrip(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	quotes := map[string][]dto.ParsedQuote{
-		"en": {{Text: "test", CharacterID: "00", Episode: 8}},
+	quotes := map[language.Language][]dto.ParsedQuote{
+		language.English: {{Text: "test", CharacterID: "00", Episode: 8}},
 	}
 	idx := NewIndexer(quotes, dir)
 
@@ -239,8 +240,8 @@ func TestIndexer_AudioFilePath_SubtitleSuffixNoBase(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	quotes := map[string][]dto.ParsedQuote{
-		"en": {{Text: "test", CharacterID: "00", Episode: 8}},
+	quotes := map[language.Language][]dto.ParsedQuote{
+		language.English: {{Text: "test", CharacterID: "00", Episode: 8}},
 	}
 	idx := NewIndexer(quotes, dir)
 
@@ -263,8 +264,8 @@ func TestIndexer_AudioFilePath_ExactMatchPreferred(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	quotes := map[string][]dto.ParsedQuote{
-		"en": {{Text: "test", CharacterID: "00", Episode: 8}},
+	quotes := map[language.Language][]dto.ParsedQuote{
+		language.English: {{Text: "test", CharacterID: "00", Episode: 8}},
 	}
 	idx := NewIndexer(quotes, dir)
 
@@ -276,8 +277,8 @@ func TestIndexer_AudioFilePath_ExactMatchPreferred(t *testing.T) {
 }
 
 func TestIndexer_QuoteIndex_SubtitleIDs(t *testing.T) {
-	quotes := map[string][]dto.ParsedQuote{
-		"en": {
+	quotes := map[language.Language][]dto.ParsedQuote{
+		language.English: {
 			{Text: "Normal quote", CharacterID: "10", AudioID: "10100001"},
 			{Text: "Welcome back, sir.", CharacterID: "00", AudioID: "end_all00_s0"},
 			{Text: "It took me a while.", CharacterID: "10", AudioID: "end_all00_s1"},
@@ -286,7 +287,7 @@ func TestIndexer_QuoteIndex_SubtitleIDs(t *testing.T) {
 	}
 	idx := NewIndexer(quotes, "")
 
-	i, ok := idx.QuoteIndex("en", "end_all00_s0")
+	i, ok := idx.QuoteIndex(language.English, "end_all00_s0")
 	if !ok {
 		t.Fatal("QuoteIndex: expected to find end_all00_s0")
 	}
@@ -294,7 +295,7 @@ func TestIndexer_QuoteIndex_SubtitleIDs(t *testing.T) {
 		t.Errorf("QuoteIndex end_all00_s0: got %d, want 1", i)
 	}
 
-	i, ok = idx.QuoteIndex("en", "end_all00_s2")
+	i, ok = idx.QuoteIndex(language.English, "end_all00_s2")
 	if !ok {
 		t.Fatal("QuoteIndex: expected to find end_all00_s2")
 	}
@@ -304,8 +305,8 @@ func TestIndexer_QuoteIndex_SubtitleIDs(t *testing.T) {
 }
 
 func TestIndexer_SubtitleQuotes_EpisodeIndex(t *testing.T) {
-	quotes := map[string][]dto.ParsedQuote{
-		"en": {
+	quotes := map[language.Language][]dto.ParsedQuote{
+		language.English: {
 			{Text: "Episode 1 line", CharacterID: "10", Episode: 1},
 			{Text: "Subtitle line 1", CharacterID: "00", Episode: 8, AudioID: "end_all00_s0"},
 			{Text: "Subtitle line 2", CharacterID: "10", Episode: 8, AudioID: "end_all00_s1"},
@@ -314,7 +315,7 @@ func TestIndexer_SubtitleQuotes_EpisodeIndex(t *testing.T) {
 	}
 	idx := NewIndexer(quotes, "")
 
-	ep8 := idx.FilteredIndices("en", "", 8)
+	ep8 := idx.FilteredIndices(language.English, "", 8)
 	if len(ep8) != 2 {
 		t.Fatalf("FilteredIndices episode 8: got %d, want 2", len(ep8))
 	}
@@ -324,8 +325,8 @@ func TestIndexer_SubtitleQuotes_EpisodeIndex(t *testing.T) {
 }
 
 func TestIndexer_SubtitleQuotes_NonNarrator(t *testing.T) {
-	quotes := map[string][]dto.ParsedQuote{
-		"en": {
+	quotes := map[language.Language][]dto.ParsedQuote{
+		language.English: {
 			{Text: "Narrator line", CharacterID: "narrator", Episode: 1},
 			{Text: "Sub line", CharacterID: "00", Episode: 8, AudioID: "end_all00_s0"},
 			{Text: "Battler sub line", CharacterID: "10", Episode: 8, AudioID: "end_all00_s1"},
@@ -333,7 +334,7 @@ func TestIndexer_SubtitleQuotes_NonNarrator(t *testing.T) {
 	}
 	idx := NewIndexer(quotes, "")
 
-	nonNarr := idx.NonNarratorIndices("en")
+	nonNarr := idx.NonNarratorIndices(language.English)
 	if len(nonNarr) != 2 {
 		t.Fatalf("NonNarratorIndices: got %d, want 2", len(nonNarr))
 	}
@@ -343,8 +344,8 @@ func TestIndexer_SubtitleQuotes_NonNarrator(t *testing.T) {
 }
 
 func TestIndexer_QuoteIndex_Found(t *testing.T) {
-	quotes := map[string][]dto.ParsedQuote{
-		"en": {
+	quotes := map[language.Language][]dto.ParsedQuote{
+		language.English: {
 			{Text: "First", CharacterID: "10", AudioID: "10100001"},
 			{Text: "Second", CharacterID: "27", AudioID: "12700001"},
 			{Text: "Third", CharacterID: "10", AudioID: "10100002"},
@@ -352,7 +353,7 @@ func TestIndexer_QuoteIndex_Found(t *testing.T) {
 	}
 	idx := NewIndexer(quotes, "")
 
-	i, ok := idx.QuoteIndex("en", "12700001")
+	i, ok := idx.QuoteIndex(language.English, "12700001")
 	if !ok {
 		t.Fatal("QuoteIndex: expected to find audio ID")
 	}
@@ -364,22 +365,22 @@ func TestIndexer_QuoteIndex_Found(t *testing.T) {
 func TestIndexer_QuoteIndex_NotFound(t *testing.T) {
 	idx, _ := buildTestIndexer()
 
-	_, ok := idx.QuoteIndex("en", "99999999")
+	_, ok := idx.QuoteIndex(language.English, "99999999")
 	if ok {
 		t.Error("QuoteIndex: expected not found for unknown audio ID")
 	}
 }
 
 func TestIndexer_QuoteIndex_CompositeIDs(t *testing.T) {
-	quotes := map[string][]dto.ParsedQuote{
-		"en": {
+	quotes := map[language.Language][]dto.ParsedQuote{
+		language.English: {
 			{Text: "Line one", CharacterID: "10", AudioID: "10100001, 10100002"},
 			{Text: "Line two", CharacterID: "27", AudioID: "12700001"},
 		},
 	}
 	idx := NewIndexer(quotes, "")
 
-	i1, ok1 := idx.QuoteIndex("en", "10100001")
+	i1, ok1 := idx.QuoteIndex(language.English, "10100001")
 	if !ok1 {
 		t.Fatal("QuoteIndex: expected to find first sub-ID")
 	}
@@ -387,7 +388,7 @@ func TestIndexer_QuoteIndex_CompositeIDs(t *testing.T) {
 		t.Errorf("QuoteIndex first sub-ID: got %d, want 0", i1)
 	}
 
-	i2, ok2 := idx.QuoteIndex("en", "10100002")
+	i2, ok2 := idx.QuoteIndex(language.English, "10100002")
 	if !ok2 {
 		t.Fatal("QuoteIndex: expected to find second sub-ID")
 	}
@@ -399,40 +400,40 @@ func TestIndexer_QuoteIndex_CompositeIDs(t *testing.T) {
 func TestIndexer_QuoteIndex_UnknownLang(t *testing.T) {
 	idx, _ := buildTestIndexer()
 
-	_, ok := idx.QuoteIndex("fr", "10100001")
+	_, ok := idx.QuoteIndex(language.Language("fr"), "10100001")
 	if ok {
 		t.Error("QuoteIndex: expected not found for unknown lang")
 	}
 }
 
 func TestIndexer_MultipleLangs(t *testing.T) {
-	quotes := map[string][]dto.ParsedQuote{
-		"en": {
+	quotes := map[language.Language][]dto.ParsedQuote{
+		language.English: {
 			{Text: "English text", CharacterID: "10", Episode: 1},
 		},
-		"ja": {
+		language.Japanese: {
 			{Text: "日本語テキスト", CharacterID: "10", Episode: 1},
 			{Text: "別の行", CharacterID: "27", Episode: 2},
 		},
 	}
 	idx := NewIndexer(quotes, "")
 
-	enTexts := idx.LowerTexts("en")
+	enTexts := idx.LowerTexts(language.English)
 	if len(enTexts) != 1 {
 		t.Errorf("EN LowerTexts: got %d, want 1", len(enTexts))
 	}
 
-	jaTexts := idx.LowerTexts("ja")
+	jaTexts := idx.LowerTexts(language.Japanese)
 	if len(jaTexts) != 2 {
 		t.Errorf("JA LowerTexts: got %d, want 2", len(jaTexts))
 	}
 
-	enBattler := idx.CharacterIndices("en", "10")
+	enBattler := idx.CharacterIndices(language.English, "10")
 	if len(enBattler) != 1 {
 		t.Errorf("EN CharacterIndices for Battler: got %d, want 1", len(enBattler))
 	}
 
-	jaBeatrice := idx.CharacterIndices("ja", "27")
+	jaBeatrice := idx.CharacterIndices(language.Japanese, "27")
 	if len(jaBeatrice) != 1 {
 		t.Errorf("JA CharacterIndices for Beatrice: got %d, want 1", len(jaBeatrice))
 	}
@@ -441,19 +442,17 @@ func TestIndexer_MultipleLangs(t *testing.T) {
 func TestIndexer_HasAudio_EmptyDir(t *testing.T) {
 	idx, _ := buildTestIndexer()
 
-	// Empty audioDir string means no audio configured
 	if idx.HasAudio() {
 		t.Error("HasAudio with empty dir string: expected false")
 	}
 }
 
 func TestIndexer_HasAudio_NonexistentDir(t *testing.T) {
-	quotes := map[string][]dto.ParsedQuote{
-		"en": {{Text: "test", CharacterID: "10", Episode: 1}},
+	quotes := map[language.Language][]dto.ParsedQuote{
+		language.English: {{Text: "test", CharacterID: "10", Episode: 1}},
 	}
 	idx := NewIndexer(quotes, "/nonexistent/audio/dir")
 
-	// Non-existent directory means no audio
 	if idx.HasAudio() {
 		t.Error("HasAudio with nonexistent dir: expected false")
 	}
@@ -461,12 +460,11 @@ func TestIndexer_HasAudio_NonexistentDir(t *testing.T) {
 
 func TestIndexer_HasAudio_EmptyExistingDir(t *testing.T) {
 	dir := t.TempDir()
-	quotes := map[string][]dto.ParsedQuote{
-		"en": {{Text: "test", CharacterID: "10", Episode: 1}},
+	quotes := map[language.Language][]dto.ParsedQuote{
+		language.English: {{Text: "test", CharacterID: "10", Episode: 1}},
 	}
 	idx := NewIndexer(quotes, dir)
 
-	// Empty existing directory means no audio files available
 	if idx.HasAudio() {
 		t.Error("HasAudio with empty existing dir: expected false")
 	}
@@ -474,7 +472,6 @@ func TestIndexer_HasAudio_EmptyExistingDir(t *testing.T) {
 
 func TestIndexer_HasAudio_WithFiles(t *testing.T) {
 	dir := t.TempDir()
-	// Create subdirectory with a file
 	subDir := filepath.Join(dir, "10")
 	if err := os.MkdirAll(subDir, 0755); err != nil {
 		t.Fatal(err)
@@ -483,8 +480,8 @@ func TestIndexer_HasAudio_WithFiles(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	quotes := map[string][]dto.ParsedQuote{
-		"en": {{Text: "test", CharacterID: "10", Episode: 1}},
+	quotes := map[language.Language][]dto.ParsedQuote{
+		language.English: {{Text: "test", CharacterID: "10", Episode: 1}},
 	}
 	idx := NewIndexer(quotes, dir)
 

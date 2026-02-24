@@ -31,6 +31,12 @@ const docTemplate = `{
                 "summary": "Browse quotes",
                 "parameters": [
                     {
+                        "enum": [
+                            "en",
+                            "ja",
+                            "es",
+                            "pt"
+                        ],
                         "type": "string",
                         "default": "en",
                         "description": "Language",
@@ -212,6 +218,12 @@ const docTemplate = `{
                         "required": true
                     },
                     {
+                        "enum": [
+                            "en",
+                            "ja",
+                            "es",
+                            "pt"
+                        ],
                         "type": "string",
                         "default": "en",
                         "description": "Language",
@@ -290,6 +302,12 @@ const docTemplate = `{
                         "required": true
                     },
                     {
+                        "enum": [
+                            "en",
+                            "ja",
+                            "es",
+                            "pt"
+                        ],
                         "type": "string",
                         "default": "en",
                         "description": "Language",
@@ -325,6 +343,12 @@ const docTemplate = `{
                 "summary": "Get random quote",
                 "parameters": [
                     {
+                        "enum": [
+                            "en",
+                            "ja",
+                            "es",
+                            "pt"
+                        ],
                         "type": "string",
                         "default": "en",
                         "description": "Language",
@@ -454,6 +478,12 @@ const docTemplate = `{
                         "required": true
                     },
                     {
+                        "enum": [
+                            "en",
+                            "ja",
+                            "es",
+                            "pt"
+                        ],
                         "type": "string",
                         "default": "en",
                         "description": "Language",

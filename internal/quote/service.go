@@ -2,59 +2,64 @@ package quote
 
 import (
 	"embed"
-	"fmt"
 	"log"
 	"math/rand/v2"
-	"path/filepath"
 	"strings"
 	"sync"
 	"time"
+	"umineko_quote/internal/quote/character"
+	"umineko_quote/internal/quote/language"
 
 	"umineko_quote/internal/dto"
 	"umineko_quote/internal/lexar"
-	"umineko_quote/internal/subtitle"
+	"umineko_quote/internal/quote/scriptloader"
 )
 
 const audioDir = "internal/quote/data/audio"
 
-//go:embed data/*.txt data/sub/*.ass
+//go:embed data/*.file data/sub/*.ass
 var dataFS embed.FS
-
-var subtitleStyleCharacter = map[string]string{
-	"Battler": "10",
-}
 
 type (
 	Service interface {
-		Search(query string, lang string, limit int, offset int, character Character, episode int, truth Truth) dto.SearchResponse
-		Browse(lang string, character Character, limit int, offset int, episode int, truth Truth) dto.CharacterResponse
-		GetByAudioID(lang string, audioID string) *dto.ParsedQuote
-		GetContext(lang string, audioID string, lines int) *dto.ContextResponse
-		Random(lang string, character Character, episode int, truth Truth) *dto.ParsedQuote
-		GetCharacters() map[Character]string
+		Search(query string, lang language.Language, limit int, offset int, character character.Character, episode int, truth Truth) dto.SearchResponse
+		Browse(lang language.Language, character character.Character, limit int, offset int, episode int, truth Truth) dto.CharacterResponse
+		GetByAudioID(lang language.Language, audioID string) *dto.ParsedQuote
+		GetContext(lang language.Language, audioID string, lines int) *dto.ContextResponse
+		Random(lang language.Language, character character.Character, episode int, truth Truth) *dto.ParsedQuote
+		GetCharacters() map[character.Character]string
 		AudioFilePath(characterId string, audioId string) string
 		GetStats() Stats
 		HasAudio() bool
 	}
 
 	service struct {
-		quotes  map[string][]dto.ParsedQuote
+		quotes  map[language.Language][]dto.ParsedQuote
 		indexer Indexer
 		stats   Stats
 	}
 
 	langParseResult struct {
-		lang   string
+		lang   language.Language
 		parsed []dto.ParsedQuote
 	}
 )
 
 func NewService() Service {
-	langFiles := map[string]string{
-		"en": "data/english.txt",
-		"ja": "data/japanese.txt",
-		"es": "data/spanish.txt",
-		"pt": "data/portuguese.txt",
+	serviceStart := time.Now()
+
+	parse := func(lines []string) ([]dto.ParsedQuote, []lexar.SubtitleRef) {
+		p := NewParser()
+		return p.ParseAll(lines), p.SubtitleRefs()
+	}
+
+	loader := scriptloader.New(dataFS, parse)
+
+	langFiles := map[language.Language]string{
+		language.English:    "data/en.file",
+		language.Japanese:   "data/ja.file",
+		language.Spanish:    "data/es.file",
+		language.Portuguese: "data/pt.file",
 	}
 
 	results := make(chan langParseResult, len(langFiles))
@@ -62,23 +67,10 @@ func NewService() Service {
 
 	for lang, path := range langFiles {
 		wg.Go(func() {
-			data, err := dataFS.ReadFile(path)
-			if err != nil {
+			parsed := loader.Load(string(lang), path)
+			if parsed == nil {
 				return
 			}
-			lines := strings.Split(string(data), "\n")
-
-			p := NewParser()
-			start := time.Now()
-			parsed := p.ParseAll(lines)
-			log.Printf("[%s] parsed %d lines → %d quotes in %v", lang, len(lines), len(parsed), time.Since(start).Round(time.Millisecond))
-
-			subQuotes := resolveSubtitleRefs(p.SubtitleRefs())
-			if len(subQuotes) > 0 {
-				parsed = append(parsed, subQuotes...)
-				log.Printf("[%s] added %d subtitle quotes", lang, len(subQuotes))
-			}
-
 			results <- langParseResult{
 				lang:   lang,
 				parsed: parsed,
@@ -91,7 +83,7 @@ func NewService() Service {
 		close(results)
 	}()
 
-	quotes := make(map[string][]dto.ParsedQuote)
+	quotes := make(map[language.Language][]dto.ParsedQuote)
 
 	for r := range results {
 		quotes[r.lang] = r.parsed
@@ -105,23 +97,22 @@ func NewService() Service {
 		log.Printf("[audio] no audio files found, disabling audio features")
 	}
 
+	log.Printf("[system] initialised in %v", time.Since(serviceStart).Round(time.Millisecond))
+
 	return &service{
 		quotes:  quotes,
 		indexer: indexer,
-		stats:   NewStats(quotes["en"]),
+		stats:   NewStats(quotes[language.English]),
 	}
 }
 
-func (s *service) Search(query string, lang string, limit int, offset int, character Character, episode int, truth Truth) dto.SearchResponse {
+func (s *service) Search(query string, lang language.Language, limit int, offset int, character character.Character, episode int, truth Truth) dto.SearchResponse {
 	characterID := character.ID()
 	if limit <= 0 {
 		limit = 30
 	}
 	if offset < 0 {
 		offset = 0
-	}
-	if lang == "" {
-		lang = "en"
 	}
 
 	quotes := s.quotes[lang]
@@ -174,16 +165,13 @@ func (s *service) Search(query string, lang string, limit int, offset int, chara
 	return NewSearchResponse(exactMatches, limit, offset)
 }
 
-func (s *service) Browse(lang string, character Character, limit int, offset int, episode int, truth Truth) dto.CharacterResponse {
+func (s *service) Browse(lang language.Language, character character.Character, limit int, offset int, episode int, truth Truth) dto.CharacterResponse {
 	characterID := character.ID()
 	if limit <= 0 {
 		limit = 50
 	}
 	if offset < 0 {
 		offset = 0
-	}
-	if lang == "" {
-		lang = "en"
 	}
 
 	quotes := s.quotes[lang]
@@ -217,11 +205,8 @@ func (s *service) Browse(lang string, character Character, limit int, offset int
 	return NewCharacterResponse(characterID, all, limit, offset)
 }
 
-func (s *service) Random(lang string, character Character, episode int, truth Truth) *dto.ParsedQuote {
+func (s *service) Random(lang language.Language, character character.Character, episode int, truth Truth) *dto.ParsedQuote {
 	characterID := character.ID()
-	if lang == "" {
-		lang = "en"
-	}
 
 	quotes := s.quotes[lang]
 	if quotes == nil || len(quotes) == 0 {
@@ -313,10 +298,7 @@ func (s *service) Random(lang string, character Character, episode int, truth Tr
 	return &quotes[pick]
 }
 
-func (s *service) GetByAudioID(lang string, audioID string) *dto.ParsedQuote {
-	if lang == "" {
-		lang = "en"
-	}
+func (s *service) GetByAudioID(lang language.Language, audioID string) *dto.ParsedQuote {
 
 	quotes := s.quotes[lang]
 	if quotes == nil {
@@ -336,10 +318,7 @@ func (s *service) GetByAudioID(lang string, audioID string) *dto.ParsedQuote {
 	return nil
 }
 
-func (s *service) GetContext(lang string, audioID string, lines int) *dto.ContextResponse {
-	if lang == "" {
-		lang = "en"
-	}
+func (s *service) GetContext(lang language.Language, audioID string, lines int) *dto.ContextResponse {
 	if lines <= 0 {
 		lines = 5
 	}
@@ -373,8 +352,8 @@ func (s *service) GetContext(lang string, audioID string, lines int) *dto.Contex
 	}
 }
 
-func (s *service) GetCharacters() map[Character]string {
-	return CharacterNames.GetAllCharacters()
+func (s *service) GetCharacters() map[character.Character]string {
+	return character.CharacterNames.GetAllCharacters()
 }
 
 func (s *service) AudioFilePath(characterId string, audioId string) string {
@@ -387,37 +366,4 @@ func (s *service) GetStats() Stats {
 
 func (s *service) HasAudio() bool {
 	return s.indexer.HasAudio()
-}
-
-func resolveSubtitleRefs(refs []lexar.SubtitleRef) []dto.ParsedQuote {
-	var quotes []dto.ParsedQuote
-
-	for _, ref := range refs {
-		filename := filepath.Base(strings.ReplaceAll(ref.SubPath, `\`, "/"))
-		data, err := dataFS.ReadFile("data/sub/" + filename)
-		if err != nil {
-			log.Printf("[subtitle] could not read %s: %v", filename, err)
-			continue
-		}
-
-		entries := subtitle.ParseASS(data)
-		for i, entry := range entries {
-			charID := ref.CharacterID
-			if mapped, ok := subtitleStyleCharacter[entry.Style]; ok {
-				charID = mapped
-			}
-
-			quotes = append(quotes, dto.ParsedQuote{
-				Text:        entry.Text,
-				TextHtml:    entry.Text,
-				CharacterID: charID,
-				Character:   CharacterNames.GetCharacterName(CharacterFromID(charID)),
-				AudioID:     fmt.Sprintf("%s_s%d", ref.AudioID, i),
-				Episode:     ref.Episode,
-				ContentType: ref.ContentType,
-			})
-		}
-	}
-
-	return quotes
 }

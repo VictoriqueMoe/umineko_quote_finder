@@ -4,6 +4,7 @@ import (
 	"runtime"
 	"strings"
 	"sync"
+	"umineko_quote/internal/quote/character"
 
 	"umineko_quote/internal/dto"
 	"umineko_quote/internal/lexar"
@@ -96,7 +97,7 @@ func (p *scriptParser) ParseAll(lines []string) []dto.ParsedQuote {
 					Text:         plainText.Transform(eq.Content),
 					TextHtml:     htmlText.Transform(eq.Content),
 					CharacterID:  eq.CharacterID,
-					Character:    CharacterNames.GetCharacterName(CharacterFromID(eq.CharacterID)),
+					Character:    character.CharacterNames.GetCharacterName(character.CharacterFromID(eq.CharacterID)),
 					AudioID:      eq.AudioID,
 					AudioCharMap: eq.AudioCharMap,
 					AudioTextMap: audioTextMap,

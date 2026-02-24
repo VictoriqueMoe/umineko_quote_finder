@@ -2,6 +2,7 @@ package quote
 
 import (
 	"testing"
+	"umineko_quote/internal/quote/character"
 
 	"umineko_quote/internal/dto"
 )
@@ -10,7 +11,7 @@ func TestNewSearchResult(t *testing.T) {
 	q := dto.ParsedQuote{
 		Text:        "test quote",
 		CharacterID: "10",
-		Character:   CharacterNames[Battler],
+		Character:   character.CharacterNames[character.Battler],
 		Episode:     1,
 	}
 

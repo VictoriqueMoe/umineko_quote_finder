@@ -4,6 +4,8 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"umineko_quote/internal/quote/character"
+	"umineko_quote/internal/quote/language"
 
 	"umineko_quote/internal/audio"
 	_ "umineko_quote/internal/dto"
@@ -16,8 +18,8 @@ import (
 var audioIdPattern = regexp.MustCompile(`^[a-zA-Z0-9_]+$`)
 
 type browseParams struct {
-	lang      string
-	character quote.Character
+	lang      language.Language
+	character character.Character
 	limit     int
 	offset    int
 	episode   int
@@ -65,10 +67,10 @@ func (s *Service) setupCharactersRoute(routeGroup fiber.Router) {
 //	@Tags			quotes
 //	@Produce		json
 //	@Param			q			query		string	true	"Search query"
-//	@Param			lang		query		string	false	"Language"	default(en)
+//	@Param			lang		query		string	false	"Language"	default(en)	Enums(en, ja, es, pt)
 //	@Param			limit		query		int		false	"Maximum results"	default(30)
 //	@Param			offset		query		int		false	"Offset for pagination"	default(0)
-//	@Param			character	query		quote.Character	false	"Filter by character ID"
+//	@Param			character	query		character.Character	false	"Filter by character ID"
 //	@Param			episode		query		int		false	"Filter by episode (1-8)"
 //	@Param			truth		query		string	false	"Filter by truth type"	Enums(red, blue)
 //	@Success		200			{object}	dto.SearchAPIResponse
@@ -82,14 +84,14 @@ func (s *Service) search(ctx fiber.Ctx) error {
 		})
 	}
 
-	lang := ctx.Query("lang", "en")
+	lang := language.English.Parse(ctx.Query("lang"))
 	limit := fiber.Query[int](ctx, "limit", 30)
 	offset := fiber.Query[int](ctx, "offset", 0)
-	character := quote.Character(ctx.Query("character"))
+	characterStruct := character.Character(ctx.Query("character"))
 	episode := fiber.Query[int](ctx, "episode", 0)
 	truth := quote.TruthAll.Parse(ctx.Query("truth"))
 
-	response := s.QuoteService.Search(query, lang, limit, offset, character, episode, truth)
+	response := s.QuoteService.Search(query, lang, limit, offset, characterStruct, episode, truth)
 	return ctx.JSON(fiber.Map{
 		"query":   query,
 		"results": response.Results,
@@ -105,19 +107,19 @@ func (s *Service) search(ctx fiber.Ctx) error {
 //	@Description	Returns a random quote with optional filters
 //	@Tags			quotes
 //	@Produce		json
-//	@Param			lang		query		string	false	"Language"	default(en)
-//	@Param			character	query		quote.Character	false	"Filter by character ID"
+//	@Param			lang		query		string	false	"Language"	default(en)	Enums(en, ja, es, pt)
+//	@Param			character	query		character.Character	false	"Filter by character ID"
 //	@Param			episode		query		int		false	"Filter by episode (1-8)"
 //	@Param			truth		query		string	false	"Filter by truth type"	Enums(red, blue)
 //	@Success		200			{object}	dto.ParsedQuote
 //	@Failure		404			{object}	dto.ErrorResponse
 //	@Router			/random [get]
 func (s *Service) random(ctx fiber.Ctx) error {
-	lang := ctx.Query("lang", "en")
-	character := quote.Character(ctx.Query("character"))
+	lang := language.English.Parse(ctx.Query("lang"))
+	characterStruct := character.Character(ctx.Query("character"))
 	episode := fiber.Query[int](ctx, "episode", 0)
 	truth := quote.TruthAll.Parse(ctx.Query("truth"))
-	q := s.QuoteService.Random(lang, character, episode, truth)
+	q := s.QuoteService.Random(lang, characterStruct, episode, truth)
 	if q == nil {
 		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"error": "no quotes available",
@@ -132,8 +134,8 @@ func (s *Service) random(ctx fiber.Ctx) error {
 //	@Description	Browse all quotes with optional filters and pagination
 //	@Tags			quotes
 //	@Produce		json
-//	@Param			lang		query		string	false	"Language"	default(en)
-//	@Param			character	query		quote.Character	false	"Filter by character ID"
+//	@Param			lang		query		string	false	"Language"	default(en)	Enums(en, ja, es, pt)
+//	@Param			character	query		character.Character	false	"Filter by character ID"
 //	@Param			limit		query		int		false	"Maximum results"	default(50)
 //	@Param			offset		query		int		false	"Offset for pagination"	default(0)
 //	@Param			episode		query		int		false	"Filter by episode (1-8)"
@@ -142,7 +144,7 @@ func (s *Service) random(ctx fiber.Ctx) error {
 //	@Router			/browse [get]
 func (s *Service) browse(ctx fiber.Ctx) error {
 	p := parseBrowseParams(ctx)
-	p.character = quote.Character(ctx.Query("character"))
+	p.character = character.Character(ctx.Query("character"))
 	response := s.QuoteService.Browse(p.lang, p.character, p.limit, p.offset, p.episode, p.truth)
 	return ctx.JSON(response)
 }
@@ -154,12 +156,12 @@ func (s *Service) browse(ctx fiber.Ctx) error {
 //	@Tags			quotes
 //	@Produce		json
 //	@Param			audioId		path		string	true	"Audio ID of the quote"
-//	@Param			lang		query		string	false	"Language"	default(en)
+//	@Param			lang		query		string	false	"Language"	default(en)	Enums(en, ja, es, pt)
 //	@Success		200			{object}	dto.ParsedQuote
 //	@Failure		404			{object}	dto.ErrorResponse
 //	@Router			/quote/{audioId} [get]
 func (s *Service) byAudioID(ctx fiber.Ctx) error {
-	lang := ctx.Query("lang", "en")
+	lang := language.English.Parse(ctx.Query("lang"))
 	audioID := ctx.Params("audioId")
 
 	q := s.QuoteService.GetByAudioID(lang, audioID)
@@ -182,14 +184,14 @@ func (s *Service) setupContextRoute(routeGroup fiber.Router) {
 //	@Tags			quotes
 //	@Produce		json
 //	@Param			audioId		path		string	true	"Audio ID of the quote"
-//	@Param			lang		query		string	false	"Language"	default(en)
+//	@Param			lang		query		string	false	"Language"	default(en)	Enums(en, ja, es, pt)
 //	@Param			lines		query		int		false	"Number of context lines before and after"	default(5)
 //	@Success		200			{object}	dto.ContextResponse
 //	@Failure		400			{object}	dto.ErrorResponse
 //	@Failure		404			{object}	dto.ErrorResponse
 //	@Router			/context/{audioId} [get]
 func (s *Service) context(ctx fiber.Ctx) error {
-	lang := ctx.Query("lang", "en")
+	lang := language.English.Parse(ctx.Query("lang"))
 	audioID := ctx.Params("audioId")
 	if !audioIdPattern.MatchString(audioID) {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -361,7 +363,7 @@ func (s *Service) combinedAudioLegacy(ctx fiber.Ctx) error {
 
 func parseBrowseParams(ctx fiber.Ctx) browseParams {
 	return browseParams{
-		lang:    ctx.Query("lang", "en"),
+		lang:    language.English.Parse(ctx.Query("lang")),
 		limit:   fiber.Query[int](ctx, "limit", 50),
 		offset:  fiber.Query[int](ctx, "offset", 0),
 		episode: fiber.Query[int](ctx, "episode", 0),

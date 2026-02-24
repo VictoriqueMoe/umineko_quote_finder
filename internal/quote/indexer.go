@@ -8,34 +8,35 @@ import (
 	"sync"
 
 	"umineko_quote/internal/dto"
+	"umineko_quote/internal/quote/language"
 )
 
 var subtitleAudioIDSuffix = regexp.MustCompile(`_s\d+$`)
 
 type (
 	Indexer interface {
-		LowerTexts(lang string) []string
-		FilteredIndices(lang string, characterID string, episode int) []int
-		CharacterIndices(lang string, characterID string) []int
-		NonNarratorIndices(lang string) []int
+		LowerTexts(lang language.Language) []string
+		FilteredIndices(lang language.Language, characterID string, episode int) []int
+		CharacterIndices(lang language.Language, characterID string) []int
+		NonNarratorIndices(lang language.Language) []int
 		AudioFilePath(characterId string, audioId string) string
-		QuoteIndex(lang string, audioID string) (int, bool)
+		QuoteIndex(lang language.Language, audioID string) (int, bool)
 		HasAudio() bool
 	}
 
 	indexer struct {
-		quoteLowerTexts  map[string][]string
-		characterIndex   map[string]map[string][]int
-		episodeIndex     map[string]map[int][]int
-		nonNarratorIndex map[string][]int
-		audioIndex       map[string]map[string]int
-		quotes           map[string][]dto.ParsedQuote
+		quoteLowerTexts  map[language.Language][]string
+		characterIndex   map[language.Language]map[string][]int
+		episodeIndex     map[language.Language]map[int][]int
+		nonNarratorIndex map[language.Language][]int
+		audioIndex       map[language.Language]map[string]int
+		quotes           map[language.Language][]dto.ParsedQuote
 		audioDir         string
 		hasAudio         bool
 	}
 
 	langIndexResult struct {
-		lang           string
+		lang           language.Language
 		lowerTexts     []string
 		charIdx        map[string][]int
 		epIdx          map[int][]int
@@ -44,7 +45,7 @@ type (
 	}
 )
 
-func NewIndexer(quotes map[string][]dto.ParsedQuote, audioDir string) Indexer {
+func NewIndexer(quotes map[language.Language][]dto.ParsedQuote, audioDir string) Indexer {
 	results := make(chan langIndexResult, len(quotes))
 	var wg sync.WaitGroup
 
@@ -104,11 +105,11 @@ func NewIndexer(quotes map[string][]dto.ParsedQuote, audioDir string) Indexer {
 	}
 
 	idx := &indexer{
-		quoteLowerTexts:  make(map[string][]string),
-		characterIndex:   make(map[string]map[string][]int),
-		episodeIndex:     make(map[string]map[int][]int),
-		nonNarratorIndex: make(map[string][]int),
-		audioIndex:       make(map[string]map[string]int),
+		quoteLowerTexts:  make(map[language.Language][]string),
+		characterIndex:   make(map[language.Language]map[string][]int),
+		episodeIndex:     make(map[language.Language]map[int][]int),
+		nonNarratorIndex: make(map[language.Language][]int),
+		audioIndex:       make(map[language.Language]map[string]int),
 		quotes:           quotes,
 		audioDir:         audioDir,
 		hasAudio:         hasAudio,
@@ -125,11 +126,11 @@ func NewIndexer(quotes map[string][]dto.ParsedQuote, audioDir string) Indexer {
 	return idx
 }
 
-func (idx *indexer) LowerTexts(lang string) []string {
+func (idx *indexer) LowerTexts(lang language.Language) []string {
 	return idx.quoteLowerTexts[lang]
 }
 
-func (idx *indexer) CharacterIndices(lang string, characterID string) []int {
+func (idx *indexer) CharacterIndices(lang language.Language, characterID string) []int {
 	langCharIdx := idx.characterIndex[lang]
 	if langCharIdx == nil {
 		return nil
@@ -156,11 +157,11 @@ func (idx *indexer) AudioFilePath(characterId string, audioId string) string {
 	return path
 }
 
-func (idx *indexer) NonNarratorIndices(lang string) []int {
+func (idx *indexer) NonNarratorIndices(lang language.Language) []int {
 	return idx.nonNarratorIndex[lang]
 }
 
-func (idx *indexer) QuoteIndex(lang string, audioID string) (int, bool) {
+func (idx *indexer) QuoteIndex(lang language.Language, audioID string) (int, bool) {
 	langAudioIdx := idx.audioIndex[lang]
 	if langAudioIdx == nil {
 		return 0, false
@@ -169,7 +170,7 @@ func (idx *indexer) QuoteIndex(lang string, audioID string) (int, bool) {
 	return i, ok
 }
 
-func (idx *indexer) FilteredIndices(lang string, characterID string, episode int) []int {
+func (idx *indexer) FilteredIndices(lang language.Language, characterID string, episode int) []int {
 	hasChar := characterID != ""
 	hasEp := episode > 0
 

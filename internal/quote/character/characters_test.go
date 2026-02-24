@@ -1,4 +1,4 @@
-package quote
+package character
 
 import (
 	"testing"

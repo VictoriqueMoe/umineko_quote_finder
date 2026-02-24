@@ -9,6 +9,8 @@ import (
 	"strings"
 	"sync"
 
+	"umineko_quote/internal/quote/language"
+
 	"github.com/fogleman/gg"
 	"golang.org/x/image/font/gofont/gobold"
 	"golang.org/x/image/font/gofont/goregular"
@@ -53,15 +55,15 @@ func NewImageGenerator() *ImageGenerator {
 	}
 }
 
-func (g *ImageGenerator) textFont(lang string) *sfnt.Font {
-	if lang == "ja" {
+func (g *ImageGenerator) textFont(lang language.Language) *sfnt.Font {
+	if lang == language.Japanese {
 		return g.jpFont
 	}
 	return g.regularFont
 }
 
-func (g *ImageGenerator) boldOrFallback(lang string) *sfnt.Font {
-	if lang == "ja" {
+func (g *ImageGenerator) boldOrFallback(lang language.Language) *sfnt.Font {
+	if lang == language.Japanese {
 		return g.jpFont
 	}
 	return g.boldFont
@@ -91,8 +93,8 @@ type DialogueLine struct {
 	Text      string
 }
 
-func (g *ImageGenerator) Generate(audioId, lang, text, textHtml, character string, episode int, contentType string) ([]byte, error) {
-	cacheKey := audioId + ":" + lang
+func (g *ImageGenerator) Generate(audioId string, lang language.Language, text, textHtml, character string, episode int, contentType string) ([]byte, error) {
+	cacheKey := audioId + ":" + string(lang)
 	if cached, ok := g.cache.Load(cacheKey); ok {
 		return cached.([]byte), nil
 	}
@@ -152,8 +154,8 @@ func (g *ImageGenerator) Generate(audioId, lang, text, textHtml, character strin
 	return g.finalise(dc, cacheKey)
 }
 
-func (g *ImageGenerator) GenerateBuilder(segmentsParam, lang string, lines []DialogueLine) ([]byte, error) {
-	cacheKey := "builder:" + segmentsParam + ":" + lang
+func (g *ImageGenerator) GenerateBuilder(segmentsParam string, lang language.Language, lines []DialogueLine) ([]byte, error) {
+	cacheKey := "builder:" + segmentsParam + ":" + string(lang)
 	if cached, ok := g.cache.Load(cacheKey); ok {
 		return cached.([]byte), nil
 	}

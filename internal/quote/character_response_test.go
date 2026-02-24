@@ -2,6 +2,7 @@ package quote
 
 import (
 	"testing"
+	"umineko_quote/internal/quote/character"
 
 	"umineko_quote/internal/dto"
 )
@@ -18,8 +19,8 @@ func TestNewCharacterResponse_NilQuotes(t *testing.T) {
 	if resp.CharacterID != "10" {
 		t.Errorf("CharacterID: got %q, want %q", resp.CharacterID, "10")
 	}
-	if resp.Character != CharacterNames[Battler] {
-		t.Errorf("Character: got %q, want %q", resp.Character, CharacterNames[Battler])
+	if resp.Character != character.CharacterNames[character.Battler] {
+		t.Errorf("Character: got %q, want %q", resp.Character, character.CharacterNames[character.Battler])
 	}
 }
 
@@ -48,8 +49,8 @@ func TestNewCharacterResponse_Pagination(t *testing.T) {
 	if resp.Total != 25 {
 		t.Errorf("Total: got %d, want 25", resp.Total)
 	}
-	if resp.Character != CharacterNames[Beatrice] {
-		t.Errorf("Character: got %q, want %q", resp.Character, CharacterNames[Beatrice])
+	if resp.Character != character.CharacterNames[character.Beatrice] {
+		t.Errorf("Character: got %q, want %q", resp.Character, character.CharacterNames[character.Beatrice])
 	}
 }
 

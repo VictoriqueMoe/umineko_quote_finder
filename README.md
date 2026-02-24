@@ -16,6 +16,8 @@ A quote search engine for Umineko no Naku Koro ni. Search through thousands of l
   - [Cross-compile](#cross-compile)
 - [Docker](#docker)
 - [Data](#data)
+  - [Script Loader](#script-loader)
+  - [Mutation Engine Pipeline](#mutation-engine-pipeline)
 - [Architecture: The Lexar Package](#architecture-the-lexar-package)
   - [Pipeline Overview](#pipeline-overview)
   - [Package Structure](#package-structure)
@@ -34,7 +36,7 @@ A quote search engine for Umineko no Naku Koro ni. Search through thousands of l
 - Filter by character and episode
 - Random quote generator
 - Scene context viewer, see surrounding dialogue for any quote
-- English/Japanese language toggle
+- Multi-language support (English, Japanese, Spanish, Portuguese)
 - Inline audio playback for voiced lines
 - Umineko-themed web interface
 
@@ -128,7 +130,7 @@ voice.zip
 | Parameter   | Endpoints                          | Description                                        |
 |-------------|------------------------------------|----------------------------------------------------|
 | `q`         | search                             | Search query (required)                            |
-| `lang`      | search, random, character, context | Language: `en` (default) or `ja`                   |
+| `lang`      | search, random, character, context | Language: `en` (default), `ja`, `es`, `pt`         |
 | `character` | search, random                     | Filter by character ID                             |
 | `episode`   | search, random, character          | Filter by episode (1-8)                            |
 | `lines`     | context                            | Number of lines before/after (default: 5, max: 20) |
@@ -214,12 +216,15 @@ docker compose up -d --build
 
 ## Data
 
-Quote data is parsed from Umineko no Naku Koro ni script files:
+Quote data is parsed from Umineko no Naku Koro ni script files. The scripts are stored in ONS2-encoded `.file` format (compressed and obfuscated) and decoded at startup.
 
 ```
 internal/quote/data/
-├── english.txt
-├── japanese.txt
+├── en.file         (English, ONS2 encoded)
+├── ja.file         (Japanese, ONS2 encoded)
+├── es.file         (Spanish, ONS2 encoded)
+├── pt.file         (Portuguese, ONS2 encoded)
+├── sub/            (ASS subtitle files)
 └── audio/          (extracted via setup script or Docker build)
     ├── 00/
     ├── 01/
@@ -227,7 +232,29 @@ internal/quote/data/
     └── 99/
 ```
 
-Text files are embedded at compile time. Audio files are read from disk at runtime and are organized by character ID subdirectory.
+`.file` data is embedded at compile time and decoded in memory at startup via the script loader. Audio files are read from disk at runtime and are organized by character ID subdirectory.
+
+### Script Loader
+
+The `internal/quote/scriptloader` package owns the full data pipeline: decode → parse → subtitle resolution → mutation fixes. The service calls `loader.Load(lang, path)` and receives clean `[]dto.ParsedQuote` back.
+
+The loader decodes the ONS2 format (XOR substitution cipher + ZLIB compression), splits the result into lines, runs the parser, resolves subtitle references from embedded `.ass` files, and applies the mutation engine pipeline before returning.
+
+### Mutation Engine Pipeline
+
+The `internal/quote/mutation` package provides an extensible pipeline for applying post-parse data integrity fixes. Some script data contains known errors (e.g. misattributed character IDs) that cannot be fixed in the encoded source files.
+
+```
+internal/quote/mutation/
+├── mutation.go                          # Engine interface + Pipeline
+└── engine/
+    └── kanon_attribution_engine.go      # Fixes Kanon/Erika misattribution
+```
+
+To add a new fix:
+1. Create a new file in `mutation/engine/`
+2. Implement the `mutation.Engine` interface (`Apply([]dto.ParsedQuote) []dto.ParsedQuote`)
+3. Register it in `mutation.NewPipeline()`
 
 ## Architecture: The Lexar Package
 

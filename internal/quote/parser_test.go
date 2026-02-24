@@ -3,6 +3,8 @@ package quote
 import (
 	"strings"
 	"testing"
+	"umineko_quote/internal/quote/character"
+	"umineko_quote/internal/quote/language"
 )
 
 var testParser = NewParser()
@@ -355,8 +357,8 @@ func TestParseAll_EpisodeAndContentTypes(t *testing.T) {
 			if en.CharacterID != tt.wantCharID {
 				t.Errorf("EN characterID: got %q, want %q", en.CharacterID, tt.wantCharID)
 			}
-			if en.Character != CharacterNames[CharacterFromID(tt.wantCharID)] {
-				t.Errorf("EN character: got %q, want %q", en.Character, CharacterNames[CharacterFromID(tt.wantCharID)])
+			if en.Character != character.CharacterNames[character.CharacterFromID(tt.wantCharID)] {
+				t.Errorf("EN character: got %q, want %q", en.Character, character.CharacterNames[character.CharacterFromID(tt.wantCharID)])
 			}
 			if en.AudioID != tt.wantAudioID {
 				t.Errorf("EN audioID: got %q, want %q", en.AudioID, tt.wantAudioID)
@@ -383,8 +385,8 @@ func TestParseAll_EpisodeAndContentTypes(t *testing.T) {
 				if ja.CharacterID != tt.wantCharID {
 					t.Errorf("JA characterID: got %q, want %q", ja.CharacterID, tt.wantCharID)
 				}
-				if ja.Character != CharacterNames[CharacterFromID(tt.wantCharID)] {
-					t.Errorf("JA character: got %q, want %q", ja.Character, CharacterNames[CharacterFromID(tt.wantCharID)])
+				if ja.Character != character.CharacterNames[character.CharacterFromID(tt.wantCharID)] {
+					t.Errorf("JA character: got %q, want %q", ja.Character, character.CharacterNames[character.CharacterFromID(tt.wantCharID)])
 				}
 				if ja.AudioID != tt.wantAudioID {
 					t.Errorf("JA audioID: got %q, want %q", ja.AudioID, tt.wantAudioID)
@@ -486,8 +488,8 @@ func TestParseAll_RedTruth(t *testing.T) {
 		if q.Episode != 2 {
 			t.Errorf("episode: got %d, want 2", q.Episode)
 		}
-		if q.CharacterID != "27" || q.Character != CharacterNames[Beatrice] {
-			t.Errorf("character: got %q/%q, want 27/%s", q.CharacterID, q.Character, CharacterNames[Beatrice])
+		if q.CharacterID != "27" || q.Character != character.CharacterNames[character.Beatrice] {
+			t.Errorf("character: got %q/%q, want 27/%s", q.CharacterID, q.Character, character.CharacterNames[character.Beatrice])
 		}
 		if !strings.Contains(q.Text, "Everything I speak in red is the truth") {
 			t.Errorf("plain text missing red truth content: %q", q.Text)
@@ -542,8 +544,8 @@ func TestParseAll_BlueTruth(t *testing.T) {
 		if q.Episode != 4 {
 			t.Errorf("episode: got %d, want 4", q.Episode)
 		}
-		if q.CharacterID != "10" || q.Character != CharacterNames[Battler] {
-			t.Errorf("character: got %q/%q, want 10/%s", q.CharacterID, q.Character, CharacterNames[Battler])
+		if q.CharacterID != "10" || q.Character != character.CharacterNames[character.Battler] {
+			t.Errorf("character: got %q/%q, want 10/%s", q.CharacterID, q.Character, character.CharacterNames[character.Battler])
 		}
 		if !strings.Contains(q.Text, "Ushiromiya Kinzo is already dead") {
 			t.Errorf("plain text missing blue truth content: %q", q.Text)
@@ -800,14 +802,10 @@ func TestParseAll_StrayBracesStripped(t *testing.T) {
 }
 
 func TestParseAll_NoBracesInOutput(t *testing.T) {
-	p := testParser
-
-	data, err := dataFS.ReadFile("data/english.txt")
-	if err != nil {
-		t.Fatalf("failed to read english.txt: %v", err)
+	quotes := testService.(*service).quotes[language.English]
+	if len(quotes) == 0 {
+		t.Fatal("no English quotes loaded")
 	}
-	lines := strings.Split(string(data), "\n")
-	quotes := p.ParseAll(lines)
 
 	for i, q := range quotes {
 		if strings.Contains(q.Text, "{") || strings.Contains(q.Text, "}") {
@@ -1264,8 +1262,8 @@ func TestParseAll_MixedRedBlueTruth(t *testing.T) {
 	if q.Episode != 5 || q.ContentType != "tea" {
 		t.Errorf("got ep=%d ct=%q, want ep=5 ct=tea", q.Episode, q.ContentType)
 	}
-	if q.CharacterID != "46" || q.Character != CharacterNames[Erika] {
-		t.Errorf("character: got %q/%q, want 46/%s", q.CharacterID, q.Character, CharacterNames[Erika])
+	if q.CharacterID != "46" || q.Character != character.CharacterNames[character.Erika] {
+		t.Errorf("character: got %q/%q, want 46/%s", q.CharacterID, q.Character, character.CharacterNames[character.Erika])
 	}
 
 	// Both red and blue truth should be present in HTML

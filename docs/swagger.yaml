@@ -283,6 +283,11 @@ paths:
       parameters:
       - default: en
         description: Language
+        enum:
+        - en
+        - ja
+        - es
+        - pt
         in: query
         name: lang
         type: string
@@ -425,6 +430,11 @@ paths:
         type: string
       - default: en
         description: Language
+        enum:
+        - en
+        - ja
+        - es
+        - pt
         in: query
         name: lang
         type: string
@@ -477,6 +487,11 @@ paths:
         type: string
       - default: en
         description: Language
+        enum:
+        - en
+        - ja
+        - es
+        - pt
         in: query
         name: lang
         type: string
@@ -500,6 +515,11 @@ paths:
       parameters:
       - default: en
         description: Language
+        enum:
+        - en
+        - ja
+        - es
+        - pt
         in: query
         name: lang
         type: string
@@ -607,6 +627,11 @@ paths:
         type: string
       - default: en
         description: Language
+        enum:
+        - en
+        - ja
+        - es
+        - pt
         in: query
         name: lang
         type: string

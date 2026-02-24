@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"umineko_quote/internal/quote/character"
 
 	"umineko_quote/internal/dto"
 )
@@ -156,7 +157,7 @@ func (*statsComputer) topSpeakers(ranked []rankedChar, n int) []dto.SpeakerStat 
 	for i := 0; i < n; i++ {
 		result[i] = dto.SpeakerStat{
 			CharacterID: ranked[i].id,
-			Name:        CharacterNames.GetCharacterName(CharacterFromID(ranked[i].id)),
+			Name:        character.CharacterNames.GetCharacterName(character.CharacterFromID(ranked[i].id)),
 			Count:       ranked[i].count,
 		}
 	}
@@ -232,8 +233,8 @@ func (*statsComputer) topInteractions(interactionCounts map[string]int, n int) [
 		result[i] = dto.InteractionPair{
 			CharA: parts[0],
 			CharB: parts[1],
-			NameA: CharacterNames.GetCharacterName(CharacterFromID(parts[0])),
-			NameB: CharacterNames.GetCharacterName(CharacterFromID(parts[1])),
+			NameA: character.CharacterNames.GetCharacterName(character.CharacterFromID(parts[0])),
+			NameB: character.CharacterNames.GetCharacterName(character.CharacterFromID(parts[1])),
 			Count: sorted[i].count,
 		}
 	}
@@ -253,7 +254,7 @@ func (*statsComputer) buildCharacterPresence(ranked []rankedChar, charEpCounts m
 		}
 		result[i] = dto.CharacterPresence{
 			CharacterID: id,
-			Name:        CharacterNames.GetCharacterName(CharacterFromID(id)),
+			Name:        character.CharacterNames.GetCharacterName(character.CharacterFromID(id)),
 			Episodes:    episodes,
 		}
 	}
@@ -263,7 +264,7 @@ func (*statsComputer) buildCharacterPresence(ranked []rankedChar, charEpCounts m
 func (*statsComputer) buildNameMap(charCounts map[string]int) map[string]string {
 	nameMap := make(map[string]string, len(charCounts))
 	for id := range charCounts {
-		nameMap[id] = CharacterNames.GetCharacterName(CharacterFromID(id))
+		nameMap[id] = character.CharacterNames.GetCharacterName(character.CharacterFromID(id))
 	}
 	return nameMap
 }

@@ -1,106 +1,163 @@
 package scriptloader
 
 import (
-	"bytes"
-	"compress/zlib"
-	"encoding/binary"
 	"testing"
+	"testing/fstest"
+
+	"umineko_quote/internal/dto"
+	"umineko_quote/internal/lexar"
 )
 
-var forwardKeyTable [256]byte
-
-func init() {
-	for i := 0; i < 256; i++ {
-		forwardKeyTable[inverseKeyTable[i]] = byte(i)
+func testParseFunc(quotes []dto.ParsedQuote, refs []lexar.SubtitleRef) ParseFunc {
+	return func(lines []string) ([]dto.ParsedQuote, []lexar.SubtitleRef) {
+		return quotes, refs
 	}
 }
 
-func xorEncode(data []byte, xorA, xorB byte) []byte {
-	out := make([]byte, len(data))
-	for i, b := range data {
-		out[i] = forwardKeyTable[b^xorB] ^ xorA
-	}
-	return out
-}
-
-func encodeTestPayload(plaintext []byte) []byte {
-	pass1Encoded := xorEncode(plaintext, pass1XorA, pass1XorB)
-
-	var compressed bytes.Buffer
-	w := zlib.NewWriter(&compressed)
-	w.Write(pass1Encoded)
-	w.Close()
-
-	pass2Encoded := xorEncode(compressed.Bytes(), pass2XorA, pass2XorB)
-
-	var header [16]byte
-	copy(header[:4], "ONS2")
-	binary.LittleEndian.PutUint32(header[4:8], uint32(len(pass2Encoded)))
-	binary.LittleEndian.PutUint32(header[8:12], uint32(len(plaintext)))
-	binary.LittleEndian.PutUint32(header[12:16], 110)
-
-	var out bytes.Buffer
-	out.Write(header[:])
-	out.Write(pass2Encoded)
-	return out.Bytes()
-}
-
-func TestDecode_ValidPayload(t *testing.T) {
-	plaintext := []byte("preset_define 0,6,36,#FFFFFF\nnew_episode 1\nd `Hello world`[\\]")
-	encoded := encodeTestPayload(plaintext)
-
-	decoded, err := decode(encoded)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-
-	if !bytes.Equal(decoded, plaintext) {
-		t.Errorf("decoded mismatch:\ngot:  %q\nwant: %q", decoded, plaintext)
+func buildTestFS(path string, plaintext []byte) fstest.MapFS {
+	return fstest.MapFS{
+		path: &fstest.MapFile{Data: encodeTestPayload(plaintext)},
 	}
 }
 
-func TestDecode_TooShort(t *testing.T) {
-	_, err := decode([]byte("ONS2"))
-	if err == nil {
-		t.Fatal("expected error for data too short")
+func TestLoad_ReturnsQuotes(t *testing.T) {
+	expected := []dto.ParsedQuote{
+		{Text: "Hello", CharacterID: "10", Episode: 1},
+		{Text: "World", CharacterID: "27", Episode: 1},
+	}
+	fs := buildTestFS("data/test.file", []byte("line1\nline2"))
+	loader := New(fs, testParseFunc(expected, nil))
+
+	result := loader.Load("en", "data/test.file")
+
+	if len(result) != 2 {
+		t.Fatalf("expected 2 quotes, got %d", len(result))
+	}
+	if result[0].Text != "Hello" {
+		t.Errorf("quote 0 text: got %q, want %q", result[0].Text, "Hello")
+	}
+	if result[1].Text != "World" {
+		t.Errorf("quote 1 text: got %q, want %q", result[1].Text, "World")
 	}
 }
 
-func TestDecode_InvalidMagic(t *testing.T) {
-	data := make([]byte, 16)
-	copy(data[:4], "NOPE")
+func TestLoad_FileNotFound(t *testing.T) {
+	fs := fstest.MapFS{}
+	loader := New(fs, testParseFunc(nil, nil))
 
-	_, err := decode(data)
-	if err == nil {
-		t.Fatal("expected error for invalid magic")
+	result := loader.Load("en", "data/missing.file")
+
+	if result != nil {
+		t.Errorf("expected nil for missing file, got %d quotes", len(result))
 	}
 }
 
-func TestDecode_CorruptZlib(t *testing.T) {
-	var header [16]byte
-	copy(header[:4], "ONS2")
-	binary.LittleEndian.PutUint32(header[4:8], 10)
-	binary.LittleEndian.PutUint32(header[8:12], 100)
-	binary.LittleEndian.PutUint32(header[12:16], 110)
+func TestLoad_InvalidEncodedData(t *testing.T) {
+	fs := fstest.MapFS{
+		"data/bad.file": &fstest.MapFile{Data: []byte("not valid ONS2 data here!")},
+	}
+	loader := New(fs, testParseFunc(nil, nil))
 
-	data := append(header[:], []byte{0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}...)
+	result := loader.Load("en", "data/bad.file")
 
-	_, err := decode(data)
-	if err == nil {
-		t.Fatal("expected error for corrupt zlib data")
+	if result != nil {
+		t.Errorf("expected nil for invalid data, got %d quotes", len(result))
 	}
 }
 
-func TestDecode_EmptyPayload(t *testing.T) {
-	var plaintext []byte
-	encoded := encodeTestPayload(plaintext)
+func TestLoad_PassesDecodedLinesToParser(t *testing.T) {
+	plaintext := []byte("first line\nsecond line\nthird line")
+	fs := buildTestFS("data/test.file", plaintext)
 
-	decoded, err := decode(encoded)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+	var capturedLines []string
+	parse := func(lines []string) ([]dto.ParsedQuote, []lexar.SubtitleRef) {
+		capturedLines = lines
+		return nil, nil
+	}
+	loader := New(fs, parse)
+
+	loader.Load("en", "data/test.file")
+
+	if len(capturedLines) != 3 {
+		t.Fatalf("expected 3 lines passed to parser, got %d", len(capturedLines))
+	}
+	if capturedLines[0] != "first line" {
+		t.Errorf("line 0: got %q, want %q", capturedLines[0], "first line")
+	}
+	if capturedLines[2] != "third line" {
+		t.Errorf("line 2: got %q, want %q", capturedLines[2], "third line")
+	}
+}
+
+func TestLoad_ResolvesSubtitleRefs(t *testing.T) {
+	assContent := "[Script Info]\nTitle: Test\n\n[V4+ Styles]\nFormat: Name\nStyle: Default\n\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\nDialogue: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,,Welcome back.\nDialogue: 0,0:00:05.00,0:00:10.00,Default,,0,0,0,,Goodbye.\n"
+
+	fs := fstest.MapFS{
+		"data/test.file":      &fstest.MapFile{Data: encodeTestPayload([]byte("test"))},
+		"data/sub/ending.ass": &fstest.MapFile{Data: []byte(assContent)},
 	}
 
-	if len(decoded) != 0 {
-		t.Errorf("expected empty decoded output, got %d bytes", len(decoded))
+	refs := []lexar.SubtitleRef{
+		{SubPath: `sub\ending.ass`, CharacterID: "00", AudioID: "end_test", Episode: 8},
+	}
+	loader := New(fs, testParseFunc(nil, refs))
+
+	result := loader.Load("en", "data/test.file")
+
+	if len(result) != 2 {
+		t.Fatalf("expected 2 subtitle quotes, got %d", len(result))
+	}
+	if result[0].AudioID != "end_test_s0" {
+		t.Errorf("quote 0 audioID: got %q, want %q", result[0].AudioID, "end_test_s0")
+	}
+	if result[1].AudioID != "end_test_s1" {
+		t.Errorf("quote 1 audioID: got %q, want %q", result[1].AudioID, "end_test_s1")
+	}
+	if result[0].Episode != 8 {
+		t.Errorf("quote 0 episode: got %d, want 8", result[0].Episode)
+	}
+}
+
+func TestLoad_SubtitleRefMissingFile(t *testing.T) {
+	fs := buildTestFS("data/test.file", []byte("test"))
+
+	refs := []lexar.SubtitleRef{
+		{SubPath: `sub\missing.ass`, CharacterID: "00", AudioID: "end_test", Episode: 8},
+	}
+	loader := New(fs, testParseFunc(nil, refs))
+
+	result := loader.Load("en", "data/test.file")
+
+	if len(result) != 0 {
+		t.Errorf("expected 0 quotes when subtitle file missing, got %d", len(result))
+	}
+}
+
+func TestLoad_CombinesParsedAndSubtitleQuotes(t *testing.T) {
+	assContent := "[Script Info]\nTitle: Test\n\n[V4+ Styles]\nFormat: Name\nStyle: Default\n\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\nDialogue: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,,Sub line.\n"
+
+	fs := fstest.MapFS{
+		"data/test.file":      &fstest.MapFile{Data: encodeTestPayload([]byte("test"))},
+		"data/sub/ending.ass": &fstest.MapFile{Data: []byte(assContent)},
+	}
+
+	parsed := []dto.ParsedQuote{
+		{Text: "Parsed quote", CharacterID: "10", Episode: 1},
+	}
+	refs := []lexar.SubtitleRef{
+		{SubPath: `sub\ending.ass`, CharacterID: "00", AudioID: "end_test", Episode: 8},
+	}
+	loader := New(fs, testParseFunc(parsed, refs))
+
+	result := loader.Load("en", "data/test.file")
+
+	if len(result) != 2 {
+		t.Fatalf("expected 2 total quotes (1 parsed + 1 subtitle), got %d", len(result))
+	}
+	if result[0].Text != "Parsed quote" {
+		t.Errorf("quote 0: got %q, want %q", result[0].Text, "Parsed quote")
+	}
+	if result[1].Text != "Sub line." {
+		t.Errorf("quote 1: got %q, want %q", result[1].Text, "Sub line.")
 	}
 }

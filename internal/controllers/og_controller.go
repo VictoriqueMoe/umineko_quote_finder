@@ -48,7 +48,9 @@ func (s *Service) ogImage(ctx fiber.Ctx) error {
 		})
 	}
 
-	data, err := s.OGImageGenerator.Generate(audioId, lang, q.Text, q.TextHtml, q.Character, q.Episode, q.ContentType)
+	full := ctx.Query("full") == "true"
+
+	data, err := s.OGImageGenerator.Generate(audioId, lang, q.Text, q.TextHtml, q.Character, q.Episode, q.ContentType, full)
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "failed to generate image",

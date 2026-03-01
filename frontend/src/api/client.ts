@@ -32,6 +32,10 @@ export function resolveCharId(audioId: string, defaultCharId: string, audioCharM
     return audioCharMap?.[audioId] ?? defaultCharId;
 }
 
-export function ogImageUrl(audioId: string, lang: string): string {
-    return `${API_BASE}/og/${audioId}.png?lang=${lang || "en"}`;
+export function ogImageUrl(audioId: string, lang: string, full?: boolean): string {
+    const params = new URLSearchParams({ lang: lang || "en" });
+    if (full) {
+        params.set("full", "true");
+    }
+    return `${API_BASE}/og/${audioId}.png?${params.toString()}`;
 }

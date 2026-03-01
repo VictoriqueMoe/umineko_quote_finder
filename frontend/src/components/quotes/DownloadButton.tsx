@@ -13,7 +13,7 @@ export function DownloadButton({ audioId, lang }: DownloadButtonProps) {
     const handleClick = useCallback(async () => {
         setDownloading(true);
         try {
-            const url = ogImageUrl(firstId, lang || "en");
+            const url = ogImageUrl(firstId, lang ?? "en", true);
             const response = await fetch(url, { cache: "no-cache" });
             if (!response.ok) {
                 throw new Error(`Failed to fetch image: ${response.status}`);

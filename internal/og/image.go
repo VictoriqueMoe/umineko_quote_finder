@@ -93,8 +93,19 @@ type DialogueLine struct {
 	Text      string
 }
 
-func (g *ImageGenerator) Generate(audioId string, lang language.Language, text, textHtml, character string, episode int, contentType string) ([]byte, error) {
-	cacheKey := audioId + ":" + string(lang)
+func (g *ImageGenerator) Generate(
+	audioId string,
+	lang language.Language,
+	text, textHtml, character string,
+	episode int,
+	contentType string,
+	full bool,
+) ([]byte, error) {
+	fullStr := ""
+	if full {
+		fullStr = ":full"
+	}
+	cacheKey := audioId + ":" + string(lang) + fullStr
 	if cached, ok := g.cache.Load(cacheKey); ok {
 		return cached.([]byte), nil
 	}
@@ -125,10 +136,15 @@ func (g *ImageGenerator) Generate(audioId string, lang language.Language, text, 
 	maxWidth := float64(imgWidth) - 120
 	if textHtml != "" {
 		segments := parseHTMLSegments(textHtml, creamColor)
-		segments = truncateSegments(segments, 300)
+		if !full {
+			segments = truncateSegments(segments, 300)
+		}
 		g.drawColouredText(dc, segments, 60, 120, maxWidth, 1.5)
 	} else {
-		displayText := truncateText(text, 300)
+		displayText := text
+		if !full {
+			displayText = truncateText(text, 300)
+		}
 		dc.SetColor(creamColor)
 		dc.DrawStringWrapped(displayText, 60, 120, 0, 0, maxWidth, 1.5, gg.AlignLeft)
 	}

@@ -31,6 +31,7 @@ type (
 		AudioFilePath(characterId string, audioId string) string
 		GetStats() Stats
 		HasAudio() bool
+		LoadedLanguages() map[language.Language]int
 	}
 
 	service struct {
@@ -366,4 +367,12 @@ func (s *service) GetStats() Stats {
 
 func (s *service) HasAudio() bool {
 	return s.indexer.HasAudio()
+}
+
+func (s *service) LoadedLanguages() map[language.Language]int {
+	result := make(map[language.Language]int, len(s.quotes))
+	for lang, quotes := range s.quotes {
+		result[lang] = len(quotes)
+	}
+	return result
 }

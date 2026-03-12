@@ -262,7 +262,7 @@ const docTemplate = `{
         },
         "/health": {
             "get": {
-                "description": "Returns the health status of the service",
+                "description": "Returns the health status of the service including language loading status",
                 "produces": [
                     "application/json"
                 ],
@@ -275,9 +275,14 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "additionalProperties": true
+                        }
+                    },
+                    "503": {
+                        "description": "Service Unavailable",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
                         }
                     }
                 }

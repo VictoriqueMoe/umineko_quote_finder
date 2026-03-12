@@ -300,23 +300,16 @@ func (s *service) Random(lang language.Language, character character.Character, 
 }
 
 func (s *service) GetByAudioID(lang language.Language, audioID string) *dto.ParsedQuote {
-
 	quotes := s.quotes[lang]
 	if quotes == nil {
 		return nil
 	}
 
-	for i := range quotes {
-		if quotes[i].AudioID == audioID {
-			return &quotes[i]
-		}
-		for _, id := range strings.Split(quotes[i].AudioID, ", ") {
-			if id == audioID {
-				return &quotes[i]
-			}
-		}
+	idx, ok := s.indexer.QuoteIndex(lang, audioID)
+	if !ok {
+		return nil
 	}
-	return nil
+	return &quotes[idx]
 }
 
 func (s *service) GetContext(lang language.Language, audioID string, lines int) *dto.ContextResponse {

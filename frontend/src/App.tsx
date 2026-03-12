@@ -22,6 +22,8 @@ import { StatsView } from "./components/stats/StatsView";
 import { VoiceBuilderView } from "./components/builder/VoiceBuilderView";
 import { LoadingSpinner } from "./components/common/LoadingSpinner";
 import { EmptyState } from "./components/common/EmptyState";
+import { BookmarksView } from "./components/quotes/BookmarksView";
+import { useBookmarks } from "./hooks/useBookmarks";
 
 const DEFAULT_FILTERS: FilterState = { character: "", episode: "0", truth: "" };
 
@@ -33,6 +35,7 @@ export default function App() {
     const browse = useBrowse();
     const stats = useStats();
     const featured = useFeaturedQuote();
+    const { count: bookmarkCount } = useBookmarks();
 
     const [viewMode, setViewMode] = useState<ViewMode>("featured");
     const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
@@ -181,6 +184,12 @@ export default function App() {
         doPushUrl("voiceBuilder", filters);
     }, [audioPlayer, filters, doPushUrl]);
 
+    const handleBookmarksClick = useCallback(() => {
+        audioPlayer.stop();
+        setViewMode("bookmarks");
+        doPushUrl("bookmarks", filters);
+    }, [audioPlayer, filters, doPushUrl]);
+
     const handleBuilderClose = useCallback(() => {
         audioPlayer.stop();
         setViewMode("featured");
@@ -317,10 +326,13 @@ export default function App() {
             <div className={`container${isStatsActive ? " stats-active" : ""}`}>
                 <Header
                     language={language}
+                    viewMode={viewMode}
                     onLanguageChange={handleLanguageChange}
                     onHomeClick={handleHomeClick}
                     onStatsClick={handleLoadStats}
                     onBuilderClick={handleBuilderClick}
+                    onBookmarksClick={handleBookmarksClick}
+                    bookmarkCount={bookmarkCount}
                 />
 
                 {isBuilderActive ? (
@@ -384,6 +396,12 @@ export default function App() {
                             )}
                             {!error && viewMode === "stats" && stats.data && (
                                 <StatsView data={stats.data} episode={filters.episode} />
+                            )}
+                            {viewMode === "bookmarks" && (
+                                <BookmarksView
+                                    audioPlayer={audioPlayer}
+                                    onContextQuoteClick={handleContextQuoteClick}
+                                />
                             )}
                         </section>
                     </>

@@ -4,6 +4,7 @@ import { AudioPlayer } from "../audio/AudioPlayer";
 import { LangToggle } from "./LangToggle";
 import { ShareButton } from "./ShareButton";
 import { DownloadButton } from "./DownloadButton";
+import { BookmarkButton } from "./BookmarkButton";
 import { ContextViewer } from "./ContextViewer";
 import type { Quote } from "../../types/api";
 import type { AudioPlayer as AudioPlayerType } from "../../hooks/useAudioPlayer";
@@ -27,6 +28,7 @@ export function QuoteCard({ quote, index, lineNumber, audioPlayer, onContextQuot
 
     return (
         <article className="quote-card" style={{ "--index": index } as React.CSSProperties}>
+            <BookmarkButton quote={quote} />
             {lineNumber !== undefined && <span className="quote-number">#{lineNumber}</span>}
             <span className="quote-mark">&ldquo;</span>
             <p className="quote-text" dangerouslySetInnerHTML={{ __html: displayHtml }} />

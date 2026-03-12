@@ -218,6 +218,7 @@ func (s *Service) context(ctx fiber.Ctx) error {
 //	@Success		200	{object}	map[string]string
 //	@Router			/characters [get]
 func (s *Service) characters(ctx fiber.Ctx) error {
+	ctx.Set("Cache-Control", "public, max-age=86400")
 	return ctx.JSON(s.QuoteService.GetCharacters())
 }
 

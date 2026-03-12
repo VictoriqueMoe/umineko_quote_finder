@@ -11,6 +11,7 @@ import (
 func ServeAudio(ctx fiber.Ctx, data []byte) error {
 	ctx.Set("Content-Type", "audio/ogg")
 	ctx.Set("Accept-Ranges", "bytes")
+	ctx.Set("Cache-Control", "public, max-age=604800, immutable")
 
 	total := len(data)
 	rangeHeader := ctx.Get("Range")

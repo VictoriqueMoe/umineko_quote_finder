@@ -1,15 +1,29 @@
-import type { Language } from "../../types/app";
+import type { Language, ViewMode } from "../../types/app";
 import { ThemeSelector } from "./ThemeSelector";
+
+const HOME_VIEWS = new Set<ViewMode>(["featured", "search", "browse", "quoteLookup"]);
 
 interface HeaderProps {
     language: Language;
+    viewMode: ViewMode;
     onLanguageChange: (lang: Language) => void;
     onHomeClick: () => void;
     onStatsClick: () => void;
     onBuilderClick: () => void;
+    onBookmarksClick: () => void;
+    bookmarkCount: number;
 }
 
-export function Header({ language, onLanguageChange, onHomeClick, onStatsClick, onBuilderClick }: HeaderProps) {
+export function Header({
+    language,
+    viewMode,
+    onLanguageChange,
+    onHomeClick,
+    onStatsClick,
+    onBuilderClick,
+    onBookmarksClick,
+    bookmarkCount,
+}: HeaderProps) {
     return (
         <header className="header">
             <div className="ornament">{"\u2726 \u2726 \u2726"}</div>
@@ -45,14 +59,24 @@ export function Header({ language, onLanguageChange, onHomeClick, onStatsClick, 
                 </button>
             </div>
             <nav className="header-nav">
-                <button className="header-nav-btn" onClick={onHomeClick}>
+                <button className={`header-nav-btn${HOME_VIEWS.has(viewMode) ? " active" : ""}`} onClick={onHomeClick}>
                     {"\u2302 Home"}
                 </button>
-                <button className="header-nav-btn" onClick={onBuilderClick}>
+                <button
+                    className={`header-nav-btn${viewMode === "voiceBuilder" ? " active" : ""}`}
+                    onClick={onBuilderClick}
+                >
                     {"\u266B Voice Builder"}
                 </button>
-                <button className="header-nav-btn" onClick={onStatsClick}>
+                <button className={`header-nav-btn${viewMode === "stats" ? " active" : ""}`} onClick={onStatsClick}>
                     {"\u2733 Statistics"}
+                </button>
+                <button
+                    className={`header-nav-btn${viewMode === "bookmarks" ? " active" : ""}`}
+                    onClick={onBookmarksClick}
+                >
+                    {"\u2605 Bookmarks"}
+                    {bookmarkCount > 0 && <span className="bookmark-count">{bookmarkCount}</span>}
                 </button>
             </nav>
         </header>

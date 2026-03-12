@@ -494,6 +494,12 @@ body {
     background: rgba(var(--gold-rgb), var(--hover-glow));
 }
 
+.header-nav-btn.active {
+    border-color: var(--gold);
+    color: var(--gold);
+    background: rgba(var(--gold-rgb), var(--hover-glow));
+}
+
 /* Footer Links */
 .footer-made-by {
     font-size: 0.75rem;
@@ -1003,6 +1009,90 @@ body {
 
 .quote-actions .share-btn {
     margin: 0;
+}
+
+/* Bookmark Icon */
+.bookmark-ribbon {
+    position: absolute;
+    top: 0;
+    right: 0.8rem;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    opacity: 0.35;
+    transition: all 0.25s var(--ease-out);
+    padding: 0;
+    z-index: 1;
+}
+
+.bookmark-ribbon:hover {
+    opacity: 0.8;
+    color: var(--gold);
+    transform: translateY(-2px);
+}
+
+.bookmark-ribbon.bookmarked {
+    opacity: 1;
+    color: var(--gold);
+    filter: drop-shadow(0 0 4px rgba(var(--gold-rgb), 0.5));
+}
+
+.bookmark-count {
+    display: inline-block;
+    margin-left: 0.4rem;
+    padding: 0 0.35rem;
+    font-size: 0.65rem;
+    line-height: 1.4;
+    background: rgba(var(--gold-rgb), 0.2);
+    border-radius: 3px;
+    color: var(--gold);
+}
+
+.bookmark-entry {
+    position: relative;
+}
+
+.bookmark-remove-btn {
+    display: block;
+    margin: 0.5rem auto 0;
+    padding: 0.2rem 0.8rem;
+    background: transparent;
+    border: 1px solid var(--text-muted);
+    color: var(--text-muted);
+    font-family: var(--font-display);
+    font-size: 0.6rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.3s var(--ease-out);
+}
+
+.bookmark-remove-btn:hover {
+    border-color: #c44;
+    color: #c44;
+    background: rgba(204, 68, 68, 0.1);
+}
+
+.bookmarks-clear-btn {
+    display: block;
+    margin: 0.75rem auto 0;
+    padding: 0.3rem 1rem;
+    background: transparent;
+    border: 1px solid var(--text-muted);
+    color: var(--text-muted);
+    font-family: var(--font-display);
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.3s var(--ease-out);
+}
+
+.bookmarks-clear-btn:hover {
+    border-color: #c44;
+    color: #c44;
+    background: rgba(204, 68, 68, 0.1);
 }
 
 /* Context Button */

@@ -2,7 +2,7 @@ export type Language = "en" | "ja" | "es" | "pt";
 
 export type ThemeType = "featherine" | "bernkastel" | "lambdadelta";
 
-export type ViewMode = "search" | "browse" | "stats" | "featured" | "quoteLookup" | "voiceBuilder";
+export type ViewMode = "search" | "browse" | "stats" | "featured" | "quoteLookup" | "voiceBuilder" | "bookmarks";
 
 export interface FilterState {
     character: string;

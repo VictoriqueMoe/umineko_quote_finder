@@ -3,6 +3,7 @@ import { AudioPlayer } from "../audio/AudioPlayer";
 import { LangToggle } from "./LangToggle";
 import { ShareButton } from "./ShareButton";
 import { DownloadButton } from "./DownloadButton";
+import { BookmarkButton } from "./BookmarkButton";
 import { ContextViewer } from "./ContextViewer";
 import type { Quote } from "../../types/api";
 import type { AudioPlayer as AudioPlayerType } from "../../hooks/useAudioPlayer";
@@ -18,6 +19,7 @@ export function FeaturedQuote({ quote, audioPlayer, onContextQuoteClick }: Featu
 
     return (
         <article className="featured-quote">
+            <BookmarkButton quote={quote} />
             <div className="featured-label">{"\u2726 A Fragment from the Sea \u2726"}</div>
             <p className="featured-text" dangerouslySetInnerHTML={{ __html: `&ldquo;${displayHtml}&rdquo;` }} />
             <p className="featured-character">&mdash; {quote.character}</p>

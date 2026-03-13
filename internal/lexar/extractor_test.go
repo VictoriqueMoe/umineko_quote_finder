@@ -99,6 +99,50 @@ d [lv 0*"10"*"91000001"]` + "`\"This is the ura content line.\"`" + `[\]`,
 			wantEpisode:     7,
 			wantContentType: "ura",
 		},
+		{
+			name: "omake label",
+			input: "*o4_16\n" +
+				`d [lv 0*"10"*"90100001"]` + "`\"Omake line.\"`" + `[\]`,
+			wantEpisode:     4,
+			wantContentType: "omake",
+		},
+		{
+			name: "omake two digit episode",
+			input: "*o12_bonus\n" +
+				`d [lv 0*"10"*"90100001"]` + "`\"Omake bonus.\"`" + `[\]`,
+			wantEpisode:     12,
+			wantContentType: "omake",
+		},
+		{
+			name: "omake overrides previous episode",
+			input: "new_episode 3\n" +
+				"*o7_extra\n" +
+				`d [lv 0*"10"*"90100001"]` + "`\"After omake label.\"`" + `[\]`,
+			wantEpisode:     7,
+			wantContentType: "omake",
+		},
+		{
+			name: "non-omake label ignored",
+			input: "new_episode 5\n" +
+				"*some_label\n" +
+				`d [lv 0*"10"*"50100001"]` + "`\"Normal line.\"`" + `[\]`,
+			wantEpisode:     5,
+			wantContentType: "",
+		},
+		{
+			name: "real omake ep1 voiced",
+			input: "*o1_1\n" +
+				`d [lv 0*"04"*"10200442"]` + "`\"KyaaaaaAAAAAAaaaaaAAaa!!!\"`" + `[\]`,
+			wantEpisode:     1,
+			wantContentType: "omake",
+		},
+		{
+			name: "real omake ep2 narration",
+			input: "*o2_1\n" +
+				"d ` ...There's no way I'll ever come to a place like this again.`[@]` Kanon sighed for about the zillionth time that day.`[\\]",
+			wantEpisode:     2,
+			wantContentType: "omake",
+		},
 	}
 
 	for _, tt := range tests {
@@ -642,6 +686,39 @@ d [lv 0*"19"*"11900001"]` + "`\"First. `[@][lv 0*\"19\"*\"11900002\"]`Second.\"`
 
 	if quotes[0].AudioCharMap != nil {
 		t.Errorf("AudioCharMap should be nil for single-character quote, got %v", quotes[0].AudioCharMap)
+	}
+}
+
+func TestParseOmakeEpisode(t *testing.T) {
+	tests := []struct {
+		name   string
+		input  string
+		wantEp int
+		wantOK bool
+	}{
+		{"basic", "o4_16", 4, true},
+		{"two digits", "o12_bonus", 12, true},
+		{"single digit with underscore", "o1_test", 1, true},
+		{"no prefix", "x4_16", 0, false},
+		{"no underscore", "o4", 0, false},
+		{"empty after o", "o_test", 0, false},
+		{"not a number", "oabc_test", 0, false},
+		{"too short", "o4", 0, false},
+		{"empty string", "", 0, false},
+		{"just o", "o", 0, false},
+	}
+
+	e := NewQuoteExtractor()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ep, ok := e.parseOmakeEpisode(tt.input)
+			if ok != tt.wantOK {
+				t.Errorf("ok: got %v, want %v", ok, tt.wantOK)
+			}
+			if ep != tt.wantEp {
+				t.Errorf("episode: got %d, want %d", ep, tt.wantEp)
+			}
+		})
 	}
 }
 

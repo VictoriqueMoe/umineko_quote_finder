@@ -9,8 +9,8 @@ import (
 )
 
 func testParseFunc(quotes []dto.ParsedQuote, refs []lexar.SubtitleRef) ParseFunc {
-	return func(lines []string) ([]dto.ParsedQuote, []lexar.SubtitleRef) {
-		return quotes, refs
+	return func(lines []string) ([]dto.ParsedQuote, []lexar.SubtitleRef, []lexar.ValidationError) {
+		return quotes, refs, nil
 	}
 }
 
@@ -70,9 +70,9 @@ func TestLoad_PassesDecodedLinesToParser(t *testing.T) {
 	fs := buildTestFS("data/test.file", plaintext)
 
 	var capturedLines []string
-	parse := func(lines []string) ([]dto.ParsedQuote, []lexar.SubtitleRef) {
+	parse := func(lines []string) ([]dto.ParsedQuote, []lexar.SubtitleRef, []lexar.ValidationError) {
 		capturedLines = lines
-		return nil, nil
+		return nil, nil, nil
 	}
 	loader := New(fs, parse)
 

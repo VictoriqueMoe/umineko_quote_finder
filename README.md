@@ -298,6 +298,15 @@ The `internal/lexar` package handles parsing Umineko script files and extracting
                                       │
                                       ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
+│                       VALIDATOR (validator.go)                               │
+│  Post-parse AST validation (non-fatal)                                      │
+│                                                                             │
+│  • Unknown format tags        • Missing voice command fields                │
+│  • Missing episode numbers    • Logged at startup, never blocks parsing     │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                      │
+                                      ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
 │                       EXTRACTOR (extractor.go)                              │
 │  Walks AST, extracts quotes with metadata                                   │
 │                                                                             │
@@ -335,6 +344,7 @@ internal/lexar/
 │   └── html.go             # HTML output with styling
 ├── lexer.go                # Tokeniser
 ├── parser.go               # AST builder
+├── validator.go            # Post-parse AST validation
 ├── extractor.go            # Quote extraction
 └── truth.go                # Red/blue truth detection
 ```

@@ -16,7 +16,7 @@ import (
 )
 
 type (
-	ParseFunc func(lines []string) ([]dto.ParsedQuote, []lexar.SubtitleRef)
+	ParseFunc func(lines []string) ([]dto.ParsedQuote, []lexar.SubtitleRef, []lexar.ValidationError)
 
 	Loader struct {
 		fs        fs.ReadFileFS
@@ -55,8 +55,31 @@ func (l *Loader) Load(lang string, path string) []dto.ParsedQuote {
 	lines := strings.Split(string(decoded), "\n")
 
 	parseStart := time.Now()
-	parsed, subtitleRefs := l.parse(lines)
+	parsed, subtitleRefs, validationErrors := l.parse(lines)
 	log.Printf("[%s] parsed %d lines → %d quotes in %v", lang, len(lines), len(parsed), time.Since(parseStart).Round(time.Millisecond))
+
+	if len(validationErrors) > 0 {
+		errorCount := 0
+		warningCount := 0
+		for _, ve := range validationErrors {
+			if ve.Severity == lexar.SeverityError {
+				errorCount++
+			} else {
+				warningCount++
+			}
+		}
+		log.Printf("[%s] validation: %d errors, %d warnings", lang, errorCount, warningCount)
+		limit := len(validationErrors)
+		if limit > 10 {
+			limit = 10
+		}
+		for i := 0; i < limit; i++ {
+			log.Printf("[%s]   %s", lang, validationErrors[i])
+		}
+		if len(validationErrors) > 10 {
+			log.Printf("[%s]   ... and %d more", lang, len(validationErrors)-10)
+		}
+	}
 
 	subQuotes := l.resolveSubtitleRefs(subtitleRefs)
 	if len(subQuotes) > 0 {

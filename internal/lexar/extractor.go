@@ -11,9 +11,10 @@ import (
 
 type (
 	QuoteExtractor struct {
-		presets      *transformer.PresetContext
-		strAliases   map[string]string
-		subtitleRefs []SubtitleRef
+		presets          *transformer.PresetContext
+		strAliases       map[string]string
+		subtitleRefs     []SubtitleRef
+		validationErrors []ValidationError
 	}
 
 	ExtractedQuote struct {
@@ -49,7 +50,12 @@ func NewQuoteExtractor() *QuoteExtractor {
 
 func (e *QuoteExtractor) ExtractQuotes(input string) []ExtractedQuote {
 	script := Parse(input)
+	e.validationErrors = Validate(script)
 	return e.ExtractFromScript(script)
+}
+
+func (e *QuoteExtractor) ValidationErrors() []ValidationError {
+	return e.validationErrors
 }
 
 func (e *QuoteExtractor) ExtractFromScript(script *ast.Script) []ExtractedQuote {

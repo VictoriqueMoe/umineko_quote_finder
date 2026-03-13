@@ -1597,3 +1597,73 @@ func TestParseAll_PreFilterIncludesSubtitleLines(t *testing.T) {
 		t.Errorf("quote episode: got %d, want 8", quotes[0].Episode)
 	}
 }
+
+func TestParseAll_ValidationErrors_UnknownTag(t *testing.T) {
+	p := NewParser()
+
+	lines := []string{
+		"new_episode 1",
+		`d [lv 0*"10"*"10100001"]` + "`\"{bogus:some content}\"`" + `[\]`,
+	}
+
+	quotes := p.ParseAll(lines)
+
+	if len(quotes) != 1 {
+		t.Fatalf("expected 1 quote despite validation error, got %d", len(quotes))
+	}
+
+	errors := p.ValidationErrors()
+	found := false
+	for _, err := range errors {
+		if strings.Contains(err.Message, "unknown format tag") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("expected unknown format tag error, got %v", errors)
+	}
+}
+
+func TestParseAll_ValidationErrors_NoErrorsForValidInput(t *testing.T) {
+	p := NewParser()
+
+	lines := []string{
+		"preset_define 1,1,-1,#FF0000,0,0,0,0,0",
+		"new_episode 3",
+		`d [lv 0*"10"*"30100001"]` + "`\"Normal dialogue.\"`" + `[\]`,
+		`d [lv 0*"27"*"30700001"]` + "`\"{p:1:Red truth here}.\"`" + `[\]`,
+	}
+
+	p.ParseAll(lines)
+
+	errors := p.ValidationErrors()
+	if len(errors) != 0 {
+		t.Errorf("expected no validation errors, got %d:", len(errors))
+		for _, err := range errors {
+			t.Errorf("  %s", err)
+		}
+	}
+}
+
+func TestParseAll_ValidationErrors_VoiceMissingFields(t *testing.T) {
+	p := NewParser()
+
+	lines := []string{
+		`d [lv 0]` + "`\"Broken voice.\"`" + `[\]`,
+	}
+
+	p.ParseAll(lines)
+
+	errors := p.ValidationErrors()
+	found := false
+	for _, err := range errors {
+		if strings.Contains(err.Message, "missing character ID") || strings.Contains(err.Message, "missing audio ID") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("expected voice command error, got %v", errors)
+	}
+}

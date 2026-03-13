@@ -879,3 +879,87 @@ stralias end_all00_subs,"video\sub\end_all00_eng.ass"`
 		t.Errorf("dialogue CharacterID: got %q, want '10'", quotes[0].CharacterID)
 	}
 }
+
+func TestExtractQuotes_ValidationErrors(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   string
+		wantErr string
+		wantLen int
+	}{
+		{
+			name:    "unknown format tag",
+			input:   `d [lv 0*"10"*"10100001"]` + "`\"{bogus:content}\"`" + `[\]`,
+			wantErr: "unknown format tag",
+			wantLen: 1,
+		},
+		{
+			name:    "voice command missing fields",
+			input:   `d [lv 0]` + "`\"Hello.\"`" + `[\]`,
+			wantErr: "missing character ID",
+			wantLen: 1,
+		},
+		{
+			name:    "valid script has no errors",
+			input:   `d [lv 0*"10"*"10100001"]` + "`\"Valid line.\"`" + `[\]`,
+			wantErr: "",
+			wantLen: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			extractor := NewQuoteExtractor()
+			quotes := extractor.ExtractQuotes(tt.input)
+
+			if len(quotes) == 0 {
+				t.Fatal("expected quotes even with validation errors")
+			}
+
+			errors := extractor.ValidationErrors()
+			if len(errors) < tt.wantLen {
+				t.Fatalf("expected at least %d validation errors, got %d", tt.wantLen, len(errors))
+			}
+			if tt.wantLen == 0 && len(errors) != 0 {
+				t.Fatalf("expected no validation errors, got %d: %v", len(errors), errors)
+			}
+
+			if tt.wantErr != "" {
+				found := false
+				for _, err := range errors {
+					if strings.Contains(err.Message, tt.wantErr) {
+						found = true
+						break
+					}
+				}
+				if !found {
+					t.Errorf("expected error containing %q, got %v", tt.wantErr, errors)
+				}
+			}
+		})
+	}
+}
+
+func TestExtractQuotes_ValidationNonFatal(t *testing.T) {
+	input := `d [lv 0*"10"*"10100001"]` + "`\"{unknown_tag:content} Normal text.\"`" + `[\]`
+
+	extractor := NewQuoteExtractor()
+	quotes := extractor.ExtractQuotes(input)
+
+	if len(quotes) != 1 {
+		t.Fatalf("expected 1 quote despite validation errors, got %d", len(quotes))
+	}
+
+	errors := extractor.ValidationErrors()
+	if len(errors) == 0 {
+		t.Error("expected validation errors")
+	}
+
+	registry := transformer.NewFactory(extractor.Presets())
+	plainTransformer := registry.MustGet(transformer.FormatPlainText)
+	text := plainTransformer.Transform(quotes[0].Content)
+
+	if !strings.Contains(text, "Normal text") {
+		t.Errorf("quote content should still be extracted: %q", text)
+	}
+}

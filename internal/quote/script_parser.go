@@ -117,3 +117,7 @@ func (p *scriptParser) ParseAll(lines []string) []dto.ParsedQuote {
 func (p *scriptParser) SubtitleRefs() []lexar.SubtitleRef {
 	return p.extractor.SubtitleRefs()
 }
+
+func (p *scriptParser) ValidationErrors() []lexar.ValidationError {
+	return p.extractor.ValidationErrors()
+}

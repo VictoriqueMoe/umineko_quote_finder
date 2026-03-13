@@ -8,6 +8,7 @@ import (
 type Parser interface {
 	ParseAll(lines []string) []dto.ParsedQuote
 	SubtitleRefs() []lexar.SubtitleRef
+	ValidationErrors() []lexar.ValidationError
 }
 
 func NewParser() Parser {

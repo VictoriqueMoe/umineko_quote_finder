@@ -1,7 +1,6 @@
 package lexar
 
 import (
-	"regexp"
 	"strconv"
 	"strings"
 	"unicode"
@@ -12,9 +11,10 @@ import (
 
 type (
 	QuoteExtractor struct {
-		presets      *transformer.PresetContext
-		strAliases   map[string]string
-		subtitleRefs []SubtitleRef
+		presets          *transformer.PresetContext
+		strAliases       map[string]string
+		subtitleRefs     []SubtitleRef
+		validationErrors []ValidationError
 	}
 
 	ExtractedQuote struct {
@@ -42,8 +42,6 @@ type (
 	}
 )
 
-var omakeRegex = regexp.MustCompile(`^o(\d+)_`)
-
 func NewQuoteExtractor() *QuoteExtractor {
 	return &QuoteExtractor{
 		presets: transformer.NewPresetContext(),
@@ -52,7 +50,12 @@ func NewQuoteExtractor() *QuoteExtractor {
 
 func (e *QuoteExtractor) ExtractQuotes(input string) []ExtractedQuote {
 	script := Parse(input)
+	e.validationErrors = Validate(script)
 	return e.ExtractFromScript(script)
+}
+
+func (e *QuoteExtractor) ValidationErrors() []ValidationError {
+	return e.validationErrors
 }
 
 func (e *QuoteExtractor) ExtractFromScript(script *ast.Script) []ExtractedQuote {
@@ -84,11 +87,9 @@ func (e *QuoteExtractor) ExtractFromScript(script *ast.Script) []ExtractedQuote 
 			}
 
 		case *ast.LabelLine:
-			if matches := omakeRegex.FindStringSubmatch(l.Name); len(matches) >= 2 {
-				if ep, err := strconv.Atoi(matches[1]); err == nil {
-					currentEpisode = ep
-					currentContentType = "omake"
-				}
+			if ep, ok := e.parseOmakeEpisode(l.Name); ok {
+				currentEpisode = ep
+				currentContentType = "omake"
 			}
 
 		case *ast.CommandLine:
@@ -285,4 +286,19 @@ func containsVoiceCommand(elements []ast.DialogueElement) bool {
 // Presets returns the preset context for use with transformers.
 func (e *QuoteExtractor) Presets() *transformer.PresetContext {
 	return e.presets
+}
+
+func (*QuoteExtractor) parseOmakeEpisode(name string) (int, bool) {
+	if len(name) < 3 || name[0] != 'o' {
+		return 0, false
+	}
+	idx := strings.IndexByte(name[1:], '_')
+	if idx <= 0 {
+		return 0, false
+	}
+	ep, err := strconv.Atoi(name[1 : 1+idx])
+	if err != nil {
+		return 0, false
+	}
+	return ep, true
 }

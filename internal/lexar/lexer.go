@@ -2,20 +2,29 @@ package lexar
 
 import "umineko_quote/internal/lexar/ast"
 
-type Lexer struct {
-	input    string
-	pos      int
-	line     int
-	col      int
-	inDialog bool
-}
+type (
+	lexMode int
+
+	Lexer struct {
+		input string
+		pos   int
+		line  int
+		col   int
+		mode  lexMode
+	}
+)
+
+const (
+	modeLine lexMode = iota
+	modeDialog
+)
 
 func NewLexer(input string) *Lexer {
 	return &Lexer{input: input, pos: 0, line: 1, col: 1}
 }
 
 func (l *Lexer) NextToken() ast.Token {
-	if l.inDialog {
+	if l.mode == modeDialog {
 		return l.nextDialogToken()
 	}
 	return l.nextLineToken()
@@ -118,7 +127,7 @@ func (l *Lexer) nextLineToken() ast.Token {
 	}
 
 	if ch == '`' {
-		l.inDialog = true
+		l.mode = modeDialog
 		l.advance()
 		return ast.Token{Type: ast.TokenBacktick, Value: "`", Line: startLine, Column: startCol}
 	}
@@ -134,7 +143,7 @@ func (l *Lexer) nextLineToken() ast.Token {
 	if isIdentStart(ch) {
 		tok := l.scanIdentifier()
 		if tok.Value == "d" || tok.Value == "d2" {
-			l.inDialog = true
+			l.mode = modeDialog
 		}
 		return tok
 	}
@@ -156,7 +165,7 @@ func (l *Lexer) nextDialogToken() ast.Token {
 	}
 
 	if l.pos >= len(l.input) {
-		l.inDialog = false
+		l.mode = modeLine
 		return l.makeToken(ast.TokenEOF, "")
 	}
 
@@ -167,13 +176,13 @@ func (l *Lexer) nextDialogToken() ast.Token {
 		l.advance()
 		next := l.peek()
 		if next == '\n' || next == '\r' || next == 0 {
-			l.inDialog = false
+			l.mode = modeLine
 		}
 		return ast.Token{Type: ast.TokenBacktick, Value: "`", Line: startLine, Column: startCol}
 	}
 
 	if ch == '\n' || ch == '\r' {
-		l.inDialog = false
+		l.mode = modeLine
 		return l.nextLineToken()
 	}
 

@@ -49,9 +49,9 @@ type (
 func NewService() Service {
 	serviceStart := time.Now()
 
-	parse := func(lines []string) ([]dto.ParsedQuote, []lexar.SubtitleRef) {
+	parse := func(lines []string) ([]dto.ParsedQuote, []lexar.SubtitleRef, []lexar.ValidationError) {
 		p := NewParser()
-		return p.ParseAll(lines), p.SubtitleRefs()
+		return p.ParseAll(lines), p.SubtitleRefs(), p.ValidationErrors()
 	}
 
 	loader := scriptloader.New(dataFS, parse)

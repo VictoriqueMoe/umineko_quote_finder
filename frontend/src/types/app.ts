@@ -6,6 +6,8 @@ export type ViewMode = "search" | "browse" | "stats" | "featured" | "quoteLookup
 
 export interface FilterState {
     character: string;
+    interactionA: string;
+    interactionB: string;
     episode: string;
     truth: string;
 }

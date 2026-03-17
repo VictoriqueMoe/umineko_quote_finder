@@ -19,6 +19,8 @@ export async function searchQuotes(
     lang: Language,
     offset: number = 0,
     characterId?: string,
+    interactionA?: string,
+    interactionB?: string,
     episode?: string,
     truth?: string,
 ): Promise<SearchResponse> {
@@ -28,6 +30,8 @@ export async function searchQuotes(
         offset,
         lang,
         character: characterId || undefined,
+        interactionA: interactionA || undefined,
+        interactionB: interactionB || undefined,
         episode: episode && episode !== "0" ? episode : undefined,
         truth: truth || undefined,
     });
@@ -57,6 +61,8 @@ export async function browseDialogue(
     lang: Language,
     offset: number = 0,
     characterId?: string,
+    interactionA?: string,
+    interactionB?: string,
     episode?: string,
     truth?: string,
 ): Promise<BrowseResponse> {
@@ -65,6 +71,8 @@ export async function browseDialogue(
         offset,
         lang,
         character: characterId || undefined,
+        interactionA: interactionA || undefined,
+        interactionB: interactionB || undefined,
         episode: episode && episode !== "0" ? episode : undefined,
         truth: truth || undefined,
     });

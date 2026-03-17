@@ -24,8 +24,9 @@ import { LoadingSpinner } from "./components/common/LoadingSpinner";
 import { EmptyState } from "./components/common/EmptyState";
 import { BookmarksView } from "./components/quotes/BookmarksView";
 import { useBookmarks } from "./hooks/useBookmarks";
+import { normalizeCharacterKey } from "./utils/characterIds";
 
-const DEFAULT_FILTERS: FilterState = { character: "", episode: "0", truth: "" };
+const DEFAULT_FILTERS: FilterState = { character: "", interactionA: "", interactionB: "", episode: "0", truth: "" };
 
 export default function App() {
     const { language, setLanguage } = useAppContext();
@@ -141,12 +142,22 @@ export default function App() {
     );
 
     const handleBrowseClick = useCallback(async () => {
-        if (!filters.character && !filters.truth) {
+        const hasInteractionPair = !!filters.interactionA && !!filters.interactionB;
+        const hasEpisodeFilter = filters.episode !== "0";
+        if (!filters.character && !filters.truth && !hasInteractionPair && !hasEpisodeFilter) {
             return;
         }
         audioPlayer.stop();
         setSearchInputValue("");
-        const result = await browse.browse(filters.character, language, 0, filters.episode, filters.truth);
+        const result = await browse.browse(
+            filters.character,
+            language,
+            0,
+            filters.interactionA,
+            filters.interactionB,
+            filters.episode,
+            filters.truth,
+        );
         if (result) {
             setViewMode("browse");
             doPushUrl("browse", filters, { browseOffset: result.offset });
@@ -156,7 +167,15 @@ export default function App() {
     const handleBrowsePaginate = useCallback(
         async (newOffset: number) => {
             audioPlayer.stop();
-            const result = await browse.browse(filters.character, language, newOffset, filters.episode, filters.truth);
+            const result = await browse.browse(
+                filters.character,
+                language,
+                newOffset,
+                filters.interactionA,
+                filters.interactionB,
+                filters.episode,
+                filters.truth,
+            );
             if (result) {
                 doPushUrl("browse", filters, { browseOffset: result.offset });
             }
@@ -170,6 +189,40 @@ export default function App() {
         setViewMode("stats");
         doPushUrl("stats", filters);
     }, [filters, audioPlayer, stats, doPushUrl]);
+
+    const handleViewInteractionDialogues = useCallback(
+        async (interactionA: string, interactionB: string) => {
+            if (!interactionA || !interactionB || interactionA === interactionB) {
+                return;
+            }
+
+            audioPlayer.stop();
+            setSearchInputValue("");
+
+            const nextFilters: FilterState = {
+                ...filters,
+                character: "",
+                interactionA: normalizeCharacterKey(interactionA),
+                interactionB: normalizeCharacterKey(interactionB),
+            };
+            setFilters(nextFilters);
+
+            const result = await browse.browse(
+                "",
+                language,
+                0,
+                nextFilters.interactionA,
+                nextFilters.interactionB,
+                nextFilters.episode,
+                nextFilters.truth,
+            );
+            if (result) {
+                setViewMode("browse");
+                doPushUrl("browse", nextFilters, { browseOffset: result.offset });
+            }
+        },
+        [audioPlayer, filters, browse, language, doPushUrl],
+    );
 
     const handleHomeClick = useCallback(() => {
         audioPlayer.stop();
@@ -216,7 +269,7 @@ export default function App() {
 
     const handleFilterChange = useCallback(
         (newFilters: Partial<FilterState>) => {
-            const merged = { ...filters, ...newFilters };
+            const merged = enforceMutuallyExclusiveFilters(normalizeFilterCharacters({ ...filters, ...newFilters }));
             setFilters(merged);
 
             if (viewMode === "stats") {
@@ -227,13 +280,29 @@ export default function App() {
                     });
                 }
             } else if (viewMode === "browse") {
-                if ("episode" in newFilters || "truth" in newFilters) {
+                if (
+                    "character" in newFilters ||
+                    "episode" in newFilters ||
+                    "truth" in newFilters ||
+                    "interactionA" in newFilters ||
+                    "interactionB" in newFilters
+                ) {
                     audioPlayer.stop();
-                    browse.browse(filters.character, language, 0, merged.episode, merged.truth).then(result => {
-                        if (result) {
-                            doPushUrl("browse", merged, { browseOffset: result.offset });
-                        }
-                    });
+                    browse
+                        .browse(
+                            merged.character,
+                            language,
+                            0,
+                            merged.interactionA,
+                            merged.interactionB,
+                            merged.episode,
+                            merged.truth,
+                        )
+                        .then(result => {
+                            if (result) {
+                                doPushUrl("browse", merged, { browseOffset: result.offset });
+                            }
+                        });
                 }
             } else if (searchInputValue.trim()) {
                 audioPlayer.stop();
@@ -251,7 +320,15 @@ export default function App() {
         (lang: Language) => {
             setLanguage(lang);
             if (viewMode === "browse") {
-                browse.browse(filters.character, lang, browse.offset, filters.episode, filters.truth);
+                browse.browse(
+                    filters.character,
+                    lang,
+                    browse.offset,
+                    filters.interactionA,
+                    filters.interactionB,
+                    filters.episode,
+                    filters.truth,
+                );
             } else if (viewMode === "search" && searchInputValue.trim()) {
                 search.search(searchInputValue, lang, search.offset, filters);
             } else if (featured.currentAudioId) {
@@ -263,22 +340,49 @@ export default function App() {
         [setLanguage, viewMode, filters, searchInputValue, browse, search, featured],
     );
 
-    // URL state initialisation
     useUrlState({
-        onSearch: (query, offset, character, episode, truth, lang) => {
+        onSearch: (query, offset, character, interactionA, interactionB, episode, truth, lang) => {
+            const nextFilters = enforceMutuallyExclusiveFilters(
+                normalizeFilterCharacters({
+                    character,
+                    interactionA,
+                    interactionB,
+                    episode,
+                    truth,
+                }),
+            );
             setSearchInputValue(query);
-            setFilters(prev => ({ ...prev, character, episode, truth }));
-            search.search(query, lang, offset, { character, episode, truth }).then(() => {
+            setFilters(prev => ({ ...prev, ...nextFilters }));
+            search.search(query, lang, offset, nextFilters).then(() => {
                 setViewMode("search");
                 urlInitialised.current = true;
             });
         },
-        onBrowse: (character, offset, episode, truth, lang) => {
-            setFilters(prev => ({ ...prev, character, episode, truth }));
-            browse.browse(character, lang, offset, episode, truth).then(() => {
-                setViewMode("browse");
-                urlInitialised.current = true;
-            });
+        onBrowse: (character, interactionA, interactionB, offset, episode, truth, lang) => {
+            const nextFilters = enforceMutuallyExclusiveFilters(
+                normalizeFilterCharacters({
+                    character,
+                    interactionA,
+                    interactionB,
+                    episode,
+                    truth,
+                }),
+            );
+            setFilters(prev => ({ ...prev, ...nextFilters }));
+            browse
+                .browse(
+                    nextFilters.character,
+                    lang,
+                    offset,
+                    nextFilters.interactionA,
+                    nextFilters.interactionB,
+                    nextFilters.episode,
+                    nextFilters.truth,
+                )
+                .then(() => {
+                    setViewMode("browse");
+                    urlInitialised.current = true;
+                });
         },
         onStats: _lang => {
             stats.loadStats(filters.episode).then(() => {
@@ -357,9 +461,16 @@ export default function App() {
 
                         <Filters
                             filters={filters}
+                            viewMode={viewMode}
                             onFilterChange={handleFilterChange}
                             onBrowseClick={handleBrowseClick}
-                            browseDisabled={!filters.character && !filters.truth}
+                            browseDisabled={
+                                !!filters.interactionA !== !!filters.interactionB ||
+                                (!filters.character &&
+                                    !filters.truth &&
+                                    filters.episode === "0" &&
+                                    !(filters.interactionA && filters.interactionB))
+                            }
                         />
 
                         <section className={`results-section${loading && hasViewData ? " results-loading" : ""}`}>
@@ -373,6 +484,7 @@ export default function App() {
                                     offset={search.offset}
                                     onPaginate={handleSearchPaginate}
                                     audioPlayer={audioPlayer}
+                                    filters={filters}
                                     onContextQuoteClick={handleContextQuoteClick}
                                 />
                             )}
@@ -395,7 +507,11 @@ export default function App() {
                                 />
                             )}
                             {!error && viewMode === "stats" && stats.data && (
-                                <StatsView data={stats.data} episode={filters.episode} />
+                                <StatsView
+                                    data={stats.data}
+                                    episode={filters.episode}
+                                    onViewInteractionDialogues={handleViewInteractionDialogues}
+                                />
                             )}
                             {viewMode === "bookmarks" && (
                                 <BookmarksView
@@ -411,4 +527,20 @@ export default function App() {
             </div>
         </>
     );
+}
+
+function enforceMutuallyExclusiveFilters(filters: FilterState): FilterState {
+    if (filters.character && (filters.interactionA || filters.interactionB)) {
+        return { ...filters, character: "" };
+    }
+    return filters;
+}
+
+function normalizeFilterCharacters(filters: FilterState): FilterState {
+    return {
+        ...filters,
+        character: normalizeCharacterKey(filters.character),
+        interactionA: normalizeCharacterKey(filters.interactionA),
+        interactionB: normalizeCharacterKey(filters.interactionB),
+    };
 }

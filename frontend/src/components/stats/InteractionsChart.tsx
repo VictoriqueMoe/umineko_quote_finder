@@ -7,9 +7,10 @@ import type { Chart } from "chart.js";
 interface InteractionsChartProps {
     data: StatsResponse;
     onRegister: (id: string, chart: Chart) => void;
+    onViewDialogues?: (charA: string, charB: string) => void;
 }
 
-export function InteractionsChart({ data, onRegister }: InteractionsChartProps) {
+export function InteractionsChart({ data, onRegister, onViewDialogues }: InteractionsChartProps) {
     const chartRef = useRef<Chart<"bar"> | null>(null);
     const [charA, setCharA] = useState("");
     const [charB, setCharB] = useState("");
@@ -49,6 +50,7 @@ export function InteractionsChart({ data, onRegister }: InteractionsChartProps) 
 
     const selectedPairKey = pairKey || null;
     const isRelatedMode = !!selectedPairKey;
+    const canViewDialogues = !!onViewDialogues && !!charA && !!charB && charA !== charB;
 
     const baselineRows = useMemo(
         () =>
@@ -177,6 +179,14 @@ export function InteractionsChart({ data, onRegister }: InteractionsChartProps) 
                 </div>
                 <button className="interactions-reset-btn" onClick={resetPairSelection} title="Clear both selections">
                     Reset Pair
+                </button>
+                <button
+                    className="interactions-view-btn"
+                    disabled={!canViewDialogues}
+                    onClick={() => onViewDialogues?.(charA, charB)}
+                    title="Open Browse results for this interaction pair"
+                >
+                    View Dialogues
                 </button>
             </div>
             <div className="interactions-mode-row">

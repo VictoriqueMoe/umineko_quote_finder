@@ -15,13 +15,27 @@ export function useBrowse() {
             characterId: string,
             language: Language,
             off: number = 0,
+            interactionA?: string,
+            interactionB?: string,
             episode?: string,
             truth?: string,
         ): Promise<{ offset: number; total: number } | undefined> => {
             setLoading(true);
             setError(null);
             try {
-                const result = await api.browseDialogue(language, off, characterId, episode, truth);
+                if (!!interactionA !== !!interactionB) {
+                    setError("Select both interaction characters or clear both.");
+                    return undefined;
+                }
+                const result = await api.browseDialogue(
+                    language,
+                    off,
+                    characterId,
+                    interactionA,
+                    interactionB,
+                    episode,
+                    truth,
+                );
                 setData(result);
                 setOffset(result.offset);
                 setTotal(result.total);

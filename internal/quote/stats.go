@@ -2,7 +2,6 @@ package quote
 
 import (
 	"cmp"
-	"fmt"
 	"slices"
 	"strings"
 	"umineko_quote/internal/quote/character"
@@ -125,11 +124,9 @@ func (s *statsComputer) tally(episode int) tallies {
 		t.charEpCounts[q.CharacterID][q.Episode]++
 
 		if prevCharID != "" && prevCharID != q.CharacterID && prevEpisode == q.Episode {
-			a, b := prevCharID, q.CharacterID
-			if a > b {
-				a, b = b, a
+			if key, ok := interactionPairKey(prevCharID, q.CharacterID); ok {
+				t.interactions[key]++
 			}
-			t.interactions[fmt.Sprintf("%s|%s", a, b)]++
 		}
 
 		prevCharID = q.CharacterID

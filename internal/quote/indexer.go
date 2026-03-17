@@ -17,6 +17,7 @@ type (
 	Indexer interface {
 		LowerTexts(lang language.Language) []string
 		FilteredIndices(lang language.Language, characterID string, episode int) []int
+		InteractionIndices(lang language.Language, interactionA string, interactionB string) []int
 		CharacterIndices(lang language.Language, characterID string) []int
 		NonNarratorIndices(lang language.Language) []int
 		AudioFilePath(characterId string, audioId string) string
@@ -28,6 +29,7 @@ type (
 		quoteLowerTexts  map[language.Language][]string
 		characterIndex   map[language.Language]map[string][]int
 		episodeIndex     map[language.Language]map[int][]int
+		interactionIndex map[language.Language]map[string][]int
 		nonNarratorIndex map[language.Language][]int
 		audioIndex       map[language.Language]map[string]int
 		quotes           map[language.Language][]dto.ParsedQuote
@@ -40,6 +42,7 @@ type (
 		lowerTexts     []string
 		charIdx        map[string][]int
 		epIdx          map[int][]int
+		interactionIdx map[string][]int
 		nonNarratorIdx []int
 		audioIdx       map[string]int
 	}
@@ -73,11 +76,14 @@ func NewIndexer(quotes map[language.Language][]dto.ParsedQuote, audioDir string)
 				}
 			}
 
+			interactionIdx := buildInteractionQuoteIndex(parsed)
+
 			results <- langIndexResult{
 				lang:           lang,
 				lowerTexts:     lowerTexts,
 				charIdx:        charIdx,
 				epIdx:          epIdx,
+				interactionIdx: interactionIdx,
 				nonNarratorIdx: nonNarratorIdx,
 				audioIdx:       audioIdx,
 			}
@@ -108,6 +114,7 @@ func NewIndexer(quotes map[language.Language][]dto.ParsedQuote, audioDir string)
 		quoteLowerTexts:  make(map[language.Language][]string),
 		characterIndex:   make(map[language.Language]map[string][]int),
 		episodeIndex:     make(map[language.Language]map[int][]int),
+		interactionIndex: make(map[language.Language]map[string][]int),
 		nonNarratorIndex: make(map[language.Language][]int),
 		audioIndex:       make(map[language.Language]map[string]int),
 		quotes:           quotes,
@@ -119,6 +126,7 @@ func NewIndexer(quotes map[language.Language][]dto.ParsedQuote, audioDir string)
 		idx.quoteLowerTexts[r.lang] = r.lowerTexts
 		idx.characterIndex[r.lang] = r.charIdx
 		idx.episodeIndex[r.lang] = r.epIdx
+		idx.interactionIndex[r.lang] = r.interactionIdx
 		idx.nonNarratorIndex[r.lang] = r.nonNarratorIdx
 		idx.audioIndex[r.lang] = r.audioIdx
 	}
@@ -136,6 +144,22 @@ func (idx *indexer) CharacterIndices(lang language.Language, characterID string)
 		return nil
 	}
 	return langCharIdx[characterID]
+}
+
+func (idx *indexer) InteractionIndices(lang language.Language, interactionA string, interactionB string) []int {
+	interactionIdx := idx.interactionIndex[lang]
+	if interactionIdx == nil {
+		return []int{}
+	}
+	key, ok := interactionPairKey(interactionA, interactionB)
+	if !ok {
+		return []int{}
+	}
+	indices, exists := interactionIdx[key]
+	if !exists {
+		return []int{}
+	}
+	return indices
 }
 
 func (idx *indexer) AudioFilePath(characterId string, audioId string) string {

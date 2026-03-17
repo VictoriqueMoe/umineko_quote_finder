@@ -1,16 +1,27 @@
 import { useCallback, useEffect, useRef } from "react";
 import type { FilterState, Language, PushUrlParams } from "../types/app";
+import { normalizeCharacterKey } from "../utils/characterIds";
 
 interface UrlStateCallbacks {
     onSearch: (
         query: string,
         offset: number,
         character: string,
+        interactionA: string,
+        interactionB: string,
         episode: string,
         truth: string,
         lang: Language,
     ) => void;
-    onBrowse: (character: string, offset: number, episode: string, truth: string, lang: Language) => void;
+    onBrowse: (
+        character: string,
+        interactionA: string,
+        interactionB: string,
+        offset: number,
+        episode: string,
+        truth: string,
+        lang: Language,
+    ) => void;
     onStats: (lang: Language) => void;
     onQuoteLookup: (audioId: string, lang: Language) => void;
     onBuilder: (segments: string, lang: Language) => void;
@@ -34,7 +45,9 @@ export function useUrlState(callbacks: UrlStateCallbacks) {
 
         const episode = params.get("episode") || "0";
         const truth = params.get("truth") || "";
-        cb.setFilters({ episode, truth });
+        const interactionA = normalizeCharacterKey(params.get("interactionA") || "");
+        const interactionB = normalizeCharacterKey(params.get("interactionB") || "");
+        cb.setFilters({ episode, truth, interactionA, interactionB });
 
         const offset = parseInt(params.get("offset") || "0") || 0;
 
@@ -57,17 +70,17 @@ export function useUrlState(callbacks: UrlStateCallbacks) {
 
         const browse = params.get("browse");
         if (browse) {
-            const character = browse !== "1" ? browse : "";
-            cb.setFilters({ character, episode, truth });
-            cb.onBrowse(character, offset, episode, truth, lang);
+            const character = browse !== "1" ? normalizeCharacterKey(browse) : "";
+            cb.setFilters({ character, interactionA, interactionB, episode, truth });
+            cb.onBrowse(character, interactionA, interactionB, offset, episode, truth, lang);
             return;
         }
 
         const q = params.get("q");
         if (q) {
-            const character = params.get("character") || "";
-            cb.setFilters({ character, episode, truth });
-            cb.onSearch(q, offset, character, episode, truth, lang);
+            const character = normalizeCharacterKey(params.get("character") || "");
+            cb.setFilters({ character, interactionA, interactionB, episode, truth });
+            cb.onSearch(q, offset, character, interactionA, interactionB, episode, truth, lang);
             return;
         }
 
@@ -92,10 +105,18 @@ export function pushUrl(state: PushUrlParams, language: Language, searchQuery: s
         params.set("stats", "1");
     } else if (state.viewMode === "browse") {
         params.set("browse", state.filters.character || "1");
+        if (state.filters.interactionA && state.filters.interactionB) {
+            params.set("interactionA", state.filters.interactionA);
+            params.set("interactionB", state.filters.interactionB);
+        }
     } else if (state.viewMode === "search" && searchQuery.trim()) {
         params.set("q", searchQuery.trim());
         if (state.filters.character) {
             params.set("character", state.filters.character);
+        }
+        if (state.filters.interactionA && state.filters.interactionB) {
+            params.set("interactionA", state.filters.interactionA);
+            params.set("interactionB", state.filters.interactionB);
         }
     } else if (state.viewMode === "quoteLookup" && state.currentAudioId) {
         params.set("quote", state.currentAudioId);

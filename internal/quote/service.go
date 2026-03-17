@@ -9,6 +9,7 @@ import (
 	"time"
 	"umineko_quote/internal/quote/character"
 	"umineko_quote/internal/quote/language"
+	quoteparams "umineko_quote/internal/quote/params"
 
 	"umineko_quote/internal/dto"
 	"umineko_quote/internal/lexar"
@@ -22,8 +23,8 @@ var dataFS embed.FS
 
 type (
 	Service interface {
-		Search(query string, lang language.Language, limit int, offset int, character character.Character, episode int, truth Truth) dto.SearchResponse
-		Browse(lang language.Language, character character.Character, limit int, offset int, episode int, truth Truth) dto.CharacterResponse
+		Search(params quoteparams.SearchParams) dto.SearchResponse
+		Browse(params quoteparams.BrowseParams) dto.CharacterResponse
 		GetByAudioID(lang language.Language, audioID string) *dto.ParsedQuote
 		GetContext(lang language.Language, audioID string, lines int) *dto.ContextResponse
 		Random(lang language.Language, character character.Character, episode int, truth Truth) *dto.ParsedQuote
@@ -107,8 +108,17 @@ func NewService() Service {
 	}
 }
 
-func (s *service) Search(query string, lang language.Language, limit int, offset int, character character.Character, episode int, truth Truth) dto.SearchResponse {
-	characterID := character.ID()
+func (s *service) Search(params quoteparams.SearchParams) dto.SearchResponse {
+	characterID := params.Character.ID()
+	query := params.Query
+	lang := params.Lang
+	limit := params.Limit
+	offset := params.Offset
+	episode := params.Episode
+	truth := TruthAll.Parse(params.Truth)
+	interactionA := params.InteractionA
+	interactionB := params.InteractionB
+
 	if limit <= 0 {
 		limit = 30
 	}
@@ -141,6 +151,10 @@ func (s *service) Search(query string, lang language.Language, limit int, offset
 	queryLower := strings.ToLower(query)
 
 	searchIndices := s.indexer.FilteredIndices(lang, characterID, episode)
+	if interactionA != "" && interactionB != "" {
+		interactionIndices := s.indexer.InteractionIndices(lang, interactionA, interactionB)
+		searchIndices = mergeFilteredIndices(searchIndices, interactionIndices)
+	}
 
 	var exactMatches []dto.SearchResult
 	if searchIndices != nil {
@@ -166,8 +180,38 @@ func (s *service) Search(query string, lang language.Language, limit int, offset
 	return NewSearchResponse(exactMatches, limit, offset)
 }
 
-func (s *service) Browse(lang language.Language, character character.Character, limit int, offset int, episode int, truth Truth) dto.CharacterResponse {
-	characterID := character.ID()
+func mergeFilteredIndices(baseIndices []int, interactionIndices []int) []int {
+	if baseIndices == nil {
+		return interactionIndices
+	}
+	if len(baseIndices) == 0 || len(interactionIndices) == 0 {
+		return []int{}
+	}
+
+	interactionSet := make(map[int]struct{}, len(interactionIndices))
+	for _, idx := range interactionIndices {
+		interactionSet[idx] = struct{}{}
+	}
+
+	out := make([]int, 0, len(baseIndices))
+	for _, idx := range baseIndices {
+		if _, ok := interactionSet[idx]; ok {
+			out = append(out, idx)
+		}
+	}
+	return out
+}
+
+func (s *service) Browse(params quoteparams.BrowseParams) dto.CharacterResponse {
+	lang := params.Lang
+	limit := params.Limit
+	offset := params.Offset
+	episode := params.Episode
+	truth := TruthAll.Parse(params.Truth)
+	interactionA := params.InteractionA
+	interactionB := params.InteractionB
+	characterID := params.Character.ID()
+
 	if limit <= 0 {
 		limit = 50
 	}
@@ -182,6 +226,10 @@ func (s *service) Browse(lang language.Language, character character.Character, 
 
 	var source []int
 	indexed := s.indexer.FilteredIndices(lang, characterID, episode)
+	if interactionA != "" && interactionB != "" {
+		interactionIndices := s.indexer.InteractionIndices(lang, interactionA, interactionB)
+		indexed = mergeFilteredIndices(indexed, interactionIndices)
+	}
 	if indexed != nil {
 		source = indexed
 	} else {

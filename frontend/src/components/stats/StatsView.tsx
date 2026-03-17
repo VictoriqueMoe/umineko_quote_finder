@@ -62,6 +62,7 @@ export function StatsView({ data, episode }: StatsViewProps) {
                     title="Character Interactions"
                     tall
                     wide
+                    chartClassName="stats-chart-interactions"
                     onResetZoom={handleResetZoom}
                 >
                     <InteractionsChart data={data} onRegister={registerChart} />

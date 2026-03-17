@@ -150,6 +150,24 @@ func TestStats_Interactions(t *testing.T) {
 	}
 }
 
+func TestStats_InteractionCountsMap(t *testing.T) {
+	quotes := buildTestQuotes()
+	s := NewStats(quotes)
+	result := s.Compute(AllEpisodes).(*dto.StatsResult)
+
+	if len(result.InteractionCounts) == 0 {
+		t.Fatal("InteractionCounts should not be empty")
+	}
+
+	count, ok := result.InteractionCounts["10|27"]
+	if !ok {
+		t.Fatal(`expected InteractionCounts to include key "10|27"`)
+	}
+	if count == 0 {
+		t.Error(`expected InteractionCounts["10|27"] to be > 0`)
+	}
+}
+
 func TestStats_CharacterPresence(t *testing.T) {
 	quotes := buildTestQuotes()
 	s := NewStats(quotes)

@@ -68,10 +68,11 @@ func (s *statsComputer) compute(episode int) *dto.StatsResult {
 	ranked := s.rankCharacters(t.charCounts)
 
 	result := &dto.StatsResult{
-		TopSpeakers:    s.topSpeakers(ranked, 20),
-		Interactions:   s.topInteractions(t.interactions, 25),
-		CharacterNames: s.buildNameMap(t.charCounts),
-		EpisodeNames:   episodeNames,
+		TopSpeakers:       s.topSpeakers(ranked, 20),
+		Interactions:      s.topInteractions(t.interactions, 25),
+		InteractionCounts: t.interactions,
+		CharacterNames:    s.buildNameMap(t.charCounts),
+		EpisodeNames:      episodeNames,
 	}
 
 	if episode == AllEpisodes {

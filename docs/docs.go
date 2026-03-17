@@ -981,6 +981,13 @@ const docTemplate = `{
                         "type": "string"
                     }
                 },
+                "interactionCounts": {
+                    "description": "Full interaction map keyed by \"charA|charB\"",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "integer"
+                    }
+                },
                 "interactions": {
                     "description": "Most frequent character dialogue pairings",
                     "type": "array",

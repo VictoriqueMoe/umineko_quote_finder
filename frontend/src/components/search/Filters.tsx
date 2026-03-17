@@ -9,6 +9,8 @@ interface FiltersProps {
     browseDisabled: boolean;
 }
 
+const DEFAULT_FILTERS: FilterState = { character: "", interactionA: "", interactionB: "", episode: "0", truth: "" };
+
 export function Filters({ filters, viewMode, onFilterChange, onBrowseClick, browseDisabled }: FiltersProps) {
     const { sortedCharacters } = useAppContext();
     const characterNameById = new Map(sortedCharacters);
@@ -22,20 +24,16 @@ export function Filters({ filters, viewMode, onFilterChange, onBrowseClick, brow
         const fallbackLabel = /^\d+$/.test(value) ? `Character ID ${value}` : value;
         return [[value, fallbackLabel], ...sortedCharacters];
     };
-    const hasCharacterFilter = !!filters.character;
-    const hasInteractionFilter = !!filters.interactionA || !!filters.interactionB;
-    const canSwapInteractions = !!filters.interactionA || !!filters.interactionB;
-    const hasBothInteractionChars = !!filters.interactionA && !!filters.interactionB;
-    const interactionHalfFilled =
-        (!!filters.interactionA && !filters.interactionB) || (!filters.interactionA && !!filters.interactionB);
+    const { character, interactionA, interactionB } = filters;
+    const hasCharacterFilter = character.length > 0;
+    const hasInteractionFilter = interactionA.length > 0 || interactionB.length > 0;
+    const hasBothInteractionChars = interactionA.length > 0 && interactionB.length > 0;
+    const interactionHalfFilled = hasInteractionFilter && !hasBothInteractionChars;
     const characterConflictsWithInteraction =
-        hasBothInteractionChars &&
-        !!filters.character &&
-        filters.character !== filters.interactionA &&
-        filters.character !== filters.interactionB;
+        hasBothInteractionChars && character.length > 0 && character !== interactionA && character !== interactionB;
 
     const handleSwapInteractions = () => {
-        onFilterChange({ interactionA: filters.interactionB, interactionB: filters.interactionA });
+        onFilterChange({ interactionA: interactionB, interactionB: interactionA });
     };
 
     const handleClearInteractions = () => {
@@ -62,21 +60,14 @@ export function Filters({ filters, viewMode, onFilterChange, onBrowseClick, brow
         onFilterChange({ character: "", interactionA: "", interactionB: "", episode: "0", truth: "" });
     };
 
-    const selectedInteractionAName = filters.interactionA
-        ? characterNameById.get(filters.interactionA) || filters.interactionA
-        : "";
-    const selectedInteractionBName = filters.interactionB
-        ? characterNameById.get(filters.interactionB) || filters.interactionB
-        : "";
-    const characterOptions = ensureValueOption(filters.character);
-    const interactionAOptions = ensureValueOption(filters.interactionA);
-    const interactionBOptions = ensureValueOption(filters.interactionB);
-    const hasAnyFilter =
-        !!filters.character ||
-        filters.episode !== "0" ||
-        !!filters.truth ||
-        !!filters.interactionA ||
-        !!filters.interactionB;
+    const selectedInteractionAName = interactionA ? characterNameById.get(interactionA) || interactionA : "";
+    const selectedInteractionBName = interactionB ? characterNameById.get(interactionB) || interactionB : "";
+    const characterOptions = ensureValueOption(character);
+    const interactionAOptions = ensureValueOption(interactionA);
+    const interactionBOptions = ensureValueOption(interactionB);
+    const hasAnyFilter = (Object.keys(DEFAULT_FILTERS) as (keyof FilterState)[]).some(
+        key => filters[key] !== DEFAULT_FILTERS[key],
+    );
 
     return (
         <section className="filter-section">
@@ -89,7 +80,7 @@ export function Filters({ filters, viewMode, onFilterChange, onBrowseClick, brow
                     <select
                         id="filter-character"
                         className="character-select"
-                        value={filters.character}
+                        value={character}
                         onChange={e => handleCharacterChange(e.target.value)}
                         disabled={hasInteractionFilter}
                     >
@@ -150,7 +141,7 @@ export function Filters({ filters, viewMode, onFilterChange, onBrowseClick, brow
                         <select
                             id="filter-interaction-a"
                             className="interaction-select"
-                            value={filters.interactionA}
+                            value={interactionA}
                             onChange={e => handleInteractionAChange(e.target.value)}
                             disabled={hasCharacterFilter}
                         >
@@ -169,7 +160,7 @@ export function Filters({ filters, viewMode, onFilterChange, onBrowseClick, brow
                         <select
                             id="filter-interaction-b"
                             className="interaction-select"
-                            value={filters.interactionB}
+                            value={interactionB}
                             onChange={e => handleInteractionBChange(e.target.value)}
                             disabled={hasCharacterFilter}
                         >
@@ -186,14 +177,14 @@ export function Filters({ filters, viewMode, onFilterChange, onBrowseClick, brow
                         <div className="interaction-filter-actions">
                             <button
                                 className="interaction-action-btn"
-                                disabled={!canSwapInteractions || hasCharacterFilter}
+                                disabled={!hasInteractionFilter || hasCharacterFilter}
                                 onClick={handleSwapInteractions}
                             >
                                 Swap
                             </button>
                             <button
                                 className="interaction-action-btn"
-                                disabled={!canSwapInteractions}
+                                disabled={!hasInteractionFilter}
                                 onClick={handleClearInteractions}
                             >
                                 Clear
@@ -205,15 +196,13 @@ export function Filters({ filters, viewMode, onFilterChange, onBrowseClick, brow
                     Activates only when both characters are selected. Uses adjacent A/B exchanges.
                 </p>
                 <p className="interaction-filter-state">
-                    {hasCharacterFilter && "Character filter is active, so Interaction Pair is disabled."}
-                    {interactionHalfFilled && "Interaction filter inactive: select both Character A and Character B."}
-                    {hasBothInteractionChars &&
-                        !interactionHalfFilled &&
-                        `Interaction filter active: ${selectedInteractionAName} x ${selectedInteractionBName}.`}
-                    {!filters.interactionA && !filters.interactionB && "Interaction filter inactive."}
-                    {viewMode === "browse" && hasBothInteractionChars && " Browse is in interaction mode."}
-                    {characterConflictsWithInteraction &&
-                        " Character filter is outside the selected pair, so Search may return zero results."}
+                    {hasCharacterFilter
+                        ? "Character filter is active, so Interaction Pair is disabled."
+                        : interactionHalfFilled
+                          ? "Interaction filter inactive: select both Character A and Character B."
+                          : hasBothInteractionChars
+                            ? `Interaction filter active: ${selectedInteractionAName} x ${selectedInteractionBName}.${viewMode === "browse" ? " Browse is in interaction mode." : ""}${characterConflictsWithInteraction ? " Character filter is outside the selected pair, so Search may return zero results." : ""}`
+                            : "Interaction filter inactive."}
                 </p>
             </div>
             <div className="filter-actions-row">

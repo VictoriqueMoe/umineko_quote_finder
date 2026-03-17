@@ -54,7 +54,7 @@ export function ContextViewer({ audioId, onQuoteClick, langOverride }: ContextVi
         }
     }, [visible, fetchContext]);
 
-    const refreshForLang = useCallback(
+    (ContextViewer as { refreshForLang?: (lang: Language) => void }).refreshForLang = useCallback(
         (lang: Language) => {
             if (visible) {
                 fetchContext(lang);
@@ -62,9 +62,6 @@ export function ContextViewer({ audioId, onQuoteClick, langOverride }: ContextVi
         },
         [visible, fetchContext],
     );
-
-    // Expose refresh method via the component
-    (ContextViewer as { refreshForLang?: (lang: Language) => void }).refreshForLang = refreshForLang;
 
     const quoteAudioId = data?.quote?.audioId || "";
 

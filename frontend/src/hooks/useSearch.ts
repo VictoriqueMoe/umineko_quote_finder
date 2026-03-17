@@ -22,6 +22,10 @@ export function useSearch() {
                 setError("Enter a search term to find quotes.");
                 return undefined;
             }
+            if (!!filters?.interactionA !== !!filters?.interactionB) {
+                setError("Select both interaction characters or clear both.");
+                return undefined;
+            }
             setLoading(true);
             setError(null);
             try {
@@ -30,6 +34,8 @@ export function useSearch() {
                     language,
                     off,
                     filters?.character,
+                    filters?.interactionA,
+                    filters?.interactionB,
                     filters?.episode,
                     filters?.truth,
                 );

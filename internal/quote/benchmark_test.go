@@ -11,7 +11,7 @@ func BenchmarkSearch_BroadQuery(b *testing.B) {
 	svc := testService
 	b.ResetTimer()
 	for b.Loop() {
-		svc.Search("the", language.English, 30, 0, "", 0, TruthAll)
+		searchWithParams(svc, "the", language.English, 30, 0, "", 0, TruthAll, "", "")
 	}
 }
 
@@ -19,7 +19,7 @@ func BenchmarkSearch_NarrowQuery(b *testing.B) {
 	svc := testService
 	b.ResetTimer()
 	for b.Loop() {
-		svc.Search("Beatrice", language.English, 30, 0, "", 0, TruthAll)
+		searchWithParams(svc, "Beatrice", language.English, 30, 0, "", 0, TruthAll, "", "")
 	}
 }
 
@@ -27,7 +27,7 @@ func BenchmarkSearch_WithCharacterFilter(b *testing.B) {
 	svc := testService
 	b.ResetTimer()
 	for b.Loop() {
-		svc.Search("witch", language.English, 30, 0, character.Battler, 0, TruthAll)
+		searchWithParams(svc, "witch", language.English, 30, 0, character.Battler, 0, TruthAll, "", "")
 	}
 }
 
@@ -35,7 +35,7 @@ func BenchmarkSearch_WithEpisodeFilter(b *testing.B) {
 	svc := testService
 	b.ResetTimer()
 	for b.Loop() {
-		svc.Search("witch", language.English, 30, 0, "", 1, TruthAll)
+		searchWithParams(svc, "witch", language.English, 30, 0, "", 1, TruthAll, "", "")
 	}
 }
 
@@ -43,7 +43,7 @@ func BenchmarkSearch_WithCharacterAndEpisodeFilter(b *testing.B) {
 	svc := testService
 	b.ResetTimer()
 	for b.Loop() {
-		svc.Search("witch", language.English, 30, 0, character.Battler, 1, TruthAll)
+		searchWithParams(svc, "witch", language.English, 30, 0, character.Battler, 1, TruthAll, "", "")
 	}
 }
 
@@ -51,7 +51,7 @@ func BenchmarkSearch_RedTruth(b *testing.B) {
 	svc := testService
 	b.ResetTimer()
 	for b.Loop() {
-		svc.Search("truth", language.English, 30, 0, "", 0, TruthRed)
+		searchWithParams(svc, "truth", language.English, 30, 0, "", 0, TruthRed, "", "")
 	}
 }
 
@@ -59,7 +59,7 @@ func BenchmarkSearch_NoResults(b *testing.B) {
 	svc := testService
 	b.ResetTimer()
 	for b.Loop() {
-		svc.Search("xyzzyxyzzyxyzzy", language.English, 30, 0, "", 0, TruthAll)
+		searchWithParams(svc, "xyzzyxyzzyxyzzy", language.English, 30, 0, "", 0, TruthAll, "", "")
 	}
 }
 
@@ -67,7 +67,7 @@ func BenchmarkSearch_Japanese(b *testing.B) {
 	svc := testService
 	b.ResetTimer()
 	for b.Loop() {
-		svc.Search("ベアトリーチェ", language.Japanese, 30, 0, "", 0, TruthAll)
+		searchWithParams(svc, "ベアトリーチェ", language.Japanese, 30, 0, "", 0, TruthAll, "", "")
 	}
 }
 
@@ -107,7 +107,7 @@ func BenchmarkBrowse(b *testing.B) {
 	svc := testService
 	b.ResetTimer()
 	for b.Loop() {
-		svc.Browse(language.English, character.Battler, 50, 0, 0, TruthAll)
+		browseWithParams(svc, language.English, character.Battler, 50, 0, 0, TruthAll, "", "")
 	}
 }
 

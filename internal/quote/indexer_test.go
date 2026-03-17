@@ -179,6 +179,36 @@ func TestIndexer_FilteredIndices_UnknownLang(t *testing.T) {
 	}
 }
 
+func TestIndexer_InteractionIndices(t *testing.T) {
+	idx, _ := buildTestIndexer()
+
+	indices := idx.InteractionIndices(language.English, "10", "27")
+	if len(indices) != 2 {
+		t.Fatalf("InteractionIndices (10,27): got %d, want 2", len(indices))
+	}
+	if indices[0] != 0 || indices[1] != 1 {
+		t.Errorf("InteractionIndices (10,27): got %v, want [0 1]", indices)
+	}
+}
+
+func TestIndexer_InteractionIndices_SameCharacter(t *testing.T) {
+	idx, _ := buildTestIndexer()
+
+	indices := idx.InteractionIndices(language.English, "10", "10")
+	if len(indices) != 0 {
+		t.Errorf("InteractionIndices same character: got %v, want empty", indices)
+	}
+}
+
+func TestIndexer_InteractionIndices_UnknownLang(t *testing.T) {
+	idx, _ := buildTestIndexer()
+
+	indices := idx.InteractionIndices(language.Language("fr"), "10", "27")
+	if len(indices) != 0 {
+		t.Errorf("InteractionIndices unknown lang: got %v, want empty", indices)
+	}
+}
+
 func TestIndexer_AudioFilePath_EmptyDir(t *testing.T) {
 	idx, _ := buildTestIndexer()
 

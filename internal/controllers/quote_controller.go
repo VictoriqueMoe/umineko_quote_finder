@@ -6,6 +6,7 @@ import (
 	"strings"
 	"umineko_quote/internal/quote/character"
 	"umineko_quote/internal/quote/language"
+	quoteparams "umineko_quote/internal/quote/params"
 
 	"umineko_quote/internal/audio"
 	_ "umineko_quote/internal/dto"
@@ -16,15 +17,6 @@ import (
 )
 
 var audioIdPattern = regexp.MustCompile(`^[a-zA-Z0-9_]+$`)
-
-type browseParams struct {
-	lang      language.Language
-	character character.Character
-	limit     int
-	offset    int
-	episode   int
-	truth     quote.Truth
-}
 
 func (s *Service) getAllQuoteRoutes() []FSetupRoute {
 	return []FSetupRoute{
@@ -71,6 +63,8 @@ func (s *Service) setupCharactersRoute(routeGroup fiber.Router) {
 //	@Param			limit		query		int		false	"Maximum results"	default(30)
 //	@Param			offset		query		int		false	"Offset for pagination"	default(0)
 //	@Param			character	query		character.Character	false	"Filter by character ID"
+//	@Param			interactionA	query		character.Character	false	"Interaction filter: first character ID (requires interactionB)"
+//	@Param			interactionB	query		character.Character	false	"Interaction filter: second character ID (requires interactionA)"
 //	@Param			episode		query		int		false	"Filter by episode (1-8)"
 //	@Param			truth		query		string	false	"Filter by truth type"	Enums(red, blue)
 //	@Success		200			{object}	dto.SearchAPIResponse
@@ -87,11 +81,30 @@ func (s *Service) search(ctx fiber.Ctx) error {
 	lang := language.English.Parse(ctx.Query("lang"))
 	limit := fiber.Query[int](ctx, "limit", 30)
 	offset := fiber.Query[int](ctx, "offset", 0)
-	characterStruct := character.Character(ctx.Query("character"))
+	characterParam := ctx.Query("character")
+	interactionAParam := ctx.Query("interactionA")
+	interactionBParam := ctx.Query("interactionB")
 	episode := fiber.Query[int](ctx, "episode", 0)
-	truth := quote.TruthAll.Parse(ctx.Query("truth"))
 
-	response := s.QuoteService.Search(query, lang, limit, offset, characterStruct, episode, truth)
+	if errMsg, invalid := validateInteractionQueryParams(characterParam, interactionAParam, interactionBParam); invalid {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": errMsg,
+		})
+	}
+
+	searchParams := quoteparams.NewSearchParams(
+		query,
+		lang,
+		limit,
+		offset,
+		characterParam,
+		episode,
+		ctx.Query("truth"),
+		interactionAParam,
+		interactionBParam,
+	)
+
+	response := s.QuoteService.Search(searchParams)
 	return ctx.JSON(fiber.Map{
 		"query":   query,
 		"results": response.Results,
@@ -136,6 +149,8 @@ func (s *Service) random(ctx fiber.Ctx) error {
 //	@Produce		json
 //	@Param			lang		query		string	false	"Language"	default(en)	Enums(en, ja, es, pt)
 //	@Param			character	query		character.Character	false	"Filter by character ID"
+//	@Param			interactionA	query		character.Character	false	"Interaction filter: first character ID (requires interactionB)"
+//	@Param			interactionB	query		character.Character	false	"Interaction filter: second character ID (requires interactionA)"
 //	@Param			limit		query		int		false	"Maximum results"	default(50)
 //	@Param			offset		query		int		false	"Offset for pagination"	default(0)
 //	@Param			episode		query		int		false	"Filter by episode (1-8)"
@@ -143,9 +158,32 @@ func (s *Service) random(ctx fiber.Ctx) error {
 //	@Success		200			{object}	dto.CharacterResponse
 //	@Router			/browse [get]
 func (s *Service) browse(ctx fiber.Ctx) error {
-	p := parseBrowseParams(ctx)
-	p.character = character.Character(ctx.Query("character"))
-	response := s.QuoteService.Browse(p.lang, p.character, p.limit, p.offset, p.episode, p.truth)
+	lang := language.English.Parse(ctx.Query("lang"))
+	limit := fiber.Query[int](ctx, "limit", 50)
+	offset := fiber.Query[int](ctx, "offset", 0)
+	episode := fiber.Query[int](ctx, "episode", 0)
+	characterParam := ctx.Query("character")
+	interactionAParam := ctx.Query("interactionA")
+	interactionBParam := ctx.Query("interactionB")
+
+	if errMsg, invalid := validateInteractionQueryParams(characterParam, interactionAParam, interactionBParam); invalid {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": errMsg,
+		})
+	}
+
+	browseParams := quoteparams.NewBrowseParams(
+		lang,
+		limit,
+		offset,
+		characterParam,
+		episode,
+		ctx.Query("truth"),
+		interactionAParam,
+		interactionBParam,
+	)
+
+	response := s.QuoteService.Browse(browseParams)
 	return ctx.JSON(response)
 }
 
@@ -362,12 +400,20 @@ func (s *Service) combinedAudioLegacy(ctx fiber.Ctx) error {
 	return utils.ServeAudio(ctx, data)
 }
 
-func parseBrowseParams(ctx fiber.Ctx) browseParams {
-	return browseParams{
-		lang:    language.English.Parse(ctx.Query("lang")),
-		limit:   fiber.Query[int](ctx, "limit", 50),
-		offset:  fiber.Query[int](ctx, "offset", 0),
-		episode: fiber.Query[int](ctx, "episode", 0),
-		truth:   quote.TruthAll.Parse(ctx.Query("truth")),
+func validateInteractionQueryParams(characterParam string, interactionAParam string, interactionBParam string) (string, bool) {
+	characterParam = strings.TrimSpace(characterParam)
+	interactionAParam = strings.TrimSpace(interactionAParam)
+	interactionBParam = strings.TrimSpace(interactionBParam)
+
+	hasInteractionA := interactionAParam != ""
+	hasInteractionB := interactionBParam != ""
+	if hasInteractionA != hasInteractionB {
+		return "interactionA and interactionB must both be provided", true
 	}
+
+	if characterParam != "" && hasInteractionA && hasInteractionB {
+		return "character cannot be combined with interactionA/interactionB", true
+	}
+
+	return "", false
 }

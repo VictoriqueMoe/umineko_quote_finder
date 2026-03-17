@@ -1,4 +1,5 @@
 import { QuoteCard } from "./QuoteCard";
+import { InteractionResults } from "./InteractionResults";
 import { Pagination } from "../common/Pagination";
 import { EmptyState } from "../common/EmptyState";
 import type { BrowseResponse } from "../../types/api";
@@ -25,13 +26,38 @@ export function BrowseView({
     onContextQuoteClick,
 }: BrowseViewProps) {
     if (!data.quotes || data.quotes.length === 0) {
-        return <EmptyState message="No dialogue found for this character." />;
+        const noResultsMessage =
+            filters.interactionA && filters.interactionB
+                ? "No interaction lines found for the selected filters."
+                : "No dialogue found for this character.";
+        return <EmptyState message={noResultsMessage} />;
     }
 
     const epLabel = filters.episode && filters.episode !== "0" ? ` \u2014 Episode ${filters.episode}` : "";
     const truthLabel =
         filters.truth === "red" ? " \u2014 Red Truth" : filters.truth === "blue" ? " \u2014 Blue Truth" : "";
     const titleName = data.character || "All Characters";
+    const isInteractionMode = !!filters.interactionA && !!filters.interactionB;
+
+    if (isInteractionMode) {
+        return (
+            <>
+                <InteractionResults
+                    mode="browse"
+                    quotes={data.quotes}
+                    offset={offset}
+                    total={total}
+                    interactionA={filters.interactionA}
+                    interactionB={filters.interactionB}
+                    characterFilter={filters.character}
+                    episodeFilter={filters.episode}
+                    truthFilter={filters.truth}
+                    onContextQuoteClick={onContextQuoteClick}
+                />
+                <Pagination total={total} offset={offset} onPaginate={onPaginate} />
+            </>
+        );
+    }
 
     return (
         <>

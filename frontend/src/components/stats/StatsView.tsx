@@ -11,9 +11,10 @@ import type { Chart } from "chart.js";
 interface StatsViewProps {
     data: StatsResponse;
     episode: string;
+    onViewInteractionDialogues?: (charA: string, charB: string) => void;
 }
 
-export function StatsView({ data, episode }: StatsViewProps) {
+export function StatsView({ data, episode, onViewInteractionDialogues }: StatsViewProps) {
     const chartsRef = useRef<Map<string, Chart>>(new Map());
 
     const ep = parseInt(episode) || 0;
@@ -65,7 +66,11 @@ export function StatsView({ data, episode }: StatsViewProps) {
                     chartClassName="stats-chart-interactions"
                     onResetZoom={handleResetZoom}
                 >
-                    <InteractionsChart data={data} onRegister={registerChart} />
+                    <InteractionsChart
+                        data={data}
+                        onRegister={registerChart}
+                        onViewDialogues={onViewInteractionDialogues}
+                    />
                 </StatsCard>
                 {hasAllEpisodes && (
                     <StatsCard

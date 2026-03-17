@@ -19,7 +19,13 @@ export function BuilderSearch({ builder, audioPlayer }: BuilderSearchProps) {
     const search = useSearch();
     const [query, setQuery] = useState("");
     const [collapsed, setCollapsed] = useState(false);
-    const [filters, setFilters] = useState<FilterState>({ character: "", episode: "0", truth: "" });
+    const [filters, setFilters] = useState<FilterState>({
+        character: "",
+        interactionA: "",
+        interactionB: "",
+        episode: "0",
+        truth: "",
+    });
 
     const handleSearch = useCallback(async () => {
         if (!query.trim()) {

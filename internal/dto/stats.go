@@ -58,6 +58,8 @@ type StatsResult struct {
 	TruthPerEpisode []EpisodeTruth `json:"truthPerEpisode"`
 	// Most frequent character dialogue pairings
 	Interactions []InteractionPair `json:"interactions"`
+	// Full interaction map keyed by "charA|charB"
+	InteractionCounts map[string]int `json:"interactionCounts"`
 	// Top characters with per-episode line counts
 	CharacterPresence []CharacterPresence `json:"characterPresence"`
 	// Map of character ID to display name

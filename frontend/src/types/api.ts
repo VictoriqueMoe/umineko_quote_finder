@@ -59,6 +59,8 @@ export interface TruthPerEpisode {
 }
 
 export interface Interaction {
+    charA: string;
+    charB: string;
     nameA: string;
     nameB: string;
     count: number;
@@ -74,6 +76,7 @@ export interface StatsResponse {
     linesPerEpisode: LinesPerEpisode[];
     truthPerEpisode: TruthPerEpisode[];
     interactions: Interaction[];
+    interactionCounts: Record<string, number>;
     characterPresence: CharacterPresence[];
     characterNames: Record<string, string>;
     episodeNames: Record<number, string>;

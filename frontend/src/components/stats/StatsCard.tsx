@@ -5,11 +5,12 @@ interface StatsCardProps {
     title: string;
     tall?: boolean;
     wide?: boolean;
+    chartClassName?: string;
     children: ReactNode;
     onResetZoom: (chartId: string) => void;
 }
 
-export function StatsCard({ id, title, tall, wide, children, onResetZoom }: StatsCardProps) {
+export function StatsCard({ id, title, tall, wide, chartClassName, children, onResetZoom }: StatsCardProps) {
     return (
         <div className={`stats-card${wide ? " stats-card-wide" : ""}`}>
             <div className="stats-card-header">
@@ -18,7 +19,11 @@ export function StatsCard({ id, title, tall, wide, children, onResetZoom }: Stat
                     Reset Zoom
                 </button>
             </div>
-            <div className={`stats-chart-container${tall ? " stats-chart-tall" : ""}`}>{children}</div>
+            <div
+                className={`stats-chart-container${tall ? " stats-chart-tall" : ""}${chartClassName ? ` ${chartClassName}` : ""}`}
+            >
+                {children}
+            </div>
             <p className="stats-zoom-hint">Scroll to zoom &middot; drag to pan</p>
         </div>
     );

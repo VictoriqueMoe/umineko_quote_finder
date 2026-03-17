@@ -247,6 +247,11 @@ definitions:
           type: string
         description: Map of episode number to title
         type: object
+      interactionCounts:
+        additionalProperties:
+          type: integer
+        description: Full interaction map keyed by "charA|charB"
+        type: object
       interactions:
         description: Most frequent character dialogue pairings
         items:

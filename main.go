@@ -14,6 +14,7 @@ import (
 	_ "umineko_quote/docs"
 
 	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v3/middleware/cors"
 	"github.com/gofiber/fiber/v3/middleware/logger"
 	"github.com/gofiber/fiber/v3/middleware/static"
 
@@ -33,6 +34,8 @@ var staticFiles embed.FS
 // @schemes		https http
 func main() {
 	app := fiber.New()
+
+	app.Use("/api", cors.New())
 
 	app.Use(logger.New(logger.Config{
 		Format:     "${time} | ${status} | ${latency} | ${method} ${path} ${queryParams}\n",

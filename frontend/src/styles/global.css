@@ -1566,6 +1566,27 @@ body {
     opacity: 0.7;
 }
 
+.footer-copyright {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-top: 0.25rem;
+    opacity: 0.7;
+}
+
+.footer-disclaimer {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    margin-top: 0.25rem;
+    opacity: 0.5;
+    font-style: italic;
+}
+
+.footer-support {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 1rem;
+}
+
 /* Audio Player */
 .audio-player {
     display: flex;

@@ -3,7 +3,13 @@ export function Footer() {
         <footer className="footer">
             <div className="footer-ornament">{"\u2666 \u2663 \u2665 \u2660"}</div>
             <p className="footer-text">Without love, it cannot be seen.</p>
-            <p className="footer-credit">From the world of Umineko no Naku Koro ni by 07th Expansion</p>
+            <p className="footer-credit">
+                {"Umineko no Naku Koro ni \u00A9 "}
+                <a href="https://07th-expansion.net/" target="_blank" rel="noopener" className="footer-author">
+                    07th Expansion
+                </a>
+                {" - this is an unofficial fan project"}
+            </p>
             <p className="footer-made-by">
                 {"Made with \u2764 by "}
                 <a href="https://x.com/FeatherineFAA" target="_blank" rel="noopener" className="footer-author">
@@ -29,6 +35,12 @@ export function Footer() {
                     API Docs
                 </a>
             </div>
+            <p className="footer-support">
+                {"Support 07th Expansion - "}
+                <a href="https://store.steampowered.com/app/406550/" target="_blank" rel="noopener" className="footer-author">
+                    get the game on Steam
+                </a>
+            </p>
         </footer>
     );
 }

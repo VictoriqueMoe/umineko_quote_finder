@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { FilterState, Language, ViewMode } from "./types/app";
 import { useAppContext } from "./hooks/useAppContext";
 import { useTheme } from "./hooks/useTheme";
@@ -44,6 +44,8 @@ export default function App() {
     const [audioIdInputValue, setAudioIdInputValue] = useState("");
     const [builderInitialSegments, setBuilderInitialSegments] = useState<string | null>(null);
     const urlInitialised = useRef(false);
+    const resultsSectionRef = useRef<HTMLElement>(null);
+    const pendingDeeplinkScroll = useRef(false);
 
     const loading = search.loading || browse.loading || stats.loading || featured.loading;
     const error =
@@ -391,6 +393,7 @@ export default function App() {
             });
         },
         onQuoteLookup: (audioId, lang) => {
+            pendingDeeplinkScroll.current = true;
             featured.lookupByAudioId(audioId, lang).then(() => {
                 setViewMode("quoteLookup");
                 urlInitialised.current = true;
@@ -419,6 +422,18 @@ export default function App() {
         },
         [handleQuoteLookup],
     );
+
+    useEffect(() => {
+        if (
+            pendingDeeplinkScroll.current &&
+            viewMode === "quoteLookup" &&
+            featured.quote &&
+            resultsSectionRef.current
+        ) {
+            pendingDeeplinkScroll.current = false;
+            resultsSectionRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+    }, [viewMode, featured.quote]);
 
     const isStatsActive = viewMode === "stats";
     const isBuilderActive = viewMode === "voiceBuilder";
@@ -473,7 +488,10 @@ export default function App() {
                             }
                         />
 
-                        <section className={`results-section${loading && hasViewData ? " results-loading" : ""}`}>
+                        <section
+                            ref={resultsSectionRef}
+                            className={`results-section${loading && hasViewData ? " results-loading" : ""}`}
+                        >
                             {loading && !hasViewData && <LoadingSpinner />}
                             {!loading && error && <EmptyState message={error} />}
                             {!error && viewMode === "search" && !!search.query && (

@@ -37,7 +37,12 @@ export function Footer() {
             </div>
             <p className="footer-support">
                 {"Support 07th Expansion - "}
-                <a href="https://store.steampowered.com/app/406550/" target="_blank" rel="noopener" className="footer-author">
+                <a
+                    href="https://store.steampowered.com/app/406550/"
+                    target="_blank"
+                    rel="noopener"
+                    className="footer-author"
+                >
                     get the game on Steam
                 </a>
             </p>

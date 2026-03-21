@@ -6,6 +6,7 @@ const (
 	English    Language = "en"
 	WitchHunt  Language = "wh"
 	Japanese   Language = "ja"
+	Russian    Language = "ru"
 	Spanish    Language = "es"
 	Portuguese Language = "pt"
 )
@@ -20,6 +21,8 @@ func (Language) Parse(s string) Language {
 		return Spanish
 	case "wh":
 		return WitchHunt
+	case "ru":
+		return Russian
 	case "pt":
 		return Portuguese
 	default:

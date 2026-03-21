@@ -10,6 +10,7 @@ var expectedLanguages = []language.Language{
 	language.English,
 	language.WitchHunt,
 	language.Japanese,
+	language.Russian,
 	language.Spanish,
 	language.Portuguese,
 }

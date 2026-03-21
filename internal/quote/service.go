@@ -61,6 +61,7 @@ func NewService() Service {
 		language.English:    "data/en.file",
 		language.WitchHunt:  "data/wh.file",
 		language.Japanese:   "data/ja.file",
+		language.Russian:    "data/ru.file",
 		language.Spanish:    "data/es.file",
 		language.Portuguese: "data/pt.file",
 	}

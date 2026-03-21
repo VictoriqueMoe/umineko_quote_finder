@@ -292,6 +292,7 @@ paths:
         - en
         - wh
         - ja
+        - ru
         - es
         - pt
         in: query
@@ -576,6 +577,7 @@ paths:
         - en
         - wh
         - ja
+        - ru
         - es
         - pt
         in: query
@@ -639,6 +641,7 @@ paths:
         - en
         - wh
         - ja
+        - ru
         - es
         - pt
         in: query
@@ -668,6 +671,7 @@ paths:
         - en
         - wh
         - ja
+        - ru
         - es
         - pt
         in: query
@@ -781,6 +785,7 @@ paths:
         - en
         - wh
         - ja
+        - ru
         - es
         - pt
         in: query

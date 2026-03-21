@@ -4,7 +4,7 @@ import { Pagination } from "../common/Pagination";
 import { EmptyState } from "../common/EmptyState";
 import type { SearchResult } from "../../types/api";
 import type { AudioPlayer } from "../../hooks/useAudioPlayer";
-import type { FilterState } from "../../types/app";
+import type { FilterState, Language } from "../../types/app";
 
 interface QuoteListProps {
     results: SearchResult[];
@@ -15,6 +15,7 @@ interface QuoteListProps {
     audioPlayer: AudioPlayer;
     filters: FilterState;
     onContextQuoteClick?: (audioId: string) => void;
+    langOverride?: Exclude<Language, "auto">;
 }
 
 export function QuoteList({
@@ -26,6 +27,7 @@ export function QuoteList({
     audioPlayer,
     filters,
     onContextQuoteClick,
+    langOverride,
 }: QuoteListProps) {
     const isInteractionMode = !!filters.interactionA && !!filters.interactionB;
 
@@ -84,6 +86,7 @@ export function QuoteList({
                             index={index}
                             audioPlayer={audioPlayer}
                             onContextQuoteClick={onContextQuoteClick}
+                            langOverride={langOverride}
                         />
                     );
                 })}

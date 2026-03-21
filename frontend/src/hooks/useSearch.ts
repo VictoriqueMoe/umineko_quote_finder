@@ -10,6 +10,7 @@ export function useSearch() {
     const [total, setTotal] = useState(0);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [detectedLang, setDetectedLang] = useState<Exclude<Language, "auto">>("en");
 
     const search = useCallback(
         async (
@@ -43,6 +44,9 @@ export function useSearch() {
                 setQuery(q);
                 setOffset(data.offset);
                 setTotal(data.total);
+                if (data.lang) {
+                    setDetectedLang(data.lang as Exclude<Language, "auto">);
+                }
                 return { offset: data.offset, total: data.total };
             } catch {
                 setError("Failed to search. Please try again.");
@@ -62,5 +66,5 @@ export function useSearch() {
         setError(null);
     }, []);
 
-    return { results, query, offset, total, loading, error, search, clear };
+    return { results, query, offset, total, loading, error, search, clear, detectedLang };
 }

@@ -18,6 +18,7 @@ export interface SearchResponse {
     results: SearchResult[];
     total: number;
     offset: number;
+    lang?: string;
 }
 
 export interface BrowseResponse {

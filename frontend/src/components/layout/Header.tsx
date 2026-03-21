@@ -34,6 +34,12 @@ export function Header({
             <ThemeSelector />
             <div className="language-selector">
                 <button
+                    className={`lang-btn${language === "auto" ? " active" : ""}`}
+                    onClick={() => onLanguageChange("auto")}
+                >
+                    Auto
+                </button>
+                <button
                     className={`lang-btn${language === "en" ? " active" : ""}`}
                     onClick={() => onLanguageChange("en")}
                 >

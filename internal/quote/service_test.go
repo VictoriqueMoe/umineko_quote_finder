@@ -573,6 +573,100 @@ func TestService_Browse_BlueTruthFilter(t *testing.T) {
 	}
 }
 
+func TestService_SearchAuto_FindsEnglish(t *testing.T) {
+	svc := testService
+
+	resp := searchWithParams(svc, "Beatrice", language.Auto, 10, 0, "", 0, TruthAll, "", "")
+
+	if resp.Total == 0 {
+		t.Fatal("expected auto-detect to find results")
+	}
+	if resp.Lang == "" {
+		t.Fatal("expected Lang to be set in auto-detect response")
+	}
+}
+
+func TestService_SearchAuto_FindsJapanese(t *testing.T) {
+	svc := testService
+
+	resp := searchWithParams(svc, "ベアトリーチェ", language.Auto, 10, 0, "", 0, TruthAll, "", "")
+
+	if resp.Total == 0 {
+		t.Fatal("expected auto-detect to find Japanese results")
+	}
+	if resp.Lang != "ja" {
+		t.Errorf("Lang: got %q, want %q", resp.Lang, "ja")
+	}
+}
+
+func TestService_SearchAuto_NoResults(t *testing.T) {
+	svc := testService
+
+	resp := searchWithParams(svc, "xyzzyxyzzyxyzzy", language.Auto, 10, 0, "", 0, TruthAll, "", "")
+
+	if resp.Total != 0 {
+		t.Errorf("Total: got %d, want 0", resp.Total)
+	}
+}
+
+func TestService_SearchAuto_ReturnsLangField(t *testing.T) {
+	svc := testService
+
+	resp := searchWithParams(svc, "witch", language.Auto, 10, 0, "", 0, TruthAll, "", "")
+
+	if resp.Total == 0 {
+		t.Fatal("expected results")
+	}
+	found := false
+	for _, l := range language.All {
+		if resp.Lang == string(l) {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("Lang %q is not a valid language", resp.Lang)
+	}
+}
+
+func TestService_SearchAuto_PrefersFirstLanguageInOrder(t *testing.T) {
+	svc := testService
+
+	resp := searchWithParams(svc, "Beatrice", language.Auto, 10, 0, "", 0, TruthAll, "", "")
+
+	if resp.Total == 0 {
+		t.Fatal("expected results")
+	}
+	if resp.Lang != "en" {
+		t.Errorf("Lang: got %q, want %q (English should be first match for 'Beatrice')", resp.Lang, "en")
+	}
+}
+
+func TestService_SearchAuto_WithFilters(t *testing.T) {
+	svc := testService
+
+	resp := searchWithParams(svc, "witch", language.Auto, 10, 0, character.Battler, 0, TruthAll, "", "")
+
+	if resp.Total == 0 {
+		t.Fatal("expected auto-detect results with character filter")
+	}
+	for i := 0; i < len(resp.Results); i++ {
+		if resp.Results[i].Quote.CharacterID != "10" {
+			t.Errorf("result %d CharacterID: got %q, want %q", i, resp.Results[i].Quote.CharacterID, "10")
+		}
+	}
+}
+
+func TestService_SearchAuto_NonAutoDoesNotSetLang(t *testing.T) {
+	svc := testService
+
+	resp := searchWithParams(svc, "Beatrice", language.English, 10, 0, "", 0, TruthAll, "", "")
+
+	if resp.Lang != "" {
+		t.Errorf("Lang should be empty for non-auto search, got %q", resp.Lang)
+	}
+}
+
 func TestService_GetByAudioID_CompositeAudioID(t *testing.T) {
 	svc := testService
 

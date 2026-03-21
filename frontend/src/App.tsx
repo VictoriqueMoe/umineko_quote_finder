@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { FilterState, Language, ViewMode } from "./types/app";
+import { resolveLanguage } from "./types/app";
 import { useAppContext } from "./hooks/useAppContext";
 import { useTheme } from "./hooks/useTheme";
 import { useAudioPlayer } from "./hooks/useAudioPlayer";
@@ -95,6 +96,7 @@ export default function App() {
             audioPlayer.stop();
             const result = await search.search(query, language, 0, filters);
             if (result) {
+                pendingDeeplinkScroll.current = true;
                 setViewMode("search");
                 doPushUrl("search", filters, { searchOffset: result.offset, searchQuery: query });
             }
@@ -115,7 +117,7 @@ export default function App() {
 
     const handleRandomQuote = useCallback(async () => {
         audioPlayer.stop();
-        const result = await featured.randomQuote(language, filters);
+        const result = await featured.randomQuote(resolveLanguage(language), filters);
         if (result) {
             setViewMode("featured");
             doPushUrl("featured", filters, { currentAudioId: result.audioId });
@@ -125,8 +127,9 @@ export default function App() {
     const handleQuoteLookup = useCallback(
         async (audioId: string) => {
             audioPlayer.stop();
-            const result = await featured.lookupByAudioId(audioId, language);
+            const result = await featured.lookupByAudioId(audioId, resolveLanguage(language));
             if (result) {
+                pendingDeeplinkScroll.current = true;
                 setViewMode("quoteLookup");
                 doPushUrl("quoteLookup", filters, { currentAudioId: result.audioId });
             }
@@ -153,7 +156,7 @@ export default function App() {
         setSearchInputValue("");
         const result = await browse.browse(
             filters.character,
-            language,
+            resolveLanguage(language),
             0,
             filters.interactionA,
             filters.interactionB,
@@ -171,7 +174,7 @@ export default function App() {
             audioPlayer.stop();
             const result = await browse.browse(
                 filters.character,
-                language,
+                resolveLanguage(language),
                 newOffset,
                 filters.interactionA,
                 filters.interactionB,
@@ -211,7 +214,7 @@ export default function App() {
 
             const result = await browse.browse(
                 "",
-                language,
+                resolveLanguage(language),
                 0,
                 nextFilters.interactionA,
                 nextFilters.interactionB,
@@ -229,7 +232,7 @@ export default function App() {
     const handleHomeClick = useCallback(() => {
         audioPlayer.stop();
         setViewMode("featured");
-        featured.randomQuote(language, filters);
+        featured.randomQuote(resolveLanguage(language), filters);
         doPushUrl("featured", filters);
     }, [audioPlayer, language, filters, featured, doPushUrl]);
 
@@ -248,7 +251,7 @@ export default function App() {
     const handleBuilderClose = useCallback(() => {
         audioPlayer.stop();
         setViewMode("featured");
-        featured.randomQuote(language, filters);
+        featured.randomQuote(resolveLanguage(language), filters);
         doPushUrl("featured", filters);
     }, [audioPlayer, language, filters, featured, doPushUrl]);
 
@@ -293,7 +296,7 @@ export default function App() {
                     browse
                         .browse(
                             merged.character,
-                            language,
+                            resolveLanguage(language),
                             0,
                             merged.interactionA,
                             merged.interactionB,
@@ -321,10 +324,11 @@ export default function App() {
     const handleLanguageChange = useCallback(
         (lang: Language) => {
             setLanguage(lang);
+            const resolved = resolveLanguage(lang);
             if (viewMode === "browse") {
                 browse.browse(
                     filters.character,
-                    lang,
+                    resolved,
                     browse.offset,
                     filters.interactionA,
                     filters.interactionB,
@@ -334,9 +338,9 @@ export default function App() {
             } else if (viewMode === "search" && searchInputValue.trim()) {
                 search.search(searchInputValue, lang, search.offset, filters);
             } else if (featured.currentAudioId) {
-                featured.lookupByAudioId(featured.currentAudioId, lang);
+                featured.lookupByAudioId(featured.currentAudioId, resolved);
             } else {
-                featured.randomQuote(lang, filters);
+                featured.randomQuote(resolved, filters);
             }
         },
         [setLanguage, viewMode, filters, searchInputValue, browse, search, featured],
@@ -424,16 +428,18 @@ export default function App() {
     );
 
     useEffect(() => {
-        if (
-            pendingDeeplinkScroll.current &&
-            viewMode === "quoteLookup" &&
-            featured.quote &&
-            resultsSectionRef.current
-        ) {
+        if (!pendingDeeplinkScroll.current || !resultsSectionRef.current) {
+            return;
+        }
+        const ready =
+            (viewMode === "quoteLookup" && featured.quote) ||
+            (viewMode === "search" && search.results.length > 0) ||
+            (viewMode === "featured" && featured.quote);
+        if (ready) {
             pendingDeeplinkScroll.current = false;
             resultsSectionRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
         }
-    }, [viewMode, featured.quote]);
+    }, [viewMode, featured.quote, search.results]);
 
     const isStatsActive = viewMode === "stats";
     const isBuilderActive = viewMode === "voiceBuilder";
@@ -504,6 +510,7 @@ export default function App() {
                                     audioPlayer={audioPlayer}
                                     filters={filters}
                                     onContextQuoteClick={handleContextQuoteClick}
+                                    langOverride={language === "auto" ? search.detectedLang : undefined}
                                 />
                             )}
                             {!error && (viewMode === "featured" || viewMode === "quoteLookup") && featured.quote && (

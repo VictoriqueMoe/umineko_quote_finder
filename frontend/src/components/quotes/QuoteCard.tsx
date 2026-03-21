@@ -16,10 +16,18 @@ interface QuoteCardProps {
     lineNumber?: number;
     audioPlayer: AudioPlayerType;
     onContextQuoteClick?: (audioId: string) => void;
+    langOverride?: Exclude<Language, "auto">;
 }
 
-export function QuoteCard({ quote, index, lineNumber, audioPlayer, onContextQuoteClick }: QuoteCardProps) {
-    const { displayHtml, lang, hasAudio, handleTextUpdate, handleLangChange } = useQuoteDisplay(quote);
+export function QuoteCard({
+    quote,
+    index,
+    lineNumber,
+    audioPlayer,
+    onContextQuoteClick,
+    langOverride,
+}: QuoteCardProps) {
+    const { displayHtml, lang, hasAudio, handleTextUpdate, handleLangChange } = useQuoteDisplay(quote, langOverride);
     const contextRefreshRef = useRef<((lang: Language) => void) | null>(null);
 
     const handleContextRefresh = useCallback((lang: Language) => {
@@ -42,6 +50,7 @@ export function QuoteCard({ quote, index, lineNumber, audioPlayer, onContextQuot
                             onTextUpdate={handleTextUpdate}
                             onLangChange={handleLangChange}
                             onContextRefresh={handleContextRefresh}
+                            langOverride={langOverride}
                         />
                     )}
                 </div>

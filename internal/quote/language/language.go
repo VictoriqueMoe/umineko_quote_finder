@@ -3,6 +3,7 @@ package language
 type Language string
 
 const (
+	Auto       Language = "auto"
 	English    Language = "en"
 	WitchHunt  Language = "wh"
 	Japanese   Language = "ja"
@@ -11,8 +12,12 @@ const (
 	Portuguese Language = "pt"
 )
 
+var All = []Language{English, WitchHunt, Japanese, Russian, Spanish, Portuguese}
+
 func (Language) Parse(s string) Language {
 	switch s {
+	case "auto":
+		return Auto
 	case "en":
 		return English
 	case "ja":

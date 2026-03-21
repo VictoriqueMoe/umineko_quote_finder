@@ -111,6 +111,10 @@ func NewService() Service {
 }
 
 func (s *service) Search(params quoteparams.SearchParams) dto.SearchResponse {
+	if params.Lang == language.Auto {
+		return s.searchAuto(params)
+	}
+
 	characterID := params.Character.ID()
 	query := params.Query
 	lang := params.Lang
@@ -180,6 +184,34 @@ func (s *service) Search(params quoteparams.SearchParams) dto.SearchResponse {
 	}
 
 	return NewSearchResponse(exactMatches, limit, offset)
+}
+
+func (s *service) searchAuto(params quoteparams.SearchParams) dto.SearchResponse {
+	type langResult struct {
+		lang   language.Language
+		result dto.SearchResponse
+	}
+
+	results := make([]langResult, len(language.All))
+	var wg sync.WaitGroup
+	for i, lang := range language.All {
+		wg.Go(func() {
+			p := params
+			p.Lang = lang
+			results[i] = langResult{lang: lang, result: s.Search(p)}
+		})
+	}
+	wg.Wait()
+
+	for _, lr := range results {
+		if lr.result.Total > 0 {
+			lr.result.Lang = string(lr.lang)
+			return lr.result
+		}
+	}
+
+	params.Lang = language.English
+	return s.Search(params)
 }
 
 func mergeFilteredIndices(baseIndices []int, interactionIndices []int) []int {

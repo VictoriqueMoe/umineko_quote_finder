@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { useAppContext } from "./useAppContext";
 import type { Quote } from "../types/api";
 import type { Language } from "../types/app";
@@ -20,25 +20,34 @@ export function episodeLabel(quote: Quote): string {
     return label;
 }
 
-export function useQuoteDisplay(quote: Quote) {
+export function useQuoteDisplay(quote: Quote, langOverride?: Exclude<Language, "auto">) {
     const { language, hasAudio } = useAppContext();
-    const [displayHtml, setDisplayHtml] = useState(quote.textHtml || quote.text);
-    const [lang, setLang] = useState<Language>(language);
+    const effective = langOverride ?? (language === "auto" ? "en" : language);
 
-    useEffect(() => {
-        setDisplayHtml(quote.textHtml || quote.text);
-    }, [quote]);
+    const [textOverride, setTextOverride] = useState<string | null>(null);
+    const [langUserOverride, setLangUserOverride] = useState<Language | null>(null);
+    const [prevQuote, setPrevQuote] = useState(quote);
+    const [prevEffective, setPrevEffective] = useState(effective);
 
-    useEffect(() => {
-        setLang(language);
-    }, [language]);
+    if (quote !== prevQuote) {
+        setPrevQuote(quote);
+        setTextOverride(null);
+        setLangUserOverride(null);
+    }
+    if (effective !== prevEffective) {
+        setPrevEffective(effective);
+        setLangUserOverride(null);
+    }
+
+    const displayHtml = textOverride ?? (quote.textHtml || quote.text);
+    const lang = langUserOverride ?? effective;
 
     const handleTextUpdate = useCallback((textHtml: string) => {
-        setDisplayHtml(textHtml);
+        setTextOverride(textHtml);
     }, []);
 
     const handleLangChange = useCallback((newLang: Language) => {
-        setLang(newLang);
+        setLangUserOverride(newLang);
     }, []);
 
     return { displayHtml, lang, hasAudio, handleTextUpdate, handleLangChange };

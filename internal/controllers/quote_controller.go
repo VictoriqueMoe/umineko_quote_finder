@@ -59,7 +59,7 @@ func (s *Service) setupCharactersRoute(routeGroup fiber.Router) {
 //	@Tags			quotes
 //	@Produce		json
 //	@Param			q			query		string	true	"Search query"
-//	@Param			lang		query		string	false	"Language"	default(en)	Enums(en, wh, ja, ru, es, pt)
+//	@Param			lang		query		string	false	"Language"	default(en)	Enums(auto, en, wh, ja, ru, es, pt)
 //	@Param			limit		query		int		false	"Maximum results"	default(30)
 //	@Param			offset		query		int		false	"Offset for pagination"	default(0)
 //	@Param			character	query		character.Character	false	"Filter by character ID"
@@ -105,13 +105,17 @@ func (s *Service) search(ctx fiber.Ctx) error {
 	)
 
 	response := s.QuoteService.Search(searchParams)
-	return ctx.JSON(fiber.Map{
+	result := fiber.Map{
 		"query":   query,
 		"results": response.Results,
 		"total":   response.Total,
 		"limit":   response.Limit,
 		"offset":  response.Offset,
-	})
+	}
+	if response.Lang != "" {
+		result["lang"] = response.Lang
+	}
+	return ctx.JSON(result)
 }
 
 // random godoc

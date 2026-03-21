@@ -12,6 +12,7 @@ type SearchResponse struct {
 	Total   int            `json:"total"`
 	Limit   int            `json:"limit"`
 	Offset  int            `json:"offset"`
+	Lang    string         `json:"lang,omitempty"`
 }
 
 type SearchAPIResponse struct {

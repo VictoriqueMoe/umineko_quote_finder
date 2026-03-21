@@ -5,7 +5,7 @@ import { getCharacters, getConfig } from "../api/endpoints";
 import { AppContext } from "./appContextValue";
 
 export function AppProvider({ children }: { children: ReactNode }) {
-    const [language, setLanguage] = useState<Language>("en");
+    const [language, setLanguage] = useState<Language>("auto");
     const [hasAudio, setHasAudio] = useState(true);
     const [characters, setCharacters] = useState<CharactersResponse>({});
     const [sortedCharacters, setSortedCharacters] = useState<[string, string][]>([]);

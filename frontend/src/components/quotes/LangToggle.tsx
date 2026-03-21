@@ -8,16 +8,19 @@ interface LangToggleProps {
     onTextUpdate: (textHtml: string, text: string) => void;
     onLangChange?: (lang: Language) => void;
     onContextRefresh?: (lang: Language) => void;
+    langOverride?: Exclude<Language, "auto">;
 }
 
-export function LangToggle({ audioId, onTextUpdate, onLangChange, onContextRefresh }: LangToggleProps) {
+export function LangToggle({ audioId, onTextUpdate, onLangChange, onContextRefresh, langOverride }: LangToggleProps) {
     const { language } = useAppContext();
-    const [activeLang, setActiveLang] = useState<Language>(language);
+    const effective = langOverride ?? (language === "auto" ? "en" : language);
+    const [activeLang, setActiveLang] = useState<Language>(effective);
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        setActiveLang(language);
-    }, [language]);
+        const next = langOverride ?? (language === "auto" ? "en" : language);
+        setActiveLang(next);
+    }, [language, langOverride]);
     const firstId = audioId.split(", ")[0];
 
     const handleToggle = useCallback(

@@ -33,6 +33,7 @@ const docTemplate = `{
                     {
                         "enum": [
                             "en",
+                            "wh",
                             "ja",
                             "es",
                             "pt"
@@ -362,6 +363,7 @@ const docTemplate = `{
                     {
                         "enum": [
                             "en",
+                            "wh",
                             "ja",
                             "es",
                             "pt"
@@ -451,6 +453,7 @@ const docTemplate = `{
                     {
                         "enum": [
                             "en",
+                            "wh",
                             "ja",
                             "es",
                             "pt"
@@ -492,6 +495,7 @@ const docTemplate = `{
                     {
                         "enum": [
                             "en",
+                            "wh",
                             "ja",
                             "es",
                             "pt"
@@ -627,6 +631,7 @@ const docTemplate = `{
                     {
                         "enum": [
                             "en",
+                            "wh",
                             "ja",
                             "es",
                             "pt"

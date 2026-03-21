@@ -8,6 +8,7 @@ import (
 
 var expectedLanguages = []language.Language{
 	language.English,
+	language.WitchHunt,
 	language.Japanese,
 	language.Spanish,
 	language.Portuguese,

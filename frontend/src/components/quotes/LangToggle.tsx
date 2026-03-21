@@ -53,6 +53,13 @@ export function LangToggle({ audioId, onTextUpdate, onLangChange, onContextRefre
                 EN
             </button>
             <button
+                className={`lang-card-btn${activeLang === "wh" ? " active" : ""}`}
+                disabled={loading}
+                onClick={() => handleToggle("wh")}
+            >
+                WH
+            </button>
+            <button
                 className={`lang-card-btn${activeLang === "ja" ? " active" : ""}`}
                 disabled={loading}
                 onClick={() => handleToggle("ja")}

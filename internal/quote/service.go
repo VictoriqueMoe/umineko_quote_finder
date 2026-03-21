@@ -59,6 +59,7 @@ func NewService() Service {
 
 	langFiles := map[language.Language]string{
 		language.English:    "data/en.file",
+		language.WitchHunt:  "data/wh.file",
 		language.Japanese:   "data/ja.file",
 		language.Spanish:    "data/es.file",
 		language.Portuguese: "data/pt.file",

@@ -19,5 +19,21 @@ export default defineConfig({
     build: {
         outDir: "../static",
         emptyOutDir: true,
+        rolldownOptions: {
+            output: {
+                codeSplitting: {
+                    groups: [
+                        {
+                            name: "vendor-chart",
+                            test: /chart\.js|react-chartjs|chartjs-plugin|hammerjs/,
+                        },
+                        {
+                            name: "vendor-dnd",
+                            test: /dnd-kit/,
+                        },
+                    ],
+                },
+            },
+        },
     },
 });

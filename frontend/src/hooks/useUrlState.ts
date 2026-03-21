@@ -40,7 +40,7 @@ export function useUrlState(callbacks: UrlStateCallbacks) {
         const params = new URLSearchParams(window.location.search);
         const cb = callbacksRef.current;
 
-        const lang = (params.get("lang") || "en") as Language;
+        const lang = (params.get("lang") || "auto") as Language;
         cb.setLanguage(lang);
 
         const episode = params.get("episode") || "0";
@@ -135,7 +135,7 @@ export function pushUrl(state: PushUrlParams, language: Language, searchQuery: s
         params.set("offset", String(offset));
     }
 
-    if (language !== "en") {
+    if (language !== "auto") {
         params.set("lang", language);
     }
 

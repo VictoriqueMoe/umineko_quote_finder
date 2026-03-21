@@ -59,7 +59,7 @@ func (s *Service) setupCharactersRoute(routeGroup fiber.Router) {
 //	@Tags			quotes
 //	@Produce		json
 //	@Param			q			query		string	true	"Search query"
-//	@Param			lang		query		string	false	"Language"	default(en)	Enums(en, wh, ja, es, pt)
+//	@Param			lang		query		string	false	"Language"	default(en)	Enums(en, wh, ja, ru, es, pt)
 //	@Param			limit		query		int		false	"Maximum results"	default(30)
 //	@Param			offset		query		int		false	"Offset for pagination"	default(0)
 //	@Param			character	query		character.Character	false	"Filter by character ID"
@@ -120,7 +120,7 @@ func (s *Service) search(ctx fiber.Ctx) error {
 //	@Description	Returns a random quote with optional filters
 //	@Tags			quotes
 //	@Produce		json
-//	@Param			lang		query		string	false	"Language"	default(en)	Enums(en, wh, ja, es, pt)
+//	@Param			lang		query		string	false	"Language"	default(en)	Enums(en, wh, ja, ru, es, pt)
 //	@Param			character	query		character.Character	false	"Filter by character ID"
 //	@Param			episode		query		int		false	"Filter by episode (1-8)"
 //	@Param			truth		query		string	false	"Filter by truth type"	Enums(red, blue)
@@ -147,7 +147,7 @@ func (s *Service) random(ctx fiber.Ctx) error {
 //	@Description	Browse all quotes with optional filters and pagination
 //	@Tags			quotes
 //	@Produce		json
-//	@Param			lang		query		string	false	"Language"	default(en)	Enums(en, wh, ja, es, pt)
+//	@Param			lang		query		string	false	"Language"	default(en)	Enums(en, wh, ja, ru, es, pt)
 //	@Param			character	query		character.Character	false	"Filter by character ID"
 //	@Param			interactionA	query		character.Character	false	"Interaction filter: first character ID (requires interactionB)"
 //	@Param			interactionB	query		character.Character	false	"Interaction filter: second character ID (requires interactionA)"
@@ -194,7 +194,7 @@ func (s *Service) browse(ctx fiber.Ctx) error {
 //	@Tags			quotes
 //	@Produce		json
 //	@Param			audioId		path		string	true	"Audio ID of the quote"
-//	@Param			lang		query		string	false	"Language"	default(en)	Enums(en, wh, ja, es, pt)
+//	@Param			lang		query		string	false	"Language"	default(en)	Enums(en, wh, ja, ru, es, pt)
 //	@Success		200			{object}	dto.ParsedQuote
 //	@Failure		404			{object}	dto.ErrorResponse
 //	@Router			/quote/{audioId} [get]
@@ -222,7 +222,7 @@ func (s *Service) setupContextRoute(routeGroup fiber.Router) {
 //	@Tags			quotes
 //	@Produce		json
 //	@Param			audioId		path		string	true	"Audio ID of the quote"
-//	@Param			lang		query		string	false	"Language"	default(en)	Enums(en, wh, ja, es, pt)
+//	@Param			lang		query		string	false	"Language"	default(en)	Enums(en, wh, ja, ru, es, pt)
 //	@Param			lines		query		int		false	"Number of context lines before and after"	default(5)
 //	@Success		200			{object}	dto.ContextResponse
 //	@Failure		400			{object}	dto.ErrorResponse

@@ -35,6 +35,7 @@ const docTemplate = `{
                             "en",
                             "wh",
                             "ja",
+                            "ru",
                             "es",
                             "pt"
                         ],
@@ -365,6 +366,7 @@ const docTemplate = `{
                             "en",
                             "wh",
                             "ja",
+                            "ru",
                             "es",
                             "pt"
                         ],
@@ -455,6 +457,7 @@ const docTemplate = `{
                             "en",
                             "wh",
                             "ja",
+                            "ru",
                             "es",
                             "pt"
                         ],
@@ -497,6 +500,7 @@ const docTemplate = `{
                             "en",
                             "wh",
                             "ja",
+                            "ru",
                             "es",
                             "pt"
                         ],
@@ -633,6 +637,7 @@ const docTemplate = `{
                             "en",
                             "wh",
                             "ja",
+                            "ru",
                             "es",
                             "pt"
                         ],

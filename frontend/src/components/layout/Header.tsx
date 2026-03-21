@@ -52,6 +52,12 @@ export function Header({
                     {"日本語"}
                 </button>
                 <button
+                    className={`lang-btn${language === "ru" ? " active" : ""}`}
+                    onClick={() => onLanguageChange("ru")}
+                >
+                    {"Русский"}
+                </button>
+                <button
                     className={`lang-btn${language === "es" ? " active" : ""}`}
                     onClick={() => onLanguageChange("es")}
                 >

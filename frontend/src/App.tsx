@@ -378,7 +378,7 @@ export default function App() {
             browse
                 .browse(
                     nextFilters.character,
-                    lang,
+                    resolveLanguage(lang),
                     offset,
                     nextFilters.interactionA,
                     nextFilters.interactionB,
@@ -398,7 +398,7 @@ export default function App() {
         },
         onQuoteLookup: (audioId, lang) => {
             pendingDeeplinkScroll.current = true;
-            featured.lookupByAudioId(audioId, lang).then(() => {
+            featured.lookupByAudioId(audioId, resolveLanguage(lang)).then(() => {
                 setViewMode("quoteLookup");
                 urlInitialised.current = true;
             });
@@ -409,7 +409,7 @@ export default function App() {
             urlInitialised.current = true;
         },
         onDefault: lang => {
-            featured.randomQuote(lang, filters).then(() => {
+            featured.randomQuote(resolveLanguage(lang), filters).then(() => {
                 setViewMode("featured");
                 urlInitialised.current = true;
             });

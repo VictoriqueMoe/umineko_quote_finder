@@ -20,4 +20,3 @@ export interface FilterState {
     episode: string;
     truth: string;
 }
-

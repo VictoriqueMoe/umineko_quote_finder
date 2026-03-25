@@ -2,7 +2,8 @@ package quote
 
 import (
 	"umineko_quote/internal/dto"
-	"umineko_quote/internal/quote/character"
+
+	"github.com/VictoriqueMoe/umineko_script_parser/quote/character"
 )
 
 func NewCharacterResponse(characterID string, quotes []dto.ParsedQuote, limit int, offset int) dto.CharacterResponse {

@@ -7,13 +7,13 @@ import (
 	"strings"
 	"sync"
 	"time"
-	"umineko_quote/internal/quote/character"
+
+	"umineko_quote/internal/dto"
 	"umineko_quote/internal/quote/language"
 	quoteparams "umineko_quote/internal/quote/params"
 
-	"umineko_quote/internal/dto"
-	"umineko_quote/internal/lexar"
-	"umineko_quote/internal/quote/scriptloader"
+	scriptparser "github.com/VictoriqueMoe/umineko_script_parser"
+	"github.com/VictoriqueMoe/umineko_script_parser/quote/character"
 )
 
 const audioDir = "internal/quote/data/audio"
@@ -50,12 +50,7 @@ type (
 func NewService() Service {
 	serviceStart := time.Now()
 
-	parse := func(lines []string) ([]dto.ParsedQuote, []lexar.SubtitleRef, []lexar.ValidationError) {
-		p := NewParser()
-		return p.ParseAll(lines), p.SubtitleRefs(), p.ValidationErrors()
-	}
-
-	loader := scriptloader.New(dataFS, parse)
+	l := scriptparser.NewLoader(dataFS)
 
 	langFiles := map[language.Language]string{
 		language.English:    "data/en.file",
@@ -71,7 +66,7 @@ func NewService() Service {
 
 	for lang, path := range langFiles {
 		wg.Go(func() {
-			parsed := loader.Load(string(lang), path)
+			parsed := l.Load(string(lang), path)
 			if parsed == nil {
 				return
 			}

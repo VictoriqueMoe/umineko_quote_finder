@@ -4,9 +4,10 @@ import (
 	"os"
 	"regexp"
 	"strings"
-	"umineko_quote/internal/quote/character"
 	"umineko_quote/internal/quote/language"
 	quoteparams "umineko_quote/internal/quote/params"
+
+	"github.com/VictoriqueMoe/umineko_script_parser/quote/character"
 
 	"umineko_quote/internal/audio"
 	_ "umineko_quote/internal/dto"

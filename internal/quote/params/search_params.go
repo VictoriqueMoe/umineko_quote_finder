@@ -2,8 +2,9 @@ package params
 
 import (
 	"strings"
-	"umineko_quote/internal/quote/character"
 	"umineko_quote/internal/quote/language"
+
+	"github.com/VictoriqueMoe/umineko_script_parser/quote/character"
 )
 
 type SearchParams struct {

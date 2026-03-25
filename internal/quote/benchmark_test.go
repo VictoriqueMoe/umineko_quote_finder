@@ -3,8 +3,9 @@ package quote
 import (
 	"testing"
 	"umineko_quote/internal/dto"
-	"umineko_quote/internal/quote/character"
 	"umineko_quote/internal/quote/language"
+
+	"github.com/VictoriqueMoe/umineko_script_parser/quote/character"
 )
 
 func BenchmarkSearch_BroadQuery(b *testing.B) {

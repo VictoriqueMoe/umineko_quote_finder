@@ -9,6 +9,7 @@ import type {
     StatsResponse,
 } from "../types/api";
 import type { Language } from "../types/app";
+import { resolveLanguage } from "../types/app";
 
 const PAGE_SIZE = 30;
 
@@ -45,7 +46,7 @@ export async function getRandomQuote(
     truth?: string,
 ): Promise<Quote> {
     const qs = buildQueryString({
-        lang,
+        lang: resolveLanguage(lang),
         character: characterId || undefined,
         episode: episode && episode !== "0" ? episode : undefined,
         truth: truth || undefined,
@@ -54,7 +55,7 @@ export async function getRandomQuote(
 }
 
 export async function getQuoteByAudioId(audioId: string, lang: Language): Promise<Quote> {
-    return apiFetch<Quote>(`/quote/${audioId}?lang=${lang}`);
+    return apiFetch<Quote>(`/quote/${audioId}?lang=${resolveLanguage(lang)}`);
 }
 
 export async function browseDialogue(
@@ -69,7 +70,7 @@ export async function browseDialogue(
     const qs = buildQueryString({
         limit: PAGE_SIZE,
         offset,
-        lang,
+        lang: resolveLanguage(lang),
         character: characterId || undefined,
         interactionA: interactionA || undefined,
         interactionB: interactionB || undefined,
@@ -80,7 +81,7 @@ export async function browseDialogue(
 }
 
 export async function getContext(audioId: string, lang: Language, lines: number = 5): Promise<ContextResponse> {
-    return apiFetch<ContextResponse>(`/context/${audioId}?lang=${lang}&lines=${lines}`);
+    return apiFetch<ContextResponse>(`/context/${audioId}?lang=${resolveLanguage(lang)}&lines=${lines}`);
 }
 
 export async function getStats(episode?: string): Promise<StatsResponse> {

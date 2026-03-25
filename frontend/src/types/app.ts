@@ -21,10 +21,3 @@ export interface FilterState {
     truth: string;
 }
 
-export interface PushUrlParams {
-    viewMode: ViewMode;
-    filters: FilterState;
-    currentAudioId: string | null;
-    browseOffset: number;
-    searchOffset: number;
-}

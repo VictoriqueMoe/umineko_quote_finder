@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { FilterState, Language, ViewMode } from "./types/app";
+import type { FilterState, Language } from "./types/app";
 import { resolveLanguage } from "./types/app";
 import { useAppContext } from "./hooks/useAppContext";
 import { useTheme } from "./hooks/useTheme";
@@ -8,7 +8,8 @@ import { useSearch } from "./hooks/useSearch";
 import { useBrowse } from "./hooks/useBrowse";
 import { useStats } from "./hooks/useStats";
 import { useFeaturedQuote } from "./hooks/useFeaturedQuote";
-import { pushUrl, useUrlState } from "./hooks/useUrlState";
+import { type ParsedRoute, useRouter } from "./hooks/useRouter";
+import { enforceMutuallyExclusiveFilters, normalizeFilterCharacters } from "./utils/filters";
 import { Header } from "./components/layout/Header";
 import { Footer } from "./components/layout/Footer";
 import { Butterflies } from "./components/layout/Butterflies";
@@ -39,14 +40,75 @@ export default function App() {
     const featured = useFeaturedQuote();
     const { count: bookmarkCount } = useBookmarks();
 
-    const [viewMode, setViewMode] = useState<ViewMode>("featured");
     const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
     const [searchInputValue, setSearchInputValue] = useState("");
     const [audioIdInputValue, setAudioIdInputValue] = useState("");
     const [builderInitialSegments, setBuilderInitialSegments] = useState<string | null>(null);
-    const urlInitialised = useRef(false);
-    const resultsSectionRef = useRef<HTMLElement>(null);
     const pendingDeeplinkScroll = useRef(false);
+    const resultsSectionRef = useRef<HTMLElement>(null);
+
+    const { viewMode, navigate } = useRouter({
+        language,
+        onRouteLoad: async (route: ParsedRoute) => {
+            setLanguage(route.lang);
+
+            const baseFilters = {
+                episode: route.episode,
+                truth: route.truth,
+                interactionA: route.interactionA,
+                interactionB: route.interactionB,
+            };
+
+            switch (route.viewMode) {
+                case "search": {
+                    const nextFilters = enforceMutuallyExclusiveFilters(
+                        normalizeFilterCharacters({ character: route.character, ...baseFilters }),
+                    );
+                    setSearchInputValue(route.query);
+                    setFilters(prev => ({ ...prev, ...nextFilters }));
+                    await search.search(route.query, route.lang, route.offset, nextFilters);
+                    break;
+                }
+                case "browse": {
+                    const nextFilters = enforceMutuallyExclusiveFilters(
+                        normalizeFilterCharacters({ character: route.character, ...baseFilters }),
+                    );
+                    setFilters(prev => ({ ...prev, ...nextFilters }));
+                    await browse.browse(
+                        nextFilters.character,
+                        resolveLanguage(route.lang),
+                        route.offset,
+                        nextFilters.interactionA,
+                        nextFilters.interactionB,
+                        nextFilters.episode,
+                        nextFilters.truth,
+                    );
+                    break;
+                }
+                case "stats": {
+                    setFilters(prev => ({ ...prev, ...baseFilters }));
+                    await stats.loadStats(route.episode);
+                    break;
+                }
+                case "quoteLookup": {
+                    setFilters(prev => ({ ...prev, ...baseFilters }));
+                    pendingDeeplinkScroll.current = true;
+                    await featured.lookupByAudioId(route.audioId, resolveLanguage(route.lang));
+                    break;
+                }
+                case "voiceBuilder": {
+                    setFilters(prev => ({ ...prev, ...baseFilters }));
+                    setBuilderInitialSegments(route.segments);
+                    break;
+                }
+                case "featured": {
+                    setFilters(prev => ({ ...prev, ...baseFilters }));
+                    await featured.randomQuote(resolveLanguage(route.lang), { character: "", ...baseFilters });
+                    break;
+                }
+            }
+        },
+    });
 
     const loading = search.loading || browse.loading || stats.loading || featured.loading;
     const error =
@@ -61,35 +123,6 @@ export default function App() {
         ((viewMode === "featured" || viewMode === "quoteLookup") && !!featured.quote) ||
         (viewMode === "stats" && !!stats.data);
 
-    const doPushUrl = useCallback(
-        (
-            vm: ViewMode,
-            f: FilterState,
-            opts?: {
-                searchOffset?: number;
-                browseOffset?: number;
-                currentAudioId?: string | null;
-                searchQuery?: string;
-            },
-        ) => {
-            if (!urlInitialised.current) {
-                return;
-            }
-            pushUrl(
-                {
-                    viewMode: vm,
-                    filters: f,
-                    currentAudioId: opts?.currentAudioId ?? null,
-                    searchOffset: opts?.searchOffset ?? 0,
-                    browseOffset: opts?.browseOffset ?? 0,
-                },
-                language,
-                opts?.searchQuery ?? "",
-            );
-        },
-        [language],
-    );
-
     const handleSearchSubmit = useCallback(
         async (query: string) => {
             setSearchInputValue(query);
@@ -97,11 +130,10 @@ export default function App() {
             const result = await search.search(query, language, 0, filters);
             if (result) {
                 pendingDeeplinkScroll.current = true;
-                setViewMode("search");
-                doPushUrl("search", filters, { searchOffset: result.offset, searchQuery: query });
+                navigate("search", filters, { searchOffset: result.offset, searchQuery: query });
             }
         },
-        [filters, language, audioPlayer, search, doPushUrl],
+        [filters, language, audioPlayer, search, navigate],
     );
 
     const handleSearchPaginate = useCallback(
@@ -109,20 +141,19 @@ export default function App() {
             audioPlayer.stop();
             const result = await search.search(search.query, language, newOffset, filters);
             if (result) {
-                doPushUrl("search", filters, { searchOffset: result.offset, searchQuery: search.query });
+                navigate("search", filters, { searchOffset: result.offset, searchQuery: search.query });
             }
         },
-        [filters, language, audioPlayer, search, doPushUrl],
+        [filters, language, audioPlayer, search, navigate],
     );
 
     const handleRandomQuote = useCallback(async () => {
         audioPlayer.stop();
         const result = await featured.randomQuote(resolveLanguage(language), filters);
         if (result) {
-            setViewMode("featured");
-            doPushUrl("featured", filters, { currentAudioId: result.audioId });
+            navigate("featured", filters, { currentAudioId: result.audioId });
         }
-    }, [filters, language, audioPlayer, featured, doPushUrl]);
+    }, [filters, language, audioPlayer, featured, navigate]);
 
     const handleQuoteLookup = useCallback(
         async (audioId: string) => {
@@ -130,11 +161,10 @@ export default function App() {
             const result = await featured.lookupByAudioId(audioId, resolveLanguage(language));
             if (result) {
                 pendingDeeplinkScroll.current = true;
-                setViewMode("quoteLookup");
-                doPushUrl("quoteLookup", filters, { currentAudioId: result.audioId });
+                navigate("quoteLookup", filters, { currentAudioId: result.audioId });
             }
         },
-        [filters, language, audioPlayer, featured, doPushUrl],
+        [filters, language, audioPlayer, featured, navigate],
     );
 
     const handleAudioIdSubmit = useCallback(
@@ -164,10 +194,9 @@ export default function App() {
             filters.truth,
         );
         if (result) {
-            setViewMode("browse");
-            doPushUrl("browse", filters, { browseOffset: result.offset });
+            navigate("browse", filters, { browseOffset: result.offset });
         }
-    }, [filters, language, audioPlayer, browse, doPushUrl]);
+    }, [filters, language, audioPlayer, browse, navigate]);
 
     const handleBrowsePaginate = useCallback(
         async (newOffset: number) => {
@@ -182,18 +211,17 @@ export default function App() {
                 filters.truth,
             );
             if (result) {
-                doPushUrl("browse", filters, { browseOffset: result.offset });
+                navigate("browse", filters, { browseOffset: result.offset });
             }
         },
-        [filters, language, audioPlayer, browse, doPushUrl],
+        [filters, language, audioPlayer, browse, navigate],
     );
 
     const handleLoadStats = useCallback(async () => {
         audioPlayer.stop();
         await stats.loadStats(filters.episode);
-        setViewMode("stats");
-        doPushUrl("stats", filters);
-    }, [filters, audioPlayer, stats, doPushUrl]);
+        navigate("stats", filters);
+    }, [filters, audioPlayer, stats, navigate]);
 
     const handleViewInteractionDialogues = useCallback(
         async (interactionA: string, interactionB: string) => {
@@ -222,38 +250,33 @@ export default function App() {
                 nextFilters.truth,
             );
             if (result) {
-                setViewMode("browse");
-                doPushUrl("browse", nextFilters, { browseOffset: result.offset });
+                navigate("browse", nextFilters, { browseOffset: result.offset });
             }
         },
-        [audioPlayer, filters, browse, language, doPushUrl],
+        [audioPlayer, filters, browse, language, navigate],
     );
 
     const handleHomeClick = useCallback(() => {
         audioPlayer.stop();
-        setViewMode("featured");
         featured.randomQuote(resolveLanguage(language), filters);
-        doPushUrl("featured", filters);
-    }, [audioPlayer, language, filters, featured, doPushUrl]);
+        navigate("featured", filters);
+    }, [audioPlayer, language, filters, featured, navigate]);
 
     const handleBuilderClick = useCallback(() => {
         audioPlayer.stop();
-        setViewMode("voiceBuilder");
-        doPushUrl("voiceBuilder", filters);
-    }, [audioPlayer, filters, doPushUrl]);
+        navigate("voiceBuilder", filters);
+    }, [audioPlayer, filters, navigate]);
 
     const handleBookmarksClick = useCallback(() => {
         audioPlayer.stop();
-        setViewMode("bookmarks");
-        doPushUrl("bookmarks", filters);
-    }, [audioPlayer, filters, doPushUrl]);
+        navigate("bookmarks", filters);
+    }, [audioPlayer, filters, navigate]);
 
     const handleBuilderClose = useCallback(() => {
         audioPlayer.stop();
-        setViewMode("featured");
         featured.randomQuote(resolveLanguage(language), filters);
-        doPushUrl("featured", filters);
-    }, [audioPlayer, language, filters, featured, doPushUrl]);
+        navigate("featured", filters);
+    }, [audioPlayer, language, filters, featured, navigate]);
 
     const handleClear = useCallback(() => {
         audioPlayer.stop();
@@ -261,16 +284,11 @@ export default function App() {
         browse.clear();
         stats.clear();
         featured.clear();
-        setViewMode("featured");
         setFilters(DEFAULT_FILTERS);
         setSearchInputValue("");
         setAudioIdInputValue("");
-        pushUrl(
-            { viewMode: "featured", filters: DEFAULT_FILTERS, currentAudioId: null, searchOffset: 0, browseOffset: 0 },
-            "en",
-            "",
-        );
-    }, [audioPlayer, search, browse, stats, featured]);
+        navigate("featured", DEFAULT_FILTERS);
+    }, [audioPlayer, search, browse, stats, featured, navigate]);
 
     const handleFilterChange = useCallback(
         (newFilters: Partial<FilterState>) => {
@@ -281,7 +299,7 @@ export default function App() {
                 if ("episode" in newFilters) {
                     audioPlayer.stop();
                     stats.loadStats(merged.episode).then(() => {
-                        doPushUrl("stats", merged);
+                        navigate("stats", merged);
                     });
                 }
             } else if (viewMode === "browse") {
@@ -305,7 +323,7 @@ export default function App() {
                         )
                         .then(result => {
                             if (result) {
-                                doPushUrl("browse", merged, { browseOffset: result.offset });
+                                navigate("browse", merged, { browseOffset: result.offset });
                             }
                         });
                 }
@@ -313,12 +331,12 @@ export default function App() {
                 audioPlayer.stop();
                 search.search(searchInputValue, language, 0, merged).then(result => {
                     if (result) {
-                        doPushUrl("search", merged, { searchOffset: result.offset, searchQuery: searchInputValue });
+                        navigate("search", merged, { searchOffset: result.offset, searchQuery: searchInputValue });
                     }
                 });
             }
         },
-        [filters, viewMode, searchInputValue, language, audioPlayer, search, browse, stats, doPushUrl],
+        [filters, viewMode, searchInputValue, language, audioPlayer, search, browse, stats, navigate],
     );
 
     const handleLanguageChange = useCallback(
@@ -345,80 +363,6 @@ export default function App() {
         },
         [setLanguage, viewMode, filters, searchInputValue, browse, search, featured],
     );
-
-    useUrlState({
-        onSearch: (query, offset, character, interactionA, interactionB, episode, truth, lang) => {
-            const nextFilters = enforceMutuallyExclusiveFilters(
-                normalizeFilterCharacters({
-                    character,
-                    interactionA,
-                    interactionB,
-                    episode,
-                    truth,
-                }),
-            );
-            setSearchInputValue(query);
-            setFilters(prev => ({ ...prev, ...nextFilters }));
-            search.search(query, lang, offset, nextFilters).then(() => {
-                setViewMode("search");
-                urlInitialised.current = true;
-            });
-        },
-        onBrowse: (character, interactionA, interactionB, offset, episode, truth, lang) => {
-            const nextFilters = enforceMutuallyExclusiveFilters(
-                normalizeFilterCharacters({
-                    character,
-                    interactionA,
-                    interactionB,
-                    episode,
-                    truth,
-                }),
-            );
-            setFilters(prev => ({ ...prev, ...nextFilters }));
-            browse
-                .browse(
-                    nextFilters.character,
-                    resolveLanguage(lang),
-                    offset,
-                    nextFilters.interactionA,
-                    nextFilters.interactionB,
-                    nextFilters.episode,
-                    nextFilters.truth,
-                )
-                .then(() => {
-                    setViewMode("browse");
-                    urlInitialised.current = true;
-                });
-        },
-        onStats: _lang => {
-            stats.loadStats(filters.episode).then(() => {
-                setViewMode("stats");
-                urlInitialised.current = true;
-            });
-        },
-        onQuoteLookup: (audioId, lang) => {
-            pendingDeeplinkScroll.current = true;
-            featured.lookupByAudioId(audioId, resolveLanguage(lang)).then(() => {
-                setViewMode("quoteLookup");
-                urlInitialised.current = true;
-            });
-        },
-        onBuilder: (segments, _lang) => {
-            setBuilderInitialSegments(segments);
-            setViewMode("voiceBuilder");
-            urlInitialised.current = true;
-        },
-        onDefault: lang => {
-            featured.randomQuote(resolveLanguage(lang), filters).then(() => {
-                setViewMode("featured");
-                urlInitialised.current = true;
-            });
-        },
-        setLanguage,
-        setFilters: f => {
-            setFilters(prev => ({ ...prev, ...f }));
-        },
-    });
 
     const handleContextQuoteClick = useCallback(
         (audioId: string) => {
@@ -552,20 +496,4 @@ export default function App() {
             </div>
         </>
     );
-}
-
-function enforceMutuallyExclusiveFilters(filters: FilterState): FilterState {
-    if (filters.character && (filters.interactionA || filters.interactionB)) {
-        return { ...filters, character: "" };
-    }
-    return filters;
-}
-
-function normalizeFilterCharacters(filters: FilterState): FilterState {
-    return {
-        ...filters,
-        character: normalizeCharacterKey(filters.character),
-        interactionA: normalizeCharacterKey(filters.interactionA),
-        interactionB: normalizeCharacterKey(filters.interactionB),
-    };
 }

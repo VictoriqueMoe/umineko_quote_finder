@@ -2,8 +2,118 @@
 
 A quote search engine for Umineko no Naku Koro ni. Search through thousands of lines of dialogue from the visual novel.
 
+## System Architecture
+
+```mermaid
+graph TB
+    subgraph Frontend["Frontend · React 19 / TypeScript / Vite"]
+        App["App.tsx"]
+        API["API Client<br/>(fetch)"]
+        SearchUI["Quote Display<br/>& Search UI"]
+        AudioPlayer["Audio Player"]
+        VoiceBuilder["Voice Clip<br/>Builder"]
+    end
+
+    subgraph HTTP["HTTP Layer · Go Fiber v3"]
+        Router["Router<br/>PublicRoutes()"]
+        QuoteCtrl["Quote<br/>Controller"]
+        OGCtrl["OG<br/>Controller"]
+        SysCtrl["System<br/>Controller"]
+    end
+
+    subgraph QuoteService["Quote Service & Search"]
+        Service["Quote Service"]
+        Search["Search Engine<br/>(concurrent workers)"]
+        Indexer["Indexer<br/>(parallel)"]
+        Stats["Stats<br/>Aggregator"]
+        Truth["Red / Blue<br/>Truth Classifier"]
+    end
+
+    subgraph Lexar["Lexar · Lexical Analysis Pipeline"]
+        Lexer["Lexer"]
+        Parser["Parser"]
+        AST["AST"]
+        Extractor["Extractor"]
+        HTMLTransform["HTML<br/>Transformer"]
+        PlainTransform["Plaintext<br/>Transformer"]
+    end
+
+    subgraph DataLoading["Data Loading · Embedded go:embed"]
+        ScriptLoader["Script Loader<br/>(ONS2 Decoder)"]
+        EN["en.file"]
+        JA["ja.file"]
+        ES["es.file"]
+        PT["pt.file"]
+        SubParser["Subtitle Parser<br/>(ASS)"]
+        Mutations["Mutation<br/>Pipeline"]
+    end
+
+    subgraph Audio["Audio Processing"]
+        Combiner["Audio<br/>Combiner"]
+        OGGParser["OGG Parser<br/>& Serializer"]
+        VoiceFiles[("Voice OGG<br/>Files")]
+    end
+
+    subgraph OG["Open Graph Image Generation"]
+        OGGen["OG Image<br/>Generator"]
+        Fonts[("Embedded Fonts<br/>NotoSansJP")]
+        Cache[("Image Cache<br/>sync.Map")]
+    end
+
+    subgraph CICD["Deployment / CI-CD"]
+        GHA["GitHub Actions"]
+        Docker["Docker<br/>Multi-Stage Build"]
+        GHCR[("GHCR Container<br/>Registry")]
+    end
+
+    App --> API
+    App --> SearchUI
+    App --> AudioPlayer
+    App --> VoiceBuilder
+    API -- "HTTP /api/v1/*" --> Router
+
+    Router --> QuoteCtrl
+    Router --> OGCtrl
+    Router --> SysCtrl
+
+    QuoteCtrl -- delegates --> Service
+    Service --> Search
+    Service --> Indexer
+    Service --> Stats
+    Service --> Truth
+    Search -- queries --> Indexer
+
+    Service -- "parses via" --> Lexer
+    Lexer -- tokens --> Parser
+    Parser -- builds --> AST
+    AST -- feeds --> Extractor
+    Extractor --> HTMLTransform
+    Extractor --> PlainTransform
+
+    ScriptLoader -- decodes --> EN
+    ScriptLoader -- decodes --> JA
+    ScriptLoader -- decodes --> ES
+    ScriptLoader -- decodes --> PT
+    ScriptLoader -- feeds --> Lexer
+    SubParser -- "merges into" --> Mutations
+    Mutations -- "post-processes" --> Service
+
+    QuoteCtrl -- "audio requests" --> Combiner
+    Combiner --> OGGParser
+    OGGParser --> VoiceFiles
+
+    OGCtrl -- generates --> OGGen
+    OGGen --> Fonts
+    OGGen -- "caches in" --> Cache
+
+    GHA -- triggers --> Docker
+    Docker -- builds --> Router
+    Docker -- pushes --> GHCR
+```
+
 ## Contents
 
+- [System Architecture](#system-architecture)
 - [Features](#features)
 - [Quick Start](#quick-start)
   - [Voice Audio (Optional)](#voice-audio-optional)

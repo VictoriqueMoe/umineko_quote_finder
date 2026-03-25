@@ -2,7 +2,7 @@ module umineko_quote
 
 go 1.26
 
-require github.com/VictoriqueMoe/umineko_script_parser v0.0.0
+require github.com/VictoriqueMoe/umineko_script_parser v1.0.0
 
 require (
 	github.com/fogleman/gg v1.3.0
@@ -47,5 +47,3 @@ require (
 	golang.org/x/text v0.35.0 // indirect
 	golang.org/x/tools v0.43.0 // indirect
 )
-
-replace github.com/VictoriqueMoe/umineko_script_parser => ../umineko_script_parser

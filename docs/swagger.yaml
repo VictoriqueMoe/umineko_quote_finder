@@ -37,7 +37,7 @@ definitions:
       quotes:
         description: Paginated list of quotes
         items:
-          $ref: '#/definitions/dto.ParsedQuote'
+          $ref: '#/definitions/umineko_quote_internal_dto.ParsedQuote'
         type: array
       total:
         description: Total number of matching quotes
@@ -49,16 +49,16 @@ definitions:
       after:
         description: Dialogue lines after the target quote
         items:
-          $ref: '#/definitions/dto.ParsedQuote'
+          $ref: '#/definitions/umineko_quote_internal_dto.ParsedQuote'
         type: array
       before:
         description: Dialogue lines before the target quote
         items:
-          $ref: '#/definitions/dto.ParsedQuote'
+          $ref: '#/definitions/umineko_quote_internal_dto.ParsedQuote'
         type: array
       quote:
         allOf:
-        - $ref: '#/definitions/dto.ParsedQuote'
+        - $ref: '#/definitions/umineko_quote_internal_dto.ParsedQuote'
         description: The target quote
     type: object
   dto.EpisodeCharacterLines:
@@ -122,61 +122,6 @@ definitions:
         example: Beatrice
         type: string
     type: object
-  dto.ParsedQuote:
-    properties:
-      audioCharMap:
-        additionalProperties:
-          type: string
-        description: Maps each audio ID to its character ID
-        example:
-          "30101088": "10"
-          "30101089": "10"
-        type: object
-      audioId:
-        description: Comma-separated audio file IDs
-        example: 30101088, 30101089
-        type: string
-      audioTextMap:
-        additionalProperties:
-          type: string
-        description: Maps each audio ID to its spoken text
-        example:
-          "30101088": You're insane!!
-          "30101089": Stop it already
-        type: object
-      character:
-        description: Display name of the character
-        example: Ushiromiya Battler
-        type: string
-      characterId:
-        description: Numeric character identifier
-        example: "10"
-        type: string
-      contentType:
-        description: Content type marker
-        example: ""
-        type: string
-      episode:
-        description: Episode number (1-8)
-        example: 3
-        type: integer
-      hasBlueTruth:
-        description: Whether the quote contains blue truth
-        example: false
-        type: boolean
-      hasRedTruth:
-        description: Whether the quote contains red truth
-        example: false
-        type: boolean
-      text:
-        description: Plain text of the quote
-        example: You're insane!! Stop it already, damn iiiiiiiiit!!
-        type: string
-      textHtml:
-        description: HTML-formatted text with truth coloring
-        example: You&#39;re insane!! Stop it already, damn iiiiiiiiit!!
-        type: string
-    type: object
   dto.SearchAPIResponse:
     properties:
       limit:
@@ -205,7 +150,7 @@ definitions:
     properties:
       quote:
         allOf:
-        - $ref: '#/definitions/dto.ParsedQuote'
+        - $ref: '#/definitions/umineko_quote_internal_dto.ParsedQuote'
         description: The matched quote
       score:
         description: Relevance score (100 = exact match)
@@ -272,6 +217,61 @@ definitions:
         items:
           $ref: '#/definitions/dto.EpisodeTruth'
         type: array
+    type: object
+  umineko_quote_internal_dto.ParsedQuote:
+    properties:
+      audioCharMap:
+        additionalProperties:
+          type: string
+        description: Maps each audio ID to its character ID
+        example:
+          "30101088": "10"
+          "30101089": "10"
+        type: object
+      audioId:
+        description: Comma-separated audio file IDs
+        example: 30101088, 30101089
+        type: string
+      audioTextMap:
+        additionalProperties:
+          type: string
+        description: Maps each audio ID to its spoken text
+        example:
+          "30101088": You're insane!!
+          "30101089": Stop it already
+        type: object
+      character:
+        description: Display name of the character
+        example: Ushiromiya Battler
+        type: string
+      characterId:
+        description: Numeric character identifier
+        example: "10"
+        type: string
+      contentType:
+        description: Content type marker
+        example: ""
+        type: string
+      episode:
+        description: Episode number (1-8)
+        example: 3
+        type: integer
+      hasBlueTruth:
+        description: Whether the quote contains blue truth
+        example: false
+        type: boolean
+      hasRedTruth:
+        description: Whether the quote contains red truth
+        example: false
+        type: boolean
+      text:
+        description: Plain text of the quote
+        example: You're insane!! Stop it already, damn iiiiiiiiit!!
+        type: string
+      textHtml:
+        description: HTML-formatted text with truth coloring
+        example: You&#39;re insane!! Stop it already, damn iiiiiiiiit!!
+        type: string
     type: object
 info:
   contact:
@@ -653,7 +653,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dto.ParsedQuote'
+            $ref: '#/definitions/umineko_quote_internal_dto.ParsedQuote'
         "404":
           description: Not Found
           schema:
@@ -762,7 +762,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dto.ParsedQuote'
+            $ref: '#/definitions/umineko_quote_internal_dto.ParsedQuote'
         "404":
           description: Not Found
           schema:
@@ -782,6 +782,7 @@ paths:
       - default: en
         description: Language
         enum:
+        - auto
         - en
         - wh
         - ja

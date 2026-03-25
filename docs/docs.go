@@ -472,7 +472,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.ParsedQuote"
+                            "$ref": "#/definitions/umineko_quote_internal_dto.ParsedQuote"
                         }
                     },
                     "404": {
@@ -602,7 +602,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.ParsedQuote"
+                            "$ref": "#/definitions/umineko_quote_internal_dto.ParsedQuote"
                         }
                     },
                     "404": {
@@ -634,6 +634,7 @@ const docTemplate = `{
                     },
                     {
                         "enum": [
+                            "auto",
                             "en",
                             "wh",
                             "ja",
@@ -986,7 +987,7 @@ const docTemplate = `{
                     "description": "Paginated list of quotes",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/dto.ParsedQuote"
+                        "$ref": "#/definitions/umineko_quote_internal_dto.ParsedQuote"
                     }
                 },
                 "total": {
@@ -1003,21 +1004,21 @@ const docTemplate = `{
                     "description": "Dialogue lines after the target quote",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/dto.ParsedQuote"
+                        "$ref": "#/definitions/umineko_quote_internal_dto.ParsedQuote"
                     }
                 },
                 "before": {
                     "description": "Dialogue lines before the target quote",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/dto.ParsedQuote"
+                        "$ref": "#/definitions/umineko_quote_internal_dto.ParsedQuote"
                     }
                 },
                 "quote": {
                     "description": "The target quote",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/dto.ParsedQuote"
+                            "$ref": "#/definitions/umineko_quote_internal_dto.ParsedQuote"
                         }
                     ]
                 }
@@ -1105,78 +1106,6 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.ParsedQuote": {
-            "type": "object",
-            "properties": {
-                "audioCharMap": {
-                    "description": "Maps each audio ID to its character ID",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    },
-                    "example": {
-                        "30101088": "10",
-                        "30101089": "10"
-                    }
-                },
-                "audioId": {
-                    "description": "Comma-separated audio file IDs",
-                    "type": "string",
-                    "example": "30101088, 30101089"
-                },
-                "audioTextMap": {
-                    "description": "Maps each audio ID to its spoken text",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    },
-                    "example": {
-                        "30101088": "You're insane!!",
-                        "30101089": "Stop it already"
-                    }
-                },
-                "character": {
-                    "description": "Display name of the character",
-                    "type": "string",
-                    "example": "Ushiromiya Battler"
-                },
-                "characterId": {
-                    "description": "Numeric character identifier",
-                    "type": "string",
-                    "example": "10"
-                },
-                "contentType": {
-                    "description": "Content type marker",
-                    "type": "string",
-                    "example": ""
-                },
-                "episode": {
-                    "description": "Episode number (1-8)",
-                    "type": "integer",
-                    "example": 3
-                },
-                "hasBlueTruth": {
-                    "description": "Whether the quote contains blue truth",
-                    "type": "boolean",
-                    "example": false
-                },
-                "hasRedTruth": {
-                    "description": "Whether the quote contains red truth",
-                    "type": "boolean",
-                    "example": false
-                },
-                "text": {
-                    "description": "Plain text of the quote",
-                    "type": "string",
-                    "example": "You're insane!! Stop it already, damn iiiiiiiiit!!"
-                },
-                "textHtml": {
-                    "description": "HTML-formatted text with truth coloring",
-                    "type": "string",
-                    "example": "You\u0026#39;re insane!! Stop it already, damn iiiiiiiiit!!"
-                }
-            }
-        },
         "dto.SearchAPIResponse": {
             "type": "object",
             "properties": {
@@ -1216,7 +1145,7 @@ const docTemplate = `{
                     "description": "The matched quote",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/dto.ParsedQuote"
+                            "$ref": "#/definitions/umineko_quote_internal_dto.ParsedQuote"
                         }
                     ]
                 },
@@ -1309,6 +1238,78 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/dto.EpisodeTruth"
                     }
+                }
+            }
+        },
+        "umineko_quote_internal_dto.ParsedQuote": {
+            "type": "object",
+            "properties": {
+                "audioCharMap": {
+                    "description": "Maps each audio ID to its character ID",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "example": {
+                        "30101088": "10",
+                        "30101089": "10"
+                    }
+                },
+                "audioId": {
+                    "description": "Comma-separated audio file IDs",
+                    "type": "string",
+                    "example": "30101088, 30101089"
+                },
+                "audioTextMap": {
+                    "description": "Maps each audio ID to its spoken text",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "example": {
+                        "30101088": "You're insane!!",
+                        "30101089": "Stop it already"
+                    }
+                },
+                "character": {
+                    "description": "Display name of the character",
+                    "type": "string",
+                    "example": "Ushiromiya Battler"
+                },
+                "characterId": {
+                    "description": "Numeric character identifier",
+                    "type": "string",
+                    "example": "10"
+                },
+                "contentType": {
+                    "description": "Content type marker",
+                    "type": "string",
+                    "example": ""
+                },
+                "episode": {
+                    "description": "Episode number (1-8)",
+                    "type": "integer",
+                    "example": 3
+                },
+                "hasBlueTruth": {
+                    "description": "Whether the quote contains blue truth",
+                    "type": "boolean",
+                    "example": false
+                },
+                "hasRedTruth": {
+                    "description": "Whether the quote contains red truth",
+                    "type": "boolean",
+                    "example": false
+                },
+                "text": {
+                    "description": "Plain text of the quote",
+                    "type": "string",
+                    "example": "You're insane!! Stop it already, damn iiiiiiiiit!!"
+                },
+                "textHtml": {
+                    "description": "HTML-formatted text with truth coloring",
+                    "type": "string",
+                    "example": "You\u0026#39;re insane!! Stop it already, damn iiiiiiiiit!!"
                 }
             }
         }

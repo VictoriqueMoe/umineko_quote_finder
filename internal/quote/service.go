@@ -27,6 +27,7 @@ type (
 		Browse(params quoteparams.BrowseParams) dto.CharacterResponse
 		GetByAudioID(lang language.Language, audioID string) *dto.ParsedQuote
 		GetContext(lang language.Language, audioID string, lines int) *dto.ContextResponse
+		NearestVoicedAudioID(lang language.Language, audioID string, direction string) string
 		Random(lang language.Language, character character.Character, episode int, truth Truth) *dto.ParsedQuote
 		GetCharacters() map[character.Character]string
 		AudioFilePath(characterId string, audioId string) string
@@ -439,6 +440,34 @@ func (s *service) GetContext(lang language.Language, audioID string, lines int) 
 		Quote:  quotes[idx],
 		After:  quotes[idx+1 : end],
 	}
+}
+
+func (s *service) NearestVoicedAudioID(lang language.Language, audioID string, direction string) string {
+	quotes := s.quotes[lang]
+	if quotes == nil {
+		return ""
+	}
+
+	idx, ok := s.indexer.QuoteIndex(lang, audioID)
+	if !ok {
+		return ""
+	}
+
+	if direction == "prev" {
+		for i := idx - 1; i >= 0; i-- {
+			if quotes[i].AudioID != "" {
+				return strings.Split(quotes[i].AudioID, ", ")[0]
+			}
+		}
+		return ""
+	}
+
+	for i := idx + 1; i < len(quotes); i++ {
+		if quotes[i].AudioID != "" {
+			return strings.Split(quotes[i].AudioID, ", ")[0]
+		}
+	}
+	return ""
 }
 
 func (s *service) GetCharacters() map[character.Character]string {

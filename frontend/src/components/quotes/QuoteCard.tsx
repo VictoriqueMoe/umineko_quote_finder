@@ -1,6 +1,7 @@
 import { useCallback, useRef } from "react";
 import { episodeLabel, useQuoteDisplay } from "../../hooks/useQuoteDisplay";
 import { AudioPlayer } from "../audio/AudioPlayer";
+import { SePlayer } from "../audio/SePlayer";
 import { LangToggle } from "./LangToggle";
 import { ShareButton } from "./ShareButton";
 import { DownloadButton } from "./DownloadButton";
@@ -62,6 +63,9 @@ export function QuoteCard({
                     audioCharMap={quote.audioCharMap}
                     audioPlayer={audioPlayer}
                 />
+            )}
+            {quote.soundEffects && quote.soundEffects.length > 0 && (
+                <SePlayer soundEffects={quote.soundEffects} audioPlayer={audioPlayer} />
             )}
             {quote.audioId && (
                 <div className="quote-actions">

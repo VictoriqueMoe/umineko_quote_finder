@@ -4,6 +4,7 @@ services:
       context: .
       args:
         VOICE_ZIP_URL: ${VOICE_ZIP_URL}
+        SE_ZIP_URL: ${SE_ZIP_URL}
     container_name: umineko-quote
     restart: unless-stopped
     ports:

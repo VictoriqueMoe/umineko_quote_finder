@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAppContext } from "../../hooks/useAppContext";
-import { getContext } from "../../api/endpoints";
+import { getContext, getNearestVoiced } from "../../api/endpoints";
 import type { ContextResponse } from "../../types/api";
 import type { Language } from "../../types/app";
 
@@ -15,15 +15,20 @@ export function ContextViewer({ audioId, onQuoteClick, langOverride }: ContextVi
     const [data, setData] = useState<ContextResponse | null>(null);
     const [visible, setVisible] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [navigating, setNavigating] = useState(false);
+    const [centerAudioId, setCenterAudioId] = useState<string | null>(null);
     const firstId = audioId.split(", ")[0];
     const prevFirstId = useRef(firstId);
 
+    const isNavigated = centerAudioId !== null && centerAudioId !== firstId;
+    const effectiveCenterId = centerAudioId || firstId;
+
     const fetchContext = useCallback(
-        async (lang?: Language) => {
+        async (targetAudioId: string, lang?: Language) => {
             const effectiveLang = lang || langOverride || language;
             setLoading(true);
             try {
-                const result = await getContext(firstId, effectiveLang, 5);
+                const result = await getContext(targetAudioId, effectiveLang, 5);
                 if (!result.error) {
                     setData(result);
                     setVisible(true);
@@ -34,14 +39,15 @@ export function ContextViewer({ audioId, onQuoteClick, langOverride }: ContextVi
                 setLoading(false);
             }
         },
-        [firstId, langOverride, language],
+        [langOverride, language],
     );
 
     useEffect(() => {
         if (firstId !== prevFirstId.current) {
             prevFirstId.current = firstId;
+            setCenterAudioId(null);
             if (visible) {
-                fetchContext();
+                fetchContext(firstId);
             }
         }
     }, [firstId, visible, fetchContext]);
@@ -50,17 +56,42 @@ export function ContextViewer({ audioId, onQuoteClick, langOverride }: ContextVi
         if (visible) {
             setVisible(false);
         } else {
-            fetchContext();
+            setCenterAudioId(null);
+            fetchContext(firstId);
         }
-    }, [visible, fetchContext]);
+    }, [visible, fetchContext, firstId]);
+
+    const handleNavigate = useCallback(
+        async (direction: "next" | "prev") => {
+            const effectiveLang = langOverride || language;
+            setNavigating(true);
+            try {
+                const result = await getNearestVoiced(effectiveCenterId, effectiveLang, direction);
+                if (result.audioId) {
+                    setCenterAudioId(result.audioId);
+                    await fetchContext(result.audioId);
+                }
+            } catch {
+                // no more voiced quotes in that direction
+            } finally {
+                setNavigating(false);
+            }
+        },
+        [effectiveCenterId, langOverride, language, fetchContext],
+    );
+
+    const handleReset = useCallback(() => {
+        setCenterAudioId(null);
+        fetchContext(firstId);
+    }, [firstId, fetchContext]);
 
     (ContextViewer as { refreshForLang?: (lang: Language) => void }).refreshForLang = useCallback(
         (lang: Language) => {
             if (visible) {
-                fetchContext(lang);
+                fetchContext(effectiveCenterId, lang);
             }
         },
-        [visible, fetchContext],
+        [visible, fetchContext, effectiveCenterId],
     );
 
     const quoteAudioId = data?.quote?.audioId || "";
@@ -68,14 +99,37 @@ export function ContextViewer({ audioId, onQuoteClick, langOverride }: ContextVi
     return (
         <>
             <button className="context-btn" disabled={loading} onClick={handleToggle}>
-                {loading ? "Loading..." : visible ? "Hide Context" : "Show Context"}
+                {loading && !navigating ? "Loading..." : visible ? "Hide Context" : "Show Context"}
             </button>
             {visible && data && (
                 <div className="context-section">
+                    <div className="context-nav">
+                        <button
+                            className="context-nav-btn"
+                            disabled={navigating}
+                            onClick={() => handleNavigate("prev")}
+                        >
+                            Prev Quote
+                        </button>
+                        <button
+                            className="context-nav-btn context-nav-reset"
+                            disabled={navigating || !isNavigated}
+                            onClick={handleReset}
+                        >
+                            Reset
+                        </button>
+                        <button
+                            className="context-nav-btn"
+                            disabled={navigating}
+                            onClick={() => handleNavigate("next")}
+                        >
+                            Next Quote
+                        </button>
+                    </div>
                     {[...data.before, data.quote, ...data.after].map((line, i) => {
                         const isHighlight = line.audioId === quoteAudioId && quoteAudioId !== "";
                         const lineFirstId = line.audioId ? line.audioId.split(", ")[0] : "";
-                        const isClickable = lineFirstId && !isHighlight;
+                        const isClickable = lineFirstId && (!isHighlight || isNavigated);
 
                         return (
                             <div

@@ -4,6 +4,7 @@ import type {
     CharactersResponse,
     ConfigResponse,
     ContextResponse,
+    NearestVoicedResponse,
     Quote,
     SearchResponse,
     StatsResponse,
@@ -82,6 +83,16 @@ export async function browseDialogue(
 
 export async function getContext(audioId: string, lang: Language, lines: number = 5): Promise<ContextResponse> {
     return apiFetch<ContextResponse>(`/context/${audioId}?lang=${resolveLanguage(lang)}&lines=${lines}`);
+}
+
+export async function getNearestVoiced(
+    audioId: string,
+    lang: Language,
+    direction: "next" | "prev",
+): Promise<NearestVoicedResponse> {
+    return apiFetch<NearestVoicedResponse>(
+        `/nearest-voiced/${audioId}?lang=${resolveLanguage(lang)}&direction=${direction}`,
+    );
 }
 
 export async function getStats(episode?: string): Promise<StatsResponse> {

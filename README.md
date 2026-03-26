@@ -52,6 +52,7 @@ graph TB
         Combiner["Audio<br/>Combiner"]
         OGGParser["OGG Parser<br/>& Serializer"]
         VoiceFiles[("Voice OGG<br/>Files")]
+        SEFiles[("Sound Effect<br/>OGG Files")]
     end
 
     subgraph OG["Open Graph Image Generation"]
@@ -128,7 +129,7 @@ graph TB
 - [Data](#data)
   - [Script Loader](#script-loader)
   - [Mutation Engine Pipeline](#mutation-engine-pipeline)
-- [Architecture: The Lexar Package](#architecture-the-lexar-package)
+- [Architecture: The Script Parser](#architecture-the-script-parser)
   - [Pipeline Overview](#pipeline-overview)
   - [Package Structure](#package-structure)
   - [Key Design Decisions](#key-design-decisions)
@@ -193,6 +194,14 @@ VOICE_ZIP_URL=https://example.com/voice.zip
 VOICE_ZIP_URL=C:\path\to\voice.zip
 ```
 
+### Sound Effects (Optional)
+
+Sound effect playback requires a zip of the SE files. Add to the same `.env` file:
+
+```env
+SE_ZIP_URL=https://example.com/se.zip
+```
+
 Then run the setup script:
 
 **Linux / macOS:**
@@ -205,13 +214,11 @@ Then run the setup script:
 .\setup_audio.ps1
 ```
 
-The script will detect whether `VOICE_ZIP_URL` is a local file or a URL and handle it accordingly. If the audio directory already exists, it skips extraction.
-
-The app works without audio files, quotes will display normally but without playback controls.
+The script will detect whether each URL is a local file or a URL and handle it accordingly. If the directory already exists, it skips extraction. Both voice and SE are optional; the app works without them, but quotes will display without playback controls or sound effect buttons.
 
 ### Expected zip structure
 
-The zip must contain a `voice/` directory at its root with character ID subdirectories:
+The voice zip must contain a `voice/` directory at its root with character ID subdirectories:
 
 ```
 voice.zip
@@ -220,6 +227,17 @@ voice.zip
     │   ├── 00100001.ogg
     │   └── ...
     ├── 01/
+    └── ...
+```
+
+The SE zip must contain an `se/` directory at its root with OGG files:
+
+```
+se.zip
+└── se/
+    ├── umise_001.ogg
+    ├── umise_002.ogg
+    ├── umilse_001.ogg
     └── ...
 ```
 
@@ -232,7 +250,8 @@ voice.zip
 | `GET /api/v1/character/:id`          | Get quotes by character ID             |
 | `GET /api/v1/context/:audioId`       | Get surrounding dialogue for a quote   |
 | `GET /api/v1/characters`             | List all character IDs and names       |
-| `GET /api/v1/audio/:charId/:audioId` | Stream audio file for a voice line     |
+| `GET /api/v1/audio/voice/:charId/:audioId` | Stream audio file for a voice line     |
+| `GET /api/v1/audio/se/:filename`     | Stream a sound effect file             |
 | `GET /api/v1/health`                 | Health check                           |
 
 ### Query Parameters
@@ -318,7 +337,7 @@ $env:GOOS="linux"; $env:GOARCH="amd64"; go build -o umineko_quote_linux .; $env:
 
 ## Docker
 
-Requires a `.env` file with `VOICE_ZIP_URL` set (URL only for Docker builds).
+Requires a `.env` file with `VOICE_ZIP_URL` set (URL only for Docker builds). `SE_ZIP_URL` is optional.
 
 ```bash
 docker compose up -d --build
@@ -335,14 +354,18 @@ internal/quote/data/
 ├── es.file         (Spanish, ONS2 encoded)
 ├── pt.file         (Portuguese, ONS2 encoded)
 ├── sub/            (ASS subtitle files)
-└── audio/          (extracted via setup script or Docker build)
-    ├── 00/
-    ├── 01/
-    ├── ...
-    └── 99/
+├── audio/          (extracted via setup script or Docker build)
+│   ├── 00/
+│   ├── 01/
+│   ├── ...
+│   └── 99/
+└── se/             (extracted via setup script or Docker build)
+    ├── umise_001.ogg
+    ├── umilse_001.ogg
+    └── ...
 ```
 
-`.file` data is embedded at compile time and decoded in memory at startup via the script loader. Audio files are read from disk at runtime and are organized by character ID subdirectory.
+`.file` data is embedded at compile time and decoded in memory at startup via the script loader. Audio and SE files are read from disk at runtime.
 
 ### Script Loader
 
@@ -366,9 +389,9 @@ To add a new fix:
 2. Implement the `mutation.Engine` interface (`Apply([]dto.ParsedQuote) []dto.ParsedQuote`)
 3. Register it in `mutation.NewPipeline()`
 
-## Architecture: The Lexar Package
+## Architecture: The Script Parser
 
-The `internal/lexar` package handles parsing Umineko script files and extracting quotes. It follows a pipeline architecture that separates concerns.
+The [`umineko_script_parser`](https://github.com/VictoriqueMoe/umineko_script_parser) library handles parsing Umineko script files and extracting quotes. It follows a pipeline architecture that separates concerns.
 
 ### Pipeline Overview
 
@@ -425,7 +448,8 @@ The `internal/lexar` package handles parsing Umineko script files and extracting
 │      CharacterID: "27"                                                      │
 │      AudioID:     "10100001"                                                │
 │      Episode:     1                                                         │
-│      Truth:       { HasRed: true, HasBlue: false }                          │
+│      Truth:       { HasRed: true, HasBlue: false, ... }                     │
+│      SoundEffects: [{ SeNum: 47, AfterClip: 0 }, ...]                      │
 │  }                                                                          │
 └─────────────────────────────────────────────────────────────────────────────┘
                                       │
@@ -442,12 +466,13 @@ The `internal/lexar` package handles parsing Umineko script files and extracting
 
 ### Package Structure
 
+The parser is an external library at [`umineko_script_parser`](https://github.com/VictoriqueMoe/umineko_script_parser):
+
 ```
-internal/lexar/
+lexer/
 ├── ast/                    # Abstract Syntax Tree types
 │   └── ast.go              # Token, Line, DialogueElement types
 ├── transformer/            # Output format transformers
-│   ├── transformer.go      # Transformer interface
 │   ├── factory.go          # Factory for obtaining transformers
 │   ├── preset.go           # Preset colour/class context
 │   ├── plaintext.go        # Plain text output
@@ -455,8 +480,11 @@ internal/lexar/
 ├── lexer.go                # Tokeniser
 ├── parser.go               # AST builder
 ├── validator.go            # Post-parse AST validation
-├── extractor.go            # Quote extraction
-└── truth.go                # Red/blue truth detection
+├── extractor.go            # Quote extraction with SE association
+├── se_dispatch.go          # SE number-to-filename dispatch table parser
+└── truth.go                # Red/blue/gold/purple truth detection
+dto/
+└── parsed_quote.go         # ParsedQuote and SoundEffect types
 ```
 
 ### Key Design Decisions
@@ -471,7 +499,7 @@ No changes are needed to the extractor or parser.
 
 **Preset context**, colour presets (`{p:1:text}`) are defined in script headers via `preset_define`. The `PresetContext` collects these definitions and provides semantic class lookups (preset 1 → "red-truth", preset 2 → "blue-truth") and dynamic colour lookups for other presets.
 
-**Truth detection**, red and blue truth are detected by walking the AST looking for preset tags with semantic classes. This is stored as `TruthFlags` with `HasRed` and `HasBlue` booleans, allowing quotes with mixed truth (both red and blue) to appear in both filters.
+**Truth detection**, red, blue, gold, and purple truth are detected by walking the AST looking for preset tags with semantic classes. This is stored as `TruthFlags` with `HasRed`, `HasBlue`, `HasGold`, and `HasPurple` booleans, allowing quotes with mixed truth to appear in multiple filters.
 
 ## Script Tag Parsing
 

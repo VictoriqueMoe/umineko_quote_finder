@@ -31,3 +31,34 @@ else
 fi
 
 echo "Done. Audio files extracted to $AUDIO_DIR"
+
+SE_DIR="internal/quote/data/se"
+SE_SOURCE="${SE_ZIP_URL:-}"
+
+if [ -z "$SE_SOURCE" ]; then
+    echo "SE_ZIP_URL is not set, skipping SE download."
+    exit 0
+fi
+
+if [ -d "$SE_DIR" ]; then
+    echo "SE directory already exists at $SE_DIR, skipping download."
+    exit 0
+fi
+
+if [ -f "$SE_SOURCE" ]; then
+    echo "Extracting SE from local file: $SE_SOURCE"
+    mkdir -p internal/quote/data
+    unzip -qo "$SE_SOURCE" -d /tmp/se
+    mv /tmp/se/se "$SE_DIR"
+    rm -rf /tmp/se
+else
+    echo "Downloading SE files..."
+    curl -fSL -o /tmp/se.zip "$SE_SOURCE"
+    echo "Extracting..."
+    mkdir -p internal/quote/data
+    unzip -qo /tmp/se.zip -d /tmp/se
+    mv /tmp/se/se "$SE_DIR"
+    rm -rf /tmp/se.zip /tmp/se
+fi
+
+echo "Done. SE files extracted to $SE_DIR"

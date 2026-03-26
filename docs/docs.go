@@ -281,7 +281,9 @@ const docTemplate = `{
                     {
                         "enum": [
                             "red",
-                            "blue"
+                            "blue",
+                            "gold",
+                            "purple"
                         ],
                         "type": "string",
                         "description": "Filter by truth type",
@@ -590,7 +592,9 @@ const docTemplate = `{
                     {
                         "enum": [
                             "red",
-                            "blue"
+                            "blue",
+                            "gold",
+                            "purple"
                         ],
                         "type": "string",
                         "description": "Filter by truth type",
@@ -884,7 +888,9 @@ const docTemplate = `{
                     {
                         "enum": [
                             "red",
-                            "blue"
+                            "blue",
+                            "gold",
+                            "purple"
                         ],
                         "type": "string",
                         "description": "Filter by truth type",
@@ -1058,6 +1064,16 @@ const docTemplate = `{
                     "description": "Episode number (1-8)",
                     "type": "integer",
                     "example": 2
+                },
+                "gold": {
+                    "description": "Number of gold truth statements",
+                    "type": "integer",
+                    "example": 0
+                },
+                "purple": {
+                    "description": "Number of purple truth statements",
+                    "type": "integer",
+                    "example": 0
                 },
                 "red": {
                     "description": "Number of red truth statements",
@@ -1233,7 +1249,7 @@ const docTemplate = `{
                     }
                 },
                 "truthPerEpisode": {
-                    "description": "Red and blue truth counts per episode",
+                    "description": "Truth counts per episode",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/dto.EpisodeTruth"
@@ -1293,6 +1309,16 @@ const docTemplate = `{
                 },
                 "hasBlueTruth": {
                     "description": "Whether the quote contains blue truth",
+                    "type": "boolean",
+                    "example": false
+                },
+                "hasGoldTruth": {
+                    "description": "Whether the quote contains gold truth",
+                    "type": "boolean",
+                    "example": false
+                },
+                "hasPurpleTruth": {
+                    "description": "Whether the quote contains purple statements",
                     "type": "boolean",
                     "example": false
                 },

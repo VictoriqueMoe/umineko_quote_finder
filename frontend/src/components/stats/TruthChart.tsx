@@ -23,6 +23,8 @@ export function TruthChart({ data, onRegister }: TruthChartProps) {
     const labels = data.truthPerEpisode.map(t => `EP${t.episode}`);
     const redData = data.truthPerEpisode.map(t => t.red);
     const blueData = data.truthPerEpisode.map(t => t.blue);
+    const goldData = data.truthPerEpisode.map(t => t.gold);
+    const purpleData = data.truthPerEpisode.map(t => t.purple);
 
     return (
         <Bar
@@ -42,6 +44,20 @@ export function TruthChart({ data, onRegister }: TruthChartProps) {
                         data: blueData,
                         backgroundColor: "#3399ff",
                         borderColor: "#0066cc",
+                        borderWidth: 1,
+                    },
+                    {
+                        label: "Gold Truth",
+                        data: goldData,
+                        backgroundColor: "#ffaa00",
+                        borderColor: "#cc8800",
+                        borderWidth: 1,
+                    },
+                    {
+                        label: "Purple Statements",
+                        data: purpleData,
+                        backgroundColor: "#aa71ff",
+                        borderColor: "#8855cc",
                         borderWidth: 1,
                     },
                 ],

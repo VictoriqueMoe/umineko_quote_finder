@@ -57,6 +57,8 @@ export interface TruthPerEpisode {
     episode: number;
     red: number;
     blue: number;
+    gold: number;
+    purple: number;
 }
 
 export interface Interaction {

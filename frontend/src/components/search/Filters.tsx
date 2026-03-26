@@ -126,6 +126,8 @@ export function Filters({ filters, viewMode, onFilterChange, onBrowseClick, brow
                         <option value="">All Quotes</option>
                         <option value="red">Red Truth</option>
                         <option value="blue">Blue Truth</option>
+                        <option value="gold">Gold Truth</option>
+                        <option value="purple">Purple Statements</option>
                     </select>
                 </div>
             </div>

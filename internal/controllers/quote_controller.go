@@ -67,7 +67,7 @@ func (s *Service) setupCharactersRoute(routeGroup fiber.Router) {
 //	@Param			interactionA	query		character.Character	false	"Interaction filter: first character ID (requires interactionB)"
 //	@Param			interactionB	query		character.Character	false	"Interaction filter: second character ID (requires interactionA)"
 //	@Param			episode		query		int		false	"Filter by episode (1-8)"
-//	@Param			truth		query		string	false	"Filter by truth type"	Enums(red, blue)
+//	@Param			truth		query		string	false	"Filter by truth type"	Enums(red, blue, gold, purple)
 //	@Success		200			{object}	dto.SearchAPIResponse
 //	@Failure		400			{object}	dto.ErrorResponse
 //	@Router			/search [get]
@@ -128,7 +128,7 @@ func (s *Service) search(ctx fiber.Ctx) error {
 //	@Param			lang		query		string	false	"Language"	default(en)	Enums(en, wh, ja, ru, es, pt)
 //	@Param			character	query		character.Character	false	"Filter by character ID"
 //	@Param			episode		query		int		false	"Filter by episode (1-8)"
-//	@Param			truth		query		string	false	"Filter by truth type"	Enums(red, blue)
+//	@Param			truth		query		string	false	"Filter by truth type"	Enums(red, blue, gold, purple)
 //	@Success		200			{object}	dto.ParsedQuote
 //	@Failure		404			{object}	dto.ErrorResponse
 //	@Router			/random [get]
@@ -159,7 +159,7 @@ func (s *Service) random(ctx fiber.Ctx) error {
 //	@Param			limit		query		int		false	"Maximum results"	default(50)
 //	@Param			offset		query		int		false	"Offset for pagination"	default(0)
 //	@Param			episode		query		int		false	"Filter by episode (1-8)"
-//	@Param			truth		query		string	false	"Filter by truth type"	Enums(red, blue)
+//	@Param			truth		query		string	false	"Filter by truth type"	Enums(red, blue, gold, purple)
 //	@Success		200			{object}	dto.CharacterResponse
 //	@Router			/browse [get]
 func (s *Service) browse(ctx fiber.Ctx) error {

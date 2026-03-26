@@ -23,7 +23,7 @@ type (
 	tallies struct {
 		charCounts   map[string]int
 		charEpCounts map[string]map[int]int
-		epTruth      map[int][2]int
+		epTruth      map[int][4]int
 		interactions map[string]int
 	}
 
@@ -88,7 +88,7 @@ func (s *statsComputer) tally(episode int) tallies {
 	t := tallies{
 		charCounts:   make(map[string]int),
 		charEpCounts: make(map[string]map[int]int),
-		epTruth:      make(map[int][2]int),
+		epTruth:      make(map[int][4]int),
 		interactions: make(map[string]int),
 	}
 
@@ -109,6 +109,16 @@ func (s *statsComputer) tally(episode int) tallies {
 		if q.HasBlueTruth {
 			counts := t.epTruth[q.Episode]
 			counts[1]++
+			t.epTruth[q.Episode] = counts
+		}
+		if q.HasGoldTruth {
+			counts := t.epTruth[q.Episode]
+			counts[2]++
+			t.epTruth[q.Episode] = counts
+		}
+		if q.HasPurpleTruth {
+			counts := t.epTruth[q.Episode]
+			counts[3]++
 			t.epTruth[q.Episode] = counts
 		}
 
@@ -193,7 +203,7 @@ func (*statsComputer) linesPerEpisode(charEpCounts map[string]map[int]int, ranke
 	return result
 }
 
-func (*statsComputer) truthPerEpisode(epTruth map[int][2]int) []dto.EpisodeTruth {
+func (*statsComputer) truthPerEpisode(epTruth map[int][4]int) []dto.EpisodeTruth {
 	result := make([]dto.EpisodeTruth, 8)
 	for ep := 1; ep <= 8; ep++ {
 		counts := epTruth[ep]
@@ -201,6 +211,8 @@ func (*statsComputer) truthPerEpisode(epTruth map[int][2]int) []dto.EpisodeTruth
 			Episode: ep,
 			Red:     counts[0],
 			Blue:    counts[1],
+			Gold:    counts[2],
+			Purple:  counts[3],
 		}
 	}
 	return result

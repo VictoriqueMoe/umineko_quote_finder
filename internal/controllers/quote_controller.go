@@ -369,17 +369,6 @@ func (s *Service) setupSeAudioRoute(routeGroup fiber.Router) {
 	routeGroup.Get("/audio/se/:filename", s.seAudio)
 }
 
-// seAudio godoc
-//
-//	@Summary		Get sound effect audio
-//	@Description	Returns a sound effect audio file by filename
-//	@Tags			audio
-//	@Produce		application/ogg
-//	@Param			filename	path		string	true	"Sound effect filename (without extension)"
-//	@Success		200
-//	@Failure		400			{object}	dto.ErrorResponse
-//	@Failure		404			{object}	dto.ErrorResponse
-//	@Router			/audio/se/{filename} [get]
 func (s *Service) seAudio(ctx fiber.Ctx) error {
 	filename := ctx.Params("filename")
 	if !audioIdPattern.MatchString(filename) {

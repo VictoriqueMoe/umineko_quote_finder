@@ -19,44 +19,6 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/audio/se/{filename}": {
-            "get": {
-                "description": "Returns a sound effect audio file by filename",
-                "produces": [
-                    "application/ogg"
-                ],
-                "tags": [
-                    "audio"
-                ],
-                "summary": "Get sound effect audio",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Sound effect filename (without extension)",
-                        "name": "filename",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/browse": {
             "get": {
                 "description": "Browse all quotes with optional filters and pagination",

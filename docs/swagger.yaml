@@ -314,31 +314,6 @@ info:
   title: Umineko Quote API
   version: "1.0"
 paths:
-  /audio/se/{filename}:
-    get:
-      description: Returns a sound effect audio file by filename
-      parameters:
-      - description: Sound effect filename (without extension)
-        in: path
-        name: filename
-        required: true
-        type: string
-      produces:
-      - application/ogg
-      responses:
-        "200":
-          description: OK
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/dto.ErrorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/dto.ErrorResponse'
-      summary: Get sound effect audio
-      tags:
-      - audio
   /browse:
     get:
       description: Browse all quotes with optional filters and pagination

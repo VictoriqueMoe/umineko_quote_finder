@@ -1491,6 +1491,51 @@ body {
     gap: 0.4rem;
 }
 
+.context-nav {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.context-nav-btn {
+    padding: 0.25rem 0.75rem;
+    background: rgba(var(--purple-rgb), 0.08);
+    border: 1px solid var(--purple-muted);
+    color: var(--purple-light);
+    font-family: var(--font-display);
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition:
+        background 0.3s var(--ease-out),
+        border-color 0.3s var(--ease-out),
+        color 0.3s var(--ease-out);
+}
+
+.context-nav-btn:hover:not(:disabled) {
+    background: rgba(var(--purple-rgb), 0.2);
+    border-color: var(--purple-light);
+    color: var(--text);
+}
+
+.context-nav-btn:disabled {
+    opacity: 0.35;
+    cursor: default;
+}
+
+.context-nav-reset {
+    color: var(--gold);
+    background: rgba(var(--gold-rgb), 0.08);
+}
+
+.context-nav-reset:hover:not(:disabled) {
+    border-color: var(--gold);
+    background: rgba(var(--gold-rgb), 0.2);
+    color: var(--gold);
+}
+
 .context-line {
     display: flex;
     gap: 0.75rem;
@@ -1800,6 +1845,51 @@ body {
 
 .featured-quote .audio-individual-clips {
     justify-content: center;
+}
+
+/* Sound Effects Player */
+.se-player {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin-top: 0.5rem;
+}
+
+.se-label {
+    font-family: var(--font-display);
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.se-clips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+.se-clip-btn {
+    background: transparent;
+    border: 1px solid var(--purple-muted);
+    padding: 0.15rem 0.45rem;
+    font-family: monospace;
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.25s var(--ease-out);
+    border-radius: 2px;
+}
+
+.se-clip-btn:hover {
+    border-color: var(--purple-light);
+    color: var(--purple-light);
+}
+
+.se-clip-btn.active {
+    border-color: var(--purple-light);
+    color: var(--purple-light);
+    background: rgba(var(--purple-rgb), 0.1);
 }
 
 /* Stats View */

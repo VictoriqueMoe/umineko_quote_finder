@@ -519,6 +519,46 @@ func TestService_GetContext_EmptyLang(t *testing.T) {
 	}
 }
 
+func TestService_NearestVoicedAudioID_Next(t *testing.T) {
+	svc := testService
+
+	result := svc.NearestVoicedAudioID(language.English, "10100001", "next")
+
+	if result == "" {
+		t.Fatal("expected to find next voiced audio ID")
+	}
+}
+
+func TestService_NearestVoicedAudioID_Prev(t *testing.T) {
+	svc := testService
+
+	result := svc.NearestVoicedAudioID(language.English, "10100041", "prev")
+
+	if result == "" {
+		t.Fatal("expected to find prev voiced audio ID")
+	}
+}
+
+func TestService_NearestVoicedAudioID_UnknownLang(t *testing.T) {
+	svc := testService
+
+	result := svc.NearestVoicedAudioID(language.Language("fr"), "10100001", "next")
+
+	if result != "" {
+		t.Errorf("expected empty result for unknown lang, got %q", result)
+	}
+}
+
+func TestService_NearestVoicedAudioID_UnknownAudioID(t *testing.T) {
+	svc := testService
+
+	result := svc.NearestVoicedAudioID(language.English, "99999999", "next")
+
+	if result != "" {
+		t.Errorf("expected empty result for unknown audio ID, got %q", result)
+	}
+}
+
 func TestService_GetCharacters(t *testing.T) {
 	svc := testService
 

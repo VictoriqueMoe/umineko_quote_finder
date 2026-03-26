@@ -40,3 +40,37 @@ if (Test-Path $ZipSource) {
 }
 
 Write-Output "Done. Audio files extracted to $AudioDir"
+
+$SeDir = "internal\quote\data\se"
+$SeSource = $env:SE_ZIP_URL
+
+if (-not $SeSource) {
+    Write-Output "SE_ZIP_URL is not set, skipping SE download."
+    exit 0
+}
+
+if (Test-Path $SeDir) {
+    Write-Output "SE directory already exists at $SeDir, skipping download."
+    exit 0
+}
+
+$TmpSeDir = "$env:TEMP\se"
+
+if (Test-Path $SeSource) {
+    Write-Output "Extracting SE from local file: $SeSource"
+    New-Item -ItemType Directory -Force -Path "internal\quote\data" | Out-Null
+    Expand-Archive -Path $SeSource -DestinationPath $TmpSeDir
+    Move-Item -Path "$TmpSeDir\se" -Destination $SeDir
+    Remove-Item -Recurse -Force $TmpSeDir
+} else {
+    $TmpSeZip = "$env:TEMP\se.zip"
+    Write-Output "Downloading SE files..."
+    Invoke-WebRequest -Uri $SeSource -OutFile $TmpSeZip
+    Write-Output "Extracting..."
+    New-Item -ItemType Directory -Force -Path "internal\quote\data" | Out-Null
+    Expand-Archive -Path $TmpSeZip -DestinationPath $TmpSeDir
+    Move-Item -Path "$TmpSeDir\se" -Destination $SeDir
+    Remove-Item -Recurse -Force $TmpSeZip, $TmpSeDir
+}
+
+Write-Output "Done. SE files extracted to $SeDir"

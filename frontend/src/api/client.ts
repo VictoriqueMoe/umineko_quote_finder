@@ -20,16 +20,20 @@ export function buildQueryString(params: Record<string, string | number | undefi
 }
 
 export function audioUrl(charId: string, audioId: string): string {
-    return `${API_BASE}/audio/${charId}/${audioId}`;
+    return `${API_BASE}/audio/voice/${charId}/${audioId}`;
 }
 
 export function combinedAudioUrl(segments: Array<{ charId: string; audioId: string }>): string {
     const param = segments.map(s => `${s.charId}:${s.audioId}`).join(",");
-    return `${API_BASE}/audio/combined?segments=${param}`;
+    return `${API_BASE}/audio/voice/combined?segments=${param}`;
 }
 
 export function resolveCharId(audioId: string, defaultCharId: string, audioCharMap?: Record<string, string>): string {
     return audioCharMap?.[audioId] ?? defaultCharId;
+}
+
+export function seAudioUrl(filename: string): string {
+    return `${API_BASE}/audio/se/${filename}`;
 }
 
 export function ogImageUrl(audioId: string, lang: string, full?: boolean): string {

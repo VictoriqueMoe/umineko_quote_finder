@@ -8,6 +8,7 @@ export interface Quote {
     audioId?: string;
     audioCharMap?: Record<string, string>;
     audioTextMap?: Record<string, string>;
+    soundEffects?: SoundEffect[];
 }
 
 export interface SearchResult {
@@ -40,6 +41,15 @@ export interface ContextResponse {
     quote: ContextLine;
     after: ContextLine[];
     error?: string;
+}
+
+export interface SoundEffect {
+    filename: string;
+    afterClip: number;
+}
+
+export interface NearestVoicedResponse {
+    audioId: string;
 }
 
 export interface TopSpeaker {

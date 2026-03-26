@@ -106,6 +106,7 @@ go.work.sum
 .idea
 *.iml
 internal/quote/data/audio
+internal/quote/data/se
 cmd
 listdupes.ps1
 

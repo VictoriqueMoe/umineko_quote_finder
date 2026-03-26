@@ -165,6 +165,17 @@ definitions:
         example: 100
         type: integer
     type: object
+  dto.SoundEffect:
+    properties:
+      afterClip:
+        description: Voice clip index this SE plays after (-1 = before all clips)
+        example: 0
+        type: integer
+      filename:
+        description: Sound effect filename (without extension)
+        example: umise_047
+        type: string
+    type: object
   dto.SpeakerStat:
     properties:
       characterId:
@@ -280,6 +291,11 @@ definitions:
         description: Whether the quote contains red truth
         example: false
         type: boolean
+      soundEffects:
+        description: Sound effects associated with this quote
+        items:
+          $ref: '#/definitions/dto.SoundEffect'
+        type: array
       text:
         description: Plain text of the quote
         example: You're insane!! Stop it already, damn iiiiiiiiit!!
@@ -644,6 +660,56 @@ paths:
       summary: Health check
       tags:
       - system
+  /nearest-voiced/{audioId}:
+    get:
+      description: Returns the audio ID of the nearest quote with voice audio in a
+        given direction
+      parameters:
+      - description: Audio ID of the reference quote
+        in: path
+        name: audioId
+        required: true
+        type: string
+      - default: en
+        description: Language
+        enum:
+        - en
+        - wh
+        - ja
+        - ru
+        - es
+        - pt
+        in: query
+        name: lang
+        type: string
+      - default: next
+        description: Direction to search
+        enum:
+        - next
+        - prev
+        in: query
+        name: direction
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Find nearest voiced quote
+      tags:
+      - quotes
   /quote/{audioId}:
     get:
       description: Returns a specific quote identified by its audio ID

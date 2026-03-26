@@ -7,3 +7,4 @@ services:
       - "4323:3000"
     volumes:
       - ./internal/quote/data/audio:/app/internal/quote/data/audio:ro
+      - ./internal/quote/data/se:/app/internal/quote/data/se:ro

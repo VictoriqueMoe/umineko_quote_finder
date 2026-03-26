@@ -436,6 +436,76 @@ const docTemplate = `{
                 }
             }
         },
+        "/nearest-voiced/{audioId}": {
+            "get": {
+                "description": "Returns the audio ID of the nearest quote with voice audio in a given direction",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "quotes"
+                ],
+                "summary": "Find nearest voiced quote",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Audio ID of the reference quote",
+                        "name": "audioId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "en",
+                            "wh",
+                            "ja",
+                            "ru",
+                            "es",
+                            "pt"
+                        ],
+                        "type": "string",
+                        "default": "en",
+                        "description": "Language",
+                        "name": "lang",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "next",
+                            "prev"
+                        ],
+                        "type": "string",
+                        "default": "next",
+                        "description": "Direction to search",
+                        "name": "direction",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/quote/{audioId}": {
             "get": {
                 "description": "Returns a specific quote identified by its audio ID",
@@ -1172,6 +1242,21 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.SoundEffect": {
+            "type": "object",
+            "properties": {
+                "afterClip": {
+                    "description": "Voice clip index this SE plays after (-1 = before all clips)",
+                    "type": "integer",
+                    "example": 0
+                },
+                "filename": {
+                    "description": "Sound effect filename (without extension)",
+                    "type": "string",
+                    "example": "umise_047"
+                }
+            }
+        },
         "dto.SpeakerStat": {
             "type": "object",
             "properties": {
@@ -1326,6 +1411,13 @@ const docTemplate = `{
                     "description": "Whether the quote contains red truth",
                     "type": "boolean",
                     "example": false
+                },
+                "soundEffects": {
+                    "description": "Sound effects associated with this quote",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.SoundEffect"
+                    }
                 },
                 "text": {
                     "description": "Plain text of the quote",

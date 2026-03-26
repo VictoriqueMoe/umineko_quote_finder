@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"umineko_quote/internal/quote/language"
@@ -19,6 +20,8 @@ import (
 
 var audioIdPattern = regexp.MustCompile(`^[a-zA-Z0-9_]+$`)
 
+const seAudioDir = "internal/quote/data/se"
+
 func (s *Service) getAllQuoteRoutes() []FSetupRoute {
 	return []FSetupRoute{
 		s.setupSearchRoute,
@@ -26,8 +29,10 @@ func (s *Service) getAllQuoteRoutes() []FSetupRoute {
 		s.setupBrowseRoute,
 		s.setupByAudioIDRoute,
 		s.setupContextRoute,
+		s.setupNearestVoicedRoute,
 		s.setupCharactersRoute,
 		s.setupCombinedAudioRoute,
+		s.setupSeAudioRoute,
 		s.setupAudioRoute,
 		s.setupStatsRoute,
 	}
@@ -252,6 +257,48 @@ func (s *Service) context(ctx fiber.Ctx) error {
 	return ctx.JSON(result)
 }
 
+func (s *Service) setupNearestVoicedRoute(routeGroup fiber.Router) {
+	routeGroup.Get("/nearest-voiced/:audioId", s.nearestVoiced)
+}
+
+// nearestVoiced godoc
+//
+//	@Summary		Find nearest voiced quote
+//	@Description	Returns the audio ID of the nearest quote with voice audio in a given direction
+//	@Tags			quotes
+//	@Produce		json
+//	@Param			audioId		path		string	true	"Audio ID of the reference quote"
+//	@Param			lang		query		string	false	"Language"	default(en)	Enums(en, wh, ja, ru, es, pt)
+//	@Param			direction	query		string	false	"Direction to search"	default(next)	Enums(next, prev)
+//	@Success		200			{object}	map[string]string
+//	@Failure		400			{object}	dto.ErrorResponse
+//	@Failure		404			{object}	dto.ErrorResponse
+//	@Router			/nearest-voiced/{audioId} [get]
+func (s *Service) nearestVoiced(ctx fiber.Ctx) error {
+	lang := language.English.Parse(ctx.Query("lang"))
+	audioID := ctx.Params("audioId")
+	if !audioIdPattern.MatchString(audioID) {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid audio ID",
+		})
+	}
+
+	direction := ctx.Query("direction", "next")
+	if direction != "next" && direction != "prev" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "direction must be 'next' or 'prev'",
+		})
+	}
+
+	result := s.QuoteService.NearestVoicedAudioID(lang, audioID, direction)
+	if result == "" {
+		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "no voiced quote found",
+		})
+	}
+	return ctx.JSON(fiber.Map{"audioId": result})
+}
+
 // characters godoc
 //
 //	@Summary		List all characters
@@ -284,12 +331,12 @@ func (s *Service) stats(ctx fiber.Ctx) error {
 }
 
 func (s *Service) setupCombinedAudioRoute(routeGroup fiber.Router) {
-	routeGroup.Get("/audio/combined", s.combinedAudioSegments)
-	routeGroup.Get("/audio/:charId/combined", s.combinedAudioLegacy)
+	routeGroup.Get("/audio/voice/combined", s.combinedAudioSegments)
+	routeGroup.Get("/audio/voice/:charId/combined", s.combinedAudioLegacy)
 }
 
 func (s *Service) setupAudioRoute(routeGroup fiber.Router) {
-	routeGroup.Get("/audio/:charId/:audioId", s.audio)
+	routeGroup.Get("/audio/voice/:charId/:audioId", s.audio)
 }
 
 func (s *Service) audio(ctx fiber.Ctx) error {
@@ -312,6 +359,29 @@ func (s *Service) audio(ctx fiber.Ctx) error {
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "failed to read audio file",
+		})
+	}
+
+	return utils.ServeAudio(ctx, data)
+}
+
+func (s *Service) setupSeAudioRoute(routeGroup fiber.Router) {
+	routeGroup.Get("/audio/se/:filename", s.seAudio)
+}
+
+func (s *Service) seAudio(ctx fiber.Ctx) error {
+	filename := ctx.Params("filename")
+	if !audioIdPattern.MatchString(filename) {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid SE filename",
+		})
+	}
+
+	filePath := filepath.Join(seAudioDir, filename+".ogg")
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "SE file not found",
 		})
 	}
 

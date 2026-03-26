@@ -16,6 +16,10 @@ type EpisodeTruth struct {
 	Red int `json:"red" example:"38"`
 	// Number of blue truth statements
 	Blue int `json:"blue" example:"0"`
+	// Number of gold truth statements
+	Gold int `json:"gold" example:"0"`
+	// Number of purple truth statements
+	Purple int `json:"purple" example:"0"`
 }
 
 type InteractionPair struct {
@@ -54,7 +58,7 @@ type StatsResult struct {
 	TopSpeakers []SpeakerStat `json:"topSpeakers"`
 	// Per-episode line breakdown by character
 	LinesPerEpisode []EpisodeCharacterLines `json:"linesPerEpisode"`
-	// Red and blue truth counts per episode
+	// Truth counts per episode
 	TruthPerEpisode []EpisodeTruth `json:"truthPerEpisode"`
 	// Most frequent character dialogue pairings
 	Interactions []InteractionPair `json:"interactions"`

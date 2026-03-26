@@ -146,6 +146,12 @@ func (s *service) Search(params quoteparams.SearchParams) dto.SearchResponse {
 		if truth == TruthBlue && !q.HasBlueTruth {
 			return false
 		}
+		if truth == TruthGold && !q.HasGoldTruth {
+			return false
+		}
+		if truth == TruthPurple && !q.HasPurpleTruth {
+			return false
+		}
 		return true
 	}
 
@@ -277,6 +283,12 @@ func (s *service) Browse(params quoteparams.BrowseParams) dto.CharacterResponse 
 		if truth == TruthBlue && !q.HasBlueTruth {
 			continue
 		}
+		if truth == TruthGold && !q.HasGoldTruth {
+			continue
+		}
+		if truth == TruthPurple && !q.HasPurpleTruth {
+			continue
+		}
 		all = append(all, q)
 	}
 
@@ -296,6 +308,12 @@ func (s *service) Random(lang language.Language, character character.Character, 
 			return false
 		}
 		if truth == TruthBlue && !q.HasBlueTruth {
+			return false
+		}
+		if truth == TruthGold && !q.HasGoldTruth {
+			return false
+		}
+		if truth == TruthPurple && !q.HasPurpleTruth {
 			return false
 		}
 		return true

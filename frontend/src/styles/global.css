@@ -1076,8 +1076,20 @@ body {
     font-weight: 600;
 }
 
+.gold-truth {
+    color: #ffaa00;
+    font-weight: 600;
+}
+
+.purple-truth {
+    color: #aa71ff;
+    font-weight: 600;
+}
+
 .red-truth .quote-name,
-.blue-truth .quote-name {
+.blue-truth .quote-name,
+.gold-truth .quote-name,
+.purple-truth .quote-name {
     color: inherit;
 }
 

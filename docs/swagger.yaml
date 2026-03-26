@@ -87,6 +87,14 @@ definitions:
         description: Episode number (1-8)
         example: 2
         type: integer
+      gold:
+        description: Number of gold truth statements
+        example: 0
+        type: integer
+      purple:
+        description: Number of purple truth statements
+        example: 0
+        type: integer
       red:
         description: Number of red truth statements
         example: 38
@@ -213,7 +221,7 @@ definitions:
           $ref: '#/definitions/dto.SpeakerStat'
         type: array
       truthPerEpisode:
-        description: Red and blue truth counts per episode
+        description: Truth counts per episode
         items:
           $ref: '#/definitions/dto.EpisodeTruth'
         type: array
@@ -258,6 +266,14 @@ definitions:
         type: integer
       hasBlueTruth:
         description: Whether the quote contains blue truth
+        example: false
+        type: boolean
+      hasGoldTruth:
+        description: Whether the quote contains gold truth
+        example: false
+        type: boolean
+      hasPurpleTruth:
+        description: Whether the quote contains purple statements
         example: false
         type: boolean
       hasRedTruth:
@@ -520,6 +536,8 @@ paths:
         enum:
         - red
         - blue
+        - gold
+        - purple
         in: query
         name: truth
         type: string
@@ -753,6 +771,8 @@ paths:
         enum:
         - red
         - blue
+        - gold
+        - purple
         in: query
         name: truth
         type: string
@@ -1014,6 +1034,8 @@ paths:
         enum:
         - red
         - blue
+        - gold
+        - purple
         in: query
         name: truth
         type: string

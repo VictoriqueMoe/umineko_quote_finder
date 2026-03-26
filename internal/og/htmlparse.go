@@ -12,8 +12,10 @@ type textSegment struct {
 }
 
 var (
-	redTruthColor  = color.RGBA{R: 255, G: 51, B: 51, A: 255}  // #ff3333
-	blueTruthColor = color.RGBA{R: 51, G: 153, B: 255, A: 255} // #3399ff
+	redTruthColor    = color.RGBA{R: 255, G: 51, B: 51, A: 255}   // #ff3333
+	blueTruthColor   = color.RGBA{R: 51, G: 153, B: 255, A: 255}  // #3399ff
+	goldTruthColor   = color.RGBA{R: 255, G: 170, B: 0, A: 255}   // #ffaa00
+	purpleTruthColor = color.RGBA{R: 170, G: 113, B: 255, A: 255} // #aa71ff
 )
 
 func parseHTMLSegments(htmlStr string, defaultColor color.RGBA) []textSegment {
@@ -51,6 +53,10 @@ func parseHTMLSegments(htmlStr string, defaultColor color.RGBA) []textSegment {
 					currentColor = redTruthColor
 				} else if strings.Contains(tag, `class="blue-truth"`) {
 					currentColor = blueTruthColor
+				} else if strings.Contains(tag, `class="gold-truth"`) {
+					currentColor = goldTruthColor
+				} else if strings.Contains(tag, `class="purple-truth"`) {
+					currentColor = purpleTruthColor
 				} else if idx := strings.Index(tag, "color:"); idx != -1 {
 					if c, ok := parseHexColor(tag[idx+6:]); ok {
 						currentColor = c

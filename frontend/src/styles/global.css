@@ -1468,6 +1468,36 @@ body {
     cursor: wait;
 }
 
+.quote-card .quote-text {
+    text-align: center;
+}
+
+.quote-card .quote-meta {
+    flex-direction: column;
+    align-items: center;
+}
+
+.quote-card .quote-details {
+    flex-direction: column;
+    align-items: center;
+}
+
+.quote-card .audio-player {
+    align-items: center;
+}
+
+.quote-card .audio-clips {
+    justify-content: center;
+}
+
+.quote-card .se-player {
+    align-items: center;
+}
+
+.quote-card .se-clips {
+    justify-content: center;
+}
+
 .quote-card .context-btn {
     padding: 0.25rem 0.8rem;
     font-size: 0.65rem;
@@ -1847,12 +1877,21 @@ body {
     justify-content: center;
 }
 
+.featured-quote .se-player {
+    align-items: center;
+}
+
+.featured-quote .se-clips {
+    justify-content: center;
+}
+
 /* Sound Effects Player */
 .se-player {
     display: flex;
     flex-direction: column;
     gap: 0.35rem;
     margin-top: 0.5rem;
+    width: 100%;
 }
 
 .se-label {

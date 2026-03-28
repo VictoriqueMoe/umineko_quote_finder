@@ -26,6 +26,10 @@ func (s *Service) setupHealthRoute(routeGroup fiber.Router) {
 	routeGroup.Get("/health", s.healthCheck)
 }
 
+func (s *Service) setupConfigRoute(routeGroup fiber.Router) {
+	routeGroup.Get("/config", s.config)
+}
+
 // healthCheck godoc
 //
 //	@Summary		Health check
@@ -61,10 +65,6 @@ func (s *Service) healthCheck(ctx fiber.Ctx) error {
 		"languages": languages,
 		"hasAudio":  s.QuoteService.HasAudio(),
 	})
-}
-
-func (s *Service) setupConfigRoute(routeGroup fiber.Router) {
-	routeGroup.Get("/config", s.config)
 }
 
 // config godoc

@@ -31,6 +31,10 @@ func (s *Service) setupOGBuilderImageRoute(routeGroup fiber.Router) {
 	routeGroup.Get("/og/builder.png", s.ogBuilderImage)
 }
 
+func (s *Service) setupOGPageRoute(routeGroup fiber.Router) {
+	routeGroup.Get("/", s.ogPage)
+}
+
 func (s *Service) ogImage(ctx fiber.Ctx) error {
 	audioId := ctx.Params("audioId")
 	if !audioIdPattern.MatchString(audioId) {
@@ -60,10 +64,6 @@ func (s *Service) ogImage(ctx fiber.Ctx) error {
 	ctx.Set("Content-Type", "image/png")
 	ctx.Set("Cache-Control", "public, max-age=86400")
 	return ctx.Send(data)
-}
-
-func (s *Service) setupOGPageRoute(routeGroup fiber.Router) {
-	routeGroup.Get("/", s.ogPage)
 }
 
 const (

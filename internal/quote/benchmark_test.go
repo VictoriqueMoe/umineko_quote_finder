@@ -142,7 +142,7 @@ func BenchmarkConcurrentExactSearch(b *testing.B) {
 	lowerTexts := make([]string, n)
 	indices := make([]int, n)
 	for i := 0; i < n; i++ {
-		quotes[i] = dto.ParsedQuote{Text: "some text about witches and magic", CharacterID: "10"}
+		quotes[i] = dto.ParsedQuote{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "some text about witches and magic", CharacterID: "10"}}
 		lowerTexts[i] = "some text about witches and magic"
 		indices[i] = i
 	}
@@ -160,11 +160,11 @@ func buildTestIndexerLarge() (Indexer, map[language.Language][]dto.ParsedQuote) 
 	n := 10000
 	quotes := make([]dto.ParsedQuote, n)
 	for i := 0; i < n; i++ {
-		quotes[i] = dto.ParsedQuote{
+		quotes[i] = dto.ParsedQuote{ScriptParsedQuote: dto.ScriptParsedQuote{
 			Text:        "Test quote text number",
 			CharacterID: chars[i%len(chars)],
 			Episode:     (i % 8) + 1,
-		}
+		}}
 	}
 	m := map[language.Language][]dto.ParsedQuote{
 		language.English: quotes,

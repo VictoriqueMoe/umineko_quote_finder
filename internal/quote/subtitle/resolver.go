@@ -36,13 +36,15 @@ func ResolveRefs(efs fs.ReadFileFS, refs []lexer.SubtitleRef) []dto.ParsedQuote 
 			}
 
 			quotes = append(quotes, dto.ParsedQuote{
-				Text:        entry.Text,
-				TextHtml:    entry.Text,
-				CharacterID: charID,
-				Character:   character.CharacterNames.GetCharacterName(character.CharacterFromID(charID)),
-				AudioID:     fmt.Sprintf("%s_s%d", ref.AudioID, i),
-				Episode:     ref.Episode,
-				ContentType: ref.ContentType,
+				ScriptParsedQuote: dto.ScriptParsedQuote{
+					Text:        entry.Text,
+					TextHtml:    entry.Text,
+					CharacterID: charID,
+					Character:   character.CharacterNames.GetCharacterName(character.CharacterFromID(charID)),
+					AudioID:     fmt.Sprintf("%s_s%d", ref.AudioID, i),
+					Episode:     ref.Episode,
+					ContentType: ref.ContentType,
+				},
 			})
 		}
 	}

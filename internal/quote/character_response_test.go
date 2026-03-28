@@ -39,7 +39,7 @@ func TestNewCharacterResponse_EmptyCharacterID(t *testing.T) {
 func TestNewCharacterResponse_Pagination(t *testing.T) {
 	quotes := make([]dto.ParsedQuote, 25)
 	for i := 0; i < 25; i++ {
-		quotes[i] = dto.ParsedQuote{Text: "quote", CharacterID: "27"}
+		quotes[i] = dto.ParsedQuote{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "quote", CharacterID: "27"}}
 	}
 
 	resp := NewCharacterResponse("27", quotes, 10, 0)
@@ -58,7 +58,7 @@ func TestNewCharacterResponse_Pagination(t *testing.T) {
 func TestNewCharacterResponse_OffsetBeyondTotal(t *testing.T) {
 	quotes := make([]dto.ParsedQuote, 5)
 	for i := 0; i < 5; i++ {
-		quotes[i] = dto.ParsedQuote{Text: "quote"}
+		quotes[i] = dto.ParsedQuote{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "quote"}}
 	}
 
 	resp := NewCharacterResponse("10", quotes, 10, 100)
@@ -74,7 +74,7 @@ func TestNewCharacterResponse_OffsetBeyondTotal(t *testing.T) {
 func TestNewCharacterResponse_PartialLastPage(t *testing.T) {
 	quotes := make([]dto.ParsedQuote, 25)
 	for i := 0; i < 25; i++ {
-		quotes[i] = dto.ParsedQuote{Text: "quote"}
+		quotes[i] = dto.ParsedQuote{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "quote"}}
 	}
 
 	resp := NewCharacterResponse("10", quotes, 10, 20)

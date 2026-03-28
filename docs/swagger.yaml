@@ -291,6 +291,9 @@ definitions:
         description: Whether the quote contains red truth
         example: false
         type: boolean
+      index:
+        description: Position index in the parsed script (stable across text changes)
+        type: integer
       soundEffects:
         description: Sound effects associated with this quote
         items:
@@ -743,6 +746,42 @@ paths:
           schema:
             $ref: '#/definitions/dto.ErrorResponse'
       summary: Get quote by audio ID
+      tags:
+      - quotes
+  /quote/index/{index}:
+    get:
+      description: Returns a specific quote identified by its position index in the
+        parsed script
+      parameters:
+      - description: Index of the quote in the parsed script
+        in: path
+        name: index
+        required: true
+        type: integer
+      - default: en
+        description: Language
+        enum:
+        - en
+        - wh
+        - ja
+        - ru
+        - es
+        - pt
+        in: query
+        name: lang
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/umineko_quote_internal_dto.ParsedQuote'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Get quote by index
       tags:
       - quotes
   /random:

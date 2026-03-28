@@ -1,26 +1,20 @@
 package controllers
 
 import (
-	"os"
-	"path/filepath"
 	"regexp"
 	"strings"
 	"umineko_quote/internal/quote/language"
-	quoteparams "umineko_quote/internal/quote/params"
+	"umineko_quote/internal/quote/params"
 
 	"github.com/VictoriqueMoe/umineko_script_parser/quote/character"
 
-	"umineko_quote/internal/audio"
 	_ "umineko_quote/internal/dto"
 	"umineko_quote/internal/quote"
-	"umineko_quote/internal/utils"
 
 	"github.com/gofiber/fiber/v3"
 )
 
 var audioIdPattern = regexp.MustCompile(`^[a-zA-Z0-9_]+$`)
-
-const seAudioDir = "internal/quote/data/se"
 
 func (s *Service) getAllQuoteRoutes() []FSetupRoute {
 	return []FSetupRoute{
@@ -28,12 +22,10 @@ func (s *Service) getAllQuoteRoutes() []FSetupRoute {
 		s.setupRandomRoute,
 		s.setupBrowseRoute,
 		s.setupByAudioIDRoute,
+		s.setupByIndexRoute,
 		s.setupContextRoute,
 		s.setupNearestVoicedRoute,
 		s.setupCharactersRoute,
-		s.setupCombinedAudioRoute,
-		s.setupSeAudioRoute,
-		s.setupAudioRoute,
 		s.setupStatsRoute,
 	}
 }
@@ -54,8 +46,24 @@ func (s *Service) setupByAudioIDRoute(routeGroup fiber.Router) {
 	routeGroup.Get("/quote/:audioId", s.byAudioID)
 }
 
+func (s *Service) setupByIndexRoute(routeGroup fiber.Router) {
+	routeGroup.Get("/quote/index/:index<int>", s.byIndex)
+}
+
+func (s *Service) setupContextRoute(routeGroup fiber.Router) {
+	routeGroup.Get("/context/:audioId", s.context)
+}
+
+func (s *Service) setupNearestVoicedRoute(routeGroup fiber.Router) {
+	routeGroup.Get("/nearest-voiced/:audioId", s.nearestVoiced)
+}
+
 func (s *Service) setupCharactersRoute(routeGroup fiber.Router) {
 	routeGroup.Get("/characters", s.characters)
+}
+
+func (s *Service) setupStatsRoute(routeGroup fiber.Router) {
+	routeGroup.Get("/stats", s.stats)
 }
 
 // search godoc
@@ -98,7 +106,7 @@ func (s *Service) search(ctx fiber.Ctx) error {
 		})
 	}
 
-	searchParams := quoteparams.NewSearchParams(
+	searchParams := params.NewSearchParams(
 		query,
 		lang,
 		limit,
@@ -182,7 +190,7 @@ func (s *Service) browse(ctx fiber.Ctx) error {
 		})
 	}
 
-	browseParams := quoteparams.NewBrowseParams(
+	browseParams := params.NewBrowseParams(
 		lang,
 		limit,
 		offset,
@@ -221,8 +229,28 @@ func (s *Service) byAudioID(ctx fiber.Ctx) error {
 	return ctx.JSON(q)
 }
 
-func (s *Service) setupContextRoute(routeGroup fiber.Router) {
-	routeGroup.Get("/context/:audioId", s.context)
+// byIndex godoc
+//
+//	@Summary		Get quote by index
+//	@Description	Returns a specific quote identified by its position index in the parsed script
+//	@Tags			quotes
+//	@Produce		json
+//	@Param			index		path		int		true	"Index of the quote in the parsed script"
+//	@Param			lang		query		string	false	"Language"	default(en)	Enums(en, wh, ja, ru, es, pt)
+//	@Success		200			{object}	dto.ParsedQuote
+//	@Failure		404			{object}	dto.ErrorResponse
+//	@Router			/quote/index/{index} [get]
+func (s *Service) byIndex(ctx fiber.Ctx) error {
+	lang := language.English.Parse(ctx.Query("lang"))
+	index := fiber.Params[int](ctx, "index")
+
+	q := s.QuoteService.GetByIndex(lang, index)
+	if q == nil {
+		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "quote not found",
+		})
+	}
+	return ctx.JSON(q)
 }
 
 // context godoc
@@ -255,10 +283,6 @@ func (s *Service) context(ctx fiber.Ctx) error {
 		})
 	}
 	return ctx.JSON(result)
-}
-
-func (s *Service) setupNearestVoicedRoute(routeGroup fiber.Router) {
-	routeGroup.Get("/nearest-voiced/:audioId", s.nearestVoiced)
 }
 
 // nearestVoiced godoc
@@ -312,10 +336,6 @@ func (s *Service) characters(ctx fiber.Ctx) error {
 	return ctx.JSON(s.QuoteService.GetCharacters())
 }
 
-func (s *Service) setupStatsRoute(routeGroup fiber.Router) {
-	routeGroup.Get("/stats", s.stats)
-}
-
 // stats godoc
 //
 //	@Summary		Get quote statistics
@@ -328,151 +348,6 @@ func (s *Service) setupStatsRoute(routeGroup fiber.Router) {
 func (s *Service) stats(ctx fiber.Ctx) error {
 	episode := fiber.Query[int](ctx, "episode", 0)
 	return ctx.JSON(s.QuoteService.GetStats().Compute(episode))
-}
-
-func (s *Service) setupCombinedAudioRoute(routeGroup fiber.Router) {
-	routeGroup.Get("/audio/voice/combined", s.combinedAudioSegments)
-	routeGroup.Get("/audio/voice/:charId/combined", s.combinedAudioLegacy)
-}
-
-func (s *Service) setupAudioRoute(routeGroup fiber.Router) {
-	routeGroup.Get("/audio/voice/:charId/:audioId", s.audio)
-}
-
-func (s *Service) audio(ctx fiber.Ctx) error {
-	charId := ctx.Params("charId")
-	audioId := ctx.Params("audioId")
-	if !audioIdPattern.MatchString(charId) || !audioIdPattern.MatchString(audioId) {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "invalid audio ID",
-		})
-	}
-
-	filePath := s.QuoteService.AudioFilePath(charId, audioId)
-	if filePath == "" {
-		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"error": "audio file not found",
-		})
-	}
-
-	data, err := os.ReadFile(filePath)
-	if err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "failed to read audio file",
-		})
-	}
-
-	return utils.ServeAudio(ctx, data)
-}
-
-func (s *Service) setupSeAudioRoute(routeGroup fiber.Router) {
-	routeGroup.Get("/audio/se/:filename", s.seAudio)
-}
-
-func (s *Service) seAudio(ctx fiber.Ctx) error {
-	filename := ctx.Params("filename")
-	if !audioIdPattern.MatchString(filename) {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "invalid SE filename",
-		})
-	}
-
-	filePath := filepath.Join(seAudioDir, filename+".ogg")
-	data, err := os.ReadFile(filePath)
-	if err != nil {
-		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"error": "SE file not found",
-		})
-	}
-
-	return utils.ServeAudio(ctx, data)
-}
-
-func (s *Service) combinedAudioSegments(ctx fiber.Ctx) error {
-	segmentsParam := ctx.Query("segments")
-	if segmentsParam == "" {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "query parameter 'segments' is required",
-		})
-	}
-
-	parts := strings.Split(segmentsParam, ",")
-	if len(parts) > 20 {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "maximum 20 audio segments allowed",
-		})
-	}
-
-	segments := make([]audio.AudioSegment, 0, len(parts))
-	for _, part := range parts {
-		part = strings.TrimSpace(part)
-		colonIdx := strings.IndexByte(part, ':')
-		if colonIdx < 1 || colonIdx >= len(part)-1 {
-			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"error": "invalid segment format: " + part + " (expected charId:audioId)",
-			})
-		}
-		charId := part[:colonIdx]
-		audioId := part[colonIdx+1:]
-		if !audioIdPattern.MatchString(charId) || !audioIdPattern.MatchString(audioId) {
-			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"error": "invalid segment: " + part,
-			})
-		}
-		segments = append(segments, audio.AudioSegment{CharID: charId, AudioID: audioId})
-	}
-
-	data, err := s.AudioCombiner.CombineOgg(segments, s.QuoteService.AudioFilePath)
-	if err != nil {
-		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"error": err.Error(),
-		})
-	}
-
-	return utils.ServeAudio(ctx, data)
-}
-
-func (s *Service) combinedAudioLegacy(ctx fiber.Ctx) error {
-	charId := ctx.Params("charId")
-	if !audioIdPattern.MatchString(charId) {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "invalid character ID",
-		})
-	}
-
-	idsParam := ctx.Query("ids")
-	if idsParam == "" {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "query parameter 'ids' is required",
-		})
-	}
-
-	ids := strings.Split(idsParam, ",")
-	if len(ids) > 20 {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "maximum 20 audio IDs allowed",
-		})
-	}
-
-	segments := make([]audio.AudioSegment, 0, len(ids))
-	for _, id := range ids {
-		id = strings.TrimSpace(id)
-		if !audioIdPattern.MatchString(id) {
-			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"error": "invalid audio ID: " + id,
-			})
-		}
-		segments = append(segments, audio.AudioSegment{CharID: charId, AudioID: id})
-	}
-
-	data, err := s.AudioCombiner.CombineOgg(segments, s.QuoteService.AudioFilePath)
-	if err != nil {
-		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"error": err.Error(),
-		})
-	}
-
-	return utils.ServeAudio(ctx, data)
 }
 
 func validateInteractionQueryParams(characterParam string, interactionAParam string, interactionBParam string) (string, bool) {

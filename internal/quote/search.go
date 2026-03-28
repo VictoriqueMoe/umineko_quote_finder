@@ -8,7 +8,13 @@ import (
 	"umineko_quote/internal/dto"
 )
 
-func concurrentExactSearch(indices []int, lowerTexts []string, quotes []dto.ParsedQuote, queryLower string, matchesFilter func(dto.ParsedQuote) bool) []dto.SearchResult {
+func concurrentExactSearch(
+	indices []int,
+	lowerTexts []string,
+	quotes []dto.ParsedQuote,
+	queryLower string,
+	matchesFilter func(dto.ParsedQuote) bool,
+) []dto.SearchResult {
 	numWorkers := runtime.NumCPU()
 	total := len(indices)
 	if total == 0 {

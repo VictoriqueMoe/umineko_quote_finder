@@ -26,6 +26,7 @@ func (s *Service) GetAPIRoutes() []FSetupRoute {
 	all := []FSetupRoute{}
 	all = append(all, s.getAllSystemRoutes()...)
 	all = append(all, s.getAllQuoteRoutes()...)
+	all = append(all, s.getAllAudioRoutes()...)
 	all = append(all, s.getAllOGAPIRoutes()...)
 	return all
 }

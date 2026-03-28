@@ -8,12 +8,12 @@ import (
 
 func TestContextResponse_Construction(t *testing.T) {
 	before := []dto.ParsedQuote{
-		{Text: "Before line 1", CharacterID: "10"},
-		{Text: "Before line 2", CharacterID: "27"},
+		{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "Before line 1", CharacterID: "10"}},
+		{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "Before line 2", CharacterID: "27"}},
 	}
-	target := dto.ParsedQuote{Text: "Target quote", CharacterID: "10", AudioID: "10100001"}
+	target := dto.ParsedQuote{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "Target quote", CharacterID: "10", AudioID: "10100001"}}
 	after := []dto.ParsedQuote{
-		{Text: "After line 1", CharacterID: "27"},
+		{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "After line 1", CharacterID: "27"}},
 	}
 
 	resp := dto.ContextResponse{
@@ -36,7 +36,7 @@ func TestContextResponse_Construction(t *testing.T) {
 func TestContextResponse_EmptyBeforeAndAfter(t *testing.T) {
 	resp := dto.ContextResponse{
 		Before: nil,
-		Quote:  dto.ParsedQuote{Text: "Only quote", CharacterID: "10"},
+		Quote:  dto.ParsedQuote{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "Only quote", CharacterID: "10"}},
 		After:  nil,
 	}
 

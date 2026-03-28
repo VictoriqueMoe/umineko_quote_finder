@@ -7,14 +7,14 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"umineko_quote/internal/quote/params"
 
 	"umineko_quote/internal/dto"
 	"umineko_quote/internal/quote/language"
-	quoteparams "umineko_quote/internal/quote/params"
 
 	"umineko_quote/internal/quote/subtitle"
 
-	scriptparser "github.com/VictoriqueMoe/umineko_script_parser"
+	"github.com/VictoriqueMoe/umineko_script_parser"
 	"github.com/VictoriqueMoe/umineko_script_parser/lexer"
 	"github.com/VictoriqueMoe/umineko_script_parser/quote/character"
 )
@@ -26,9 +26,10 @@ var dataFS embed.FS
 
 type (
 	Service interface {
-		Search(params quoteparams.SearchParams) dto.SearchResponse
-		Browse(params quoteparams.BrowseParams) dto.CharacterResponse
+		Search(params params.SearchParams) dto.SearchResponse
+		Browse(params params.BrowseParams) dto.CharacterResponse
 		GetByAudioID(lang language.Language, audioID string) *dto.ParsedQuote
+		GetByIndex(lang language.Language, index int) *dto.ParsedQuote
 		GetContext(lang language.Language, audioID string, lines int) *dto.ContextResponse
 		NearestVoicedAudioID(lang language.Language, audioID string, direction string) string
 		Random(lang language.Language, character character.Character, episode int, truth Truth) *dto.ParsedQuote
@@ -109,14 +110,27 @@ func NewService() Service {
 					log.Printf("[%s]   ... and %d more", lang, len(validationErrors)-10)
 				}
 			}
+			indexed := make([]dto.ParsedQuote, len(parsed))
+			for i, q := range parsed {
+				indexed[i] = dto.ParsedQuote{
+					ScriptParsedQuote: q,
+					Index:             i,
+				}
+			}
+
 			subQuotes := subtitle.ResolveRefs(dataFS, subtitleRefs)
 			if len(subQuotes) > 0 {
-				parsed = append(parsed, subQuotes...)
+				startIdx := len(indexed)
+				for i, sq := range subQuotes {
+					sq.Index = startIdx + i
+					indexed = append(indexed, sq)
+				}
 				log.Printf("[%s] added %d subtitle quotes", lang, len(subQuotes))
 			}
+
 			results <- langParseResult{
 				lang:   lang,
-				parsed: parsed,
+				parsed: indexed,
 			}
 		})
 	}
@@ -149,7 +163,7 @@ func NewService() Service {
 	}
 }
 
-func (s *service) Search(params quoteparams.SearchParams) dto.SearchResponse {
+func (s *service) Search(params params.SearchParams) dto.SearchResponse {
 	if params.Lang == language.Auto {
 		return s.searchAuto(params)
 	}
@@ -231,7 +245,7 @@ func (s *service) Search(params quoteparams.SearchParams) dto.SearchResponse {
 	return NewSearchResponse(exactMatches, limit, offset)
 }
 
-func (s *service) searchAuto(params quoteparams.SearchParams) dto.SearchResponse {
+func (s *service) searchAuto(params params.SearchParams) dto.SearchResponse {
 	type langResult struct {
 		lang   language.Language
 		result dto.SearchResponse
@@ -281,7 +295,7 @@ func mergeFilteredIndices(baseIndices []int, interactionIndices []int) []int {
 	return out
 }
 
-func (s *service) Browse(params quoteparams.BrowseParams) dto.CharacterResponse {
+func (s *service) Browse(params params.BrowseParams) dto.CharacterResponse {
 	lang := params.Lang
 	limit := params.Limit
 	offset := params.Offset
@@ -449,6 +463,17 @@ func (s *service) GetByAudioID(lang language.Language, audioID string) *dto.Pars
 		return nil
 	}
 	return &quotes[idx]
+}
+
+func (s *service) GetByIndex(lang language.Language, index int) *dto.ParsedQuote {
+	quotes := s.quotes[lang]
+	if quotes == nil {
+		return nil
+	}
+	if index < 0 || index >= len(quotes) {
+		return nil
+	}
+	return &quotes[index]
 }
 
 func (s *service) GetContext(lang language.Language, audioID string, lines int) *dto.ContextResponse {

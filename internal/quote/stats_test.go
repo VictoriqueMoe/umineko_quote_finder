@@ -10,16 +10,16 @@ import (
 
 func buildTestQuotes() []dto.ParsedQuote {
 	return []dto.ParsedQuote{
-		{Text: "Line 1", TextHtml: "Line 1", CharacterID: "10", Episode: 1},
-		{Text: "Line 2", TextHtml: "Line 2", CharacterID: "10", Episode: 1},
-		{Text: "Line 3", TextHtml: "Line 3", CharacterID: "27", Episode: 1},
-		{Text: "Narrator line", TextHtml: "Narrator line", CharacterID: "narrator", Episode: 1},
-		{Text: "Red truth", TextHtml: `<span class="red-truth">Red</span>`, CharacterID: "27", Episode: 2, HasRedTruth: true},
-		{Text: "Blue truth", TextHtml: `<span class="blue-truth">Blue</span>`, CharacterID: "10", Episode: 2, HasBlueTruth: true},
-		{Text: "Red truth ep3", TextHtml: `<span class="red-truth">Red</span>`, CharacterID: "10", Episode: 3, HasRedTruth: true},
-		{Text: "Blue truth ep3", TextHtml: `<span class="blue-truth">Blue</span>`, CharacterID: "27", Episode: 3, HasBlueTruth: true},
-		{Text: "Line ep3", TextHtml: "Line ep3", CharacterID: "27", Episode: 3},
-		{Text: "Line ep3 b", TextHtml: "Line ep3 b", CharacterID: "10", Episode: 3},
+		{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "Line 1", TextHtml: "Line 1", CharacterID: "10", Episode: 1}},
+		{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "Line 2", TextHtml: "Line 2", CharacterID: "10", Episode: 1}},
+		{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "Line 3", TextHtml: "Line 3", CharacterID: "27", Episode: 1}},
+		{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "Narrator line", TextHtml: "Narrator line", CharacterID: "narrator", Episode: 1}},
+		{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "Red truth", TextHtml: `<span class="red-truth">Red</span>`, CharacterID: "27", Episode: 2, HasRedTruth: true}},
+		{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "Blue truth", TextHtml: `<span class="blue-truth">Blue</span>`, CharacterID: "10", Episode: 2, HasBlueTruth: true}},
+		{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "Red truth ep3", TextHtml: `<span class="red-truth">Red</span>`, CharacterID: "10", Episode: 3, HasRedTruth: true}},
+		{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "Blue truth ep3", TextHtml: `<span class="blue-truth">Blue</span>`, CharacterID: "27", Episode: 3, HasBlueTruth: true}},
+		{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "Line ep3", TextHtml: "Line ep3", CharacterID: "27", Episode: 3}},
+		{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "Line ep3 b", TextHtml: "Line ep3 b", CharacterID: "10", Episode: 3}},
 	}
 }
 
@@ -263,8 +263,8 @@ func TestStats_EmptyQuotes(t *testing.T) {
 
 func TestStats_InteractionPairOrdering(t *testing.T) {
 	quotes := []dto.ParsedQuote{
-		{Text: "Line 1", TextHtml: "Line 1", CharacterID: "27", Episode: 1},
-		{Text: "Line 2", TextHtml: "Line 2", CharacterID: "10", Episode: 1},
+		{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "Line 1", TextHtml: "Line 1", CharacterID: "27", Episode: 1}},
+		{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "Line 2", TextHtml: "Line 2", CharacterID: "10", Episode: 1}},
 	}
 	s := NewStats(quotes)
 	result := s.Compute(AllEpisodes).(*dto.StatsResult)
@@ -280,9 +280,9 @@ func TestStats_InteractionPairOrdering(t *testing.T) {
 
 func TestStats_NarratorBreaksInteraction(t *testing.T) {
 	quotes := []dto.ParsedQuote{
-		{Text: "Line 1", TextHtml: "Line 1", CharacterID: "10", Episode: 1},
-		{Text: "Narration", TextHtml: "Narration", CharacterID: "narrator", Episode: 1},
-		{Text: "Line 2", TextHtml: "Line 2", CharacterID: "27", Episode: 1},
+		{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "Line 1", TextHtml: "Line 1", CharacterID: "10", Episode: 1}},
+		{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "Narration", TextHtml: "Narration", CharacterID: "narrator", Episode: 1}},
+		{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "Line 2", TextHtml: "Line 2", CharacterID: "27", Episode: 1}},
 	}
 	s := NewStats(quotes)
 	result := s.Compute(AllEpisodes).(*dto.StatsResult)

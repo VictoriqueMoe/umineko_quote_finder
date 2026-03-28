@@ -9,12 +9,12 @@ import (
 )
 
 func TestNewSearchResult(t *testing.T) {
-	q := dto.ParsedQuote{
+	q := dto.ParsedQuote{ScriptParsedQuote: dto.ScriptParsedQuote{
 		Text:        "test quote",
 		CharacterID: "10",
 		Character:   character.CharacterNames[character.Battler],
 		Episode:     1,
-	}
+	}}
 
 	sr := NewSearchResult(q, 100)
 
@@ -30,7 +30,7 @@ func TestNewSearchResult(t *testing.T) {
 }
 
 func TestNewSearchResult_ZeroScore(t *testing.T) {
-	q := dto.ParsedQuote{Text: "something"}
+	q := dto.ParsedQuote{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "something"}}
 	sr := NewSearchResult(q, 0)
 
 	if sr.Score != 0 {

@@ -506,6 +506,56 @@ const docTemplate = `{
                 }
             }
         },
+        "/quote/index/{index}": {
+            "get": {
+                "description": "Returns a specific quote identified by its position index in the parsed script",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "quotes"
+                ],
+                "summary": "Get quote by index",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Index of the quote in the parsed script",
+                        "name": "index",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "en",
+                            "wh",
+                            "ja",
+                            "ru",
+                            "es",
+                            "pt"
+                        ],
+                        "type": "string",
+                        "default": "en",
+                        "description": "Language",
+                        "name": "lang",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/umineko_quote_internal_dto.ParsedQuote"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/quote/{audioId}": {
             "get": {
                 "description": "Returns a specific quote identified by its audio ID",
@@ -1411,6 +1461,10 @@ const docTemplate = `{
                     "description": "Whether the quote contains red truth",
                     "type": "boolean",
                     "example": false
+                },
+                "index": {
+                    "description": "Position index in the parsed script (stable across text changes)",
+                    "type": "integer"
                 },
                 "soundEffects": {
                     "description": "Sound effects associated with this quote",

@@ -26,7 +26,7 @@ func TestNewSearchResponse_NilResults(t *testing.T) {
 func TestNewSearchResponse_Pagination(t *testing.T) {
 	results := make([]dto.SearchResult, 25)
 	for i := 0; i < 25; i++ {
-		results[i] = NewSearchResult(dto.ParsedQuote{Text: "quote"}, 100)
+		results[i] = NewSearchResult(dto.ParsedQuote{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "quote"}}, 100)
 	}
 
 	resp := NewSearchResponse(results, 10, 0)
@@ -45,7 +45,7 @@ func TestNewSearchResponse_Pagination(t *testing.T) {
 func TestNewSearchResponse_PaginationSecondPage(t *testing.T) {
 	results := make([]dto.SearchResult, 25)
 	for i := 0; i < 25; i++ {
-		results[i] = NewSearchResult(dto.ParsedQuote{Text: "quote"}, 100)
+		results[i] = NewSearchResult(dto.ParsedQuote{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "quote"}}, 100)
 	}
 
 	resp := NewSearchResponse(results, 10, 10)
@@ -64,7 +64,7 @@ func TestNewSearchResponse_PaginationSecondPage(t *testing.T) {
 func TestNewSearchResponse_OffsetBeyondTotal(t *testing.T) {
 	results := make([]dto.SearchResult, 5)
 	for i := 0; i < 5; i++ {
-		results[i] = NewSearchResult(dto.ParsedQuote{Text: "quote"}, 100)
+		results[i] = NewSearchResult(dto.ParsedQuote{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "quote"}}, 100)
 	}
 
 	resp := NewSearchResponse(results, 10, 100)
@@ -83,7 +83,7 @@ func TestNewSearchResponse_OffsetBeyondTotal(t *testing.T) {
 func TestNewSearchResponse_PartialLastPage(t *testing.T) {
 	results := make([]dto.SearchResult, 25)
 	for i := 0; i < 25; i++ {
-		results[i] = NewSearchResult(dto.ParsedQuote{Text: "quote"}, 100)
+		results[i] = NewSearchResult(dto.ParsedQuote{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "quote"}}, 100)
 	}
 
 	resp := NewSearchResponse(results, 10, 20)
@@ -99,7 +99,7 @@ func TestNewSearchResponse_PartialLastPage(t *testing.T) {
 func TestNewSearchResponse_LimitLargerThanTotal(t *testing.T) {
 	results := make([]dto.SearchResult, 3)
 	for i := 0; i < 3; i++ {
-		results[i] = NewSearchResult(dto.ParsedQuote{Text: "quote"}, 100)
+		results[i] = NewSearchResult(dto.ParsedQuote{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "quote"}}, 100)
 	}
 
 	resp := NewSearchResponse(results, 100, 0)

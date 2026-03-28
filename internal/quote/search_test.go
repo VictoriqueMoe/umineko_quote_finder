@@ -22,10 +22,10 @@ func TestConcurrentExactSearch_EmptyIndices(t *testing.T) {
 
 func TestConcurrentExactSearch_FindsMatches(t *testing.T) {
 	quotes := []dto.ParsedQuote{
-		{Text: "Hello World"},
-		{Text: "Goodbye World"},
-		{Text: "Hello Again"},
-		{Text: "Something Else"},
+		{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "Hello World"}},
+		{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "Goodbye World"}},
+		{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "Hello Again"}},
+		{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "Something Else"}},
 	}
 	lowerTexts := []string{
 		"hello world",
@@ -55,9 +55,9 @@ func TestConcurrentExactSearch_FindsMatches(t *testing.T) {
 
 func TestConcurrentExactSearch_RespectsFilter(t *testing.T) {
 	quotes := []dto.ParsedQuote{
-		{Text: "Hello World", CharacterID: "10"},
-		{Text: "Hello Again", CharacterID: "27"},
-		{Text: "Hello There", CharacterID: "10"},
+		{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "Hello World", CharacterID: "10"}},
+		{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "Hello Again", CharacterID: "27"}},
+		{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "Hello There", CharacterID: "10"}},
 	}
 	lowerTexts := []string{
 		"hello world",
@@ -86,8 +86,8 @@ func TestConcurrentExactSearch_RespectsFilter(t *testing.T) {
 
 func TestConcurrentExactSearch_NoMatches(t *testing.T) {
 	quotes := []dto.ParsedQuote{
-		{Text: "Hello World"},
-		{Text: "Goodbye World"},
+		{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "Hello World"}},
+		{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "Goodbye World"}},
 	}
 	lowerTexts := []string{
 		"hello world",
@@ -110,9 +110,9 @@ func TestConcurrentExactSearch_NoMatches(t *testing.T) {
 
 func TestConcurrentExactSearch_SubsetIndices(t *testing.T) {
 	quotes := []dto.ParsedQuote{
-		{Text: "Hello World"},
-		{Text: "Hello Again"},
-		{Text: "Hello There"},
+		{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "Hello World"}},
+		{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "Hello Again"}},
+		{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "Hello There"}},
 	}
 	lowerTexts := []string{
 		"hello world",
@@ -136,7 +136,7 @@ func TestConcurrentExactSearch_SubsetIndices(t *testing.T) {
 
 func TestConcurrentExactSearch_CaseInsensitive(t *testing.T) {
 	quotes := []dto.ParsedQuote{
-		{Text: "Hello WORLD"},
+		{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "Hello WORLD"}},
 	}
 	lowerTexts := []string{
 		"hello world",

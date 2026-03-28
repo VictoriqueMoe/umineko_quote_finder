@@ -12,11 +12,11 @@ import (
 func buildTestIndexer() (Indexer, map[language.Language][]dto.ParsedQuote) {
 	quotes := map[language.Language][]dto.ParsedQuote{
 		language.English: {
-			{Text: "Hello World", CharacterID: "10", Episode: 1},
-			{Text: "Beatrice speaks", CharacterID: "27", Episode: 1},
-			{Text: "Narrator text here", CharacterID: "narrator", Episode: 2},
-			{Text: "Battler again", CharacterID: "10", Episode: 2},
-			{Text: "Episode three line", CharacterID: "27", Episode: 3},
+			{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "Hello World", CharacterID: "10", Episode: 1}},
+			{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "Beatrice speaks", CharacterID: "27", Episode: 1}},
+			{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "Narrator text here", CharacterID: "narrator", Episode: 2}},
+			{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "Battler again", CharacterID: "10", Episode: 2}},
+			{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "Episode three line", CharacterID: "27", Episode: 3}},
 		},
 	}
 	return NewIndexer(quotes, ""), quotes
@@ -220,7 +220,7 @@ func TestIndexer_AudioFilePath_EmptyDir(t *testing.T) {
 
 func TestIndexer_AudioFilePath_NonexistentFile(t *testing.T) {
 	quotes := map[language.Language][]dto.ParsedQuote{
-		language.English: {{Text: "test", CharacterID: "10", Episode: 1}},
+		language.English: {{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "test", CharacterID: "10", Episode: 1}}},
 	}
 	idx := NewIndexer(quotes, "/nonexistent/audio/dir")
 
@@ -241,7 +241,7 @@ func TestIndexer_AudioFilePath_SubtitleSuffixStrip(t *testing.T) {
 	}
 
 	quotes := map[language.Language][]dto.ParsedQuote{
-		language.English: {{Text: "test", CharacterID: "00", Episode: 8}},
+		language.English: {{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "test", CharacterID: "00", Episode: 8}}},
 	}
 	idx := NewIndexer(quotes, dir)
 
@@ -271,7 +271,7 @@ func TestIndexer_AudioFilePath_SubtitleSuffixNoBase(t *testing.T) {
 	}
 
 	quotes := map[language.Language][]dto.ParsedQuote{
-		language.English: {{Text: "test", CharacterID: "00", Episode: 8}},
+		language.English: {{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "test", CharacterID: "00", Episode: 8}}},
 	}
 	idx := NewIndexer(quotes, dir)
 
@@ -295,7 +295,7 @@ func TestIndexer_AudioFilePath_ExactMatchPreferred(t *testing.T) {
 	}
 
 	quotes := map[language.Language][]dto.ParsedQuote{
-		language.English: {{Text: "test", CharacterID: "00", Episode: 8}},
+		language.English: {{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "test", CharacterID: "00", Episode: 8}}},
 	}
 	idx := NewIndexer(quotes, dir)
 
@@ -309,10 +309,10 @@ func TestIndexer_AudioFilePath_ExactMatchPreferred(t *testing.T) {
 func TestIndexer_QuoteIndex_SubtitleIDs(t *testing.T) {
 	quotes := map[language.Language][]dto.ParsedQuote{
 		language.English: {
-			{Text: "Normal quote", CharacterID: "10", AudioID: "10100001"},
-			{Text: "Welcome back, sir.", CharacterID: "00", AudioID: "end_all00_s0"},
-			{Text: "It took me a while.", CharacterID: "10", AudioID: "end_all00_s1"},
-			{Text: "Goodbye.", CharacterID: "00", AudioID: "end_all00_s2"},
+			{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "Normal quote", CharacterID: "10", AudioID: "10100001"}},
+			{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "Welcome back, sir.", CharacterID: "00", AudioID: "end_all00_s0"}},
+			{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "It took me a while.", CharacterID: "10", AudioID: "end_all00_s1"}},
+			{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "Goodbye.", CharacterID: "00", AudioID: "end_all00_s2"}},
 		},
 	}
 	idx := NewIndexer(quotes, "")
@@ -337,10 +337,10 @@ func TestIndexer_QuoteIndex_SubtitleIDs(t *testing.T) {
 func TestIndexer_SubtitleQuotes_EpisodeIndex(t *testing.T) {
 	quotes := map[language.Language][]dto.ParsedQuote{
 		language.English: {
-			{Text: "Episode 1 line", CharacterID: "10", Episode: 1},
-			{Text: "Subtitle line 1", CharacterID: "00", Episode: 8, AudioID: "end_all00_s0"},
-			{Text: "Subtitle line 2", CharacterID: "10", Episode: 8, AudioID: "end_all00_s1"},
-			{Text: "Episode 3 line", CharacterID: "27", Episode: 3},
+			{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "Episode 1 line", CharacterID: "10", Episode: 1}},
+			{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "Subtitle line 1", CharacterID: "00", Episode: 8, AudioID: "end_all00_s0"}},
+			{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "Subtitle line 2", CharacterID: "10", Episode: 8, AudioID: "end_all00_s1"}},
+			{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "Episode 3 line", CharacterID: "27", Episode: 3}},
 		},
 	}
 	idx := NewIndexer(quotes, "")
@@ -357,9 +357,9 @@ func TestIndexer_SubtitleQuotes_EpisodeIndex(t *testing.T) {
 func TestIndexer_SubtitleQuotes_NonNarrator(t *testing.T) {
 	quotes := map[language.Language][]dto.ParsedQuote{
 		language.English: {
-			{Text: "Narrator line", CharacterID: "narrator", Episode: 1},
-			{Text: "Sub line", CharacterID: "00", Episode: 8, AudioID: "end_all00_s0"},
-			{Text: "Battler sub line", CharacterID: "10", Episode: 8, AudioID: "end_all00_s1"},
+			{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "Narrator line", CharacterID: "narrator", Episode: 1}},
+			{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "Sub line", CharacterID: "00", Episode: 8, AudioID: "end_all00_s0"}},
+			{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "Battler sub line", CharacterID: "10", Episode: 8, AudioID: "end_all00_s1"}},
 		},
 	}
 	idx := NewIndexer(quotes, "")
@@ -376,9 +376,9 @@ func TestIndexer_SubtitleQuotes_NonNarrator(t *testing.T) {
 func TestIndexer_QuoteIndex_Found(t *testing.T) {
 	quotes := map[language.Language][]dto.ParsedQuote{
 		language.English: {
-			{Text: "First", CharacterID: "10", AudioID: "10100001"},
-			{Text: "Second", CharacterID: "27", AudioID: "12700001"},
-			{Text: "Third", CharacterID: "10", AudioID: "10100002"},
+			{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "First", CharacterID: "10", AudioID: "10100001"}},
+			{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "Second", CharacterID: "27", AudioID: "12700001"}},
+			{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "Third", CharacterID: "10", AudioID: "10100002"}},
 		},
 	}
 	idx := NewIndexer(quotes, "")
@@ -404,8 +404,8 @@ func TestIndexer_QuoteIndex_NotFound(t *testing.T) {
 func TestIndexer_QuoteIndex_CompositeIDs(t *testing.T) {
 	quotes := map[language.Language][]dto.ParsedQuote{
 		language.English: {
-			{Text: "Line one", CharacterID: "10", AudioID: "10100001, 10100002"},
-			{Text: "Line two", CharacterID: "27", AudioID: "12700001"},
+			{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "Line one", CharacterID: "10", AudioID: "10100001, 10100002"}},
+			{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "Line two", CharacterID: "27", AudioID: "12700001"}},
 		},
 	}
 	idx := NewIndexer(quotes, "")
@@ -439,11 +439,11 @@ func TestIndexer_QuoteIndex_UnknownLang(t *testing.T) {
 func TestIndexer_MultipleLangs(t *testing.T) {
 	quotes := map[language.Language][]dto.ParsedQuote{
 		language.English: {
-			{Text: "English text", CharacterID: "10", Episode: 1},
+			{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "English text", CharacterID: "10", Episode: 1}},
 		},
 		language.Japanese: {
-			{Text: "日本語テキスト", CharacterID: "10", Episode: 1},
-			{Text: "別の行", CharacterID: "27", Episode: 2},
+			{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "日本語テキスト", CharacterID: "10", Episode: 1}},
+			{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "別の行", CharacterID: "27", Episode: 2}},
 		},
 	}
 	idx := NewIndexer(quotes, "")
@@ -479,7 +479,7 @@ func TestIndexer_HasAudio_EmptyDir(t *testing.T) {
 
 func TestIndexer_HasAudio_NonexistentDir(t *testing.T) {
 	quotes := map[language.Language][]dto.ParsedQuote{
-		language.English: {{Text: "test", CharacterID: "10", Episode: 1}},
+		language.English: {{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "test", CharacterID: "10", Episode: 1}}},
 	}
 	idx := NewIndexer(quotes, "/nonexistent/audio/dir")
 
@@ -491,7 +491,7 @@ func TestIndexer_HasAudio_NonexistentDir(t *testing.T) {
 func TestIndexer_HasAudio_EmptyExistingDir(t *testing.T) {
 	dir := t.TempDir()
 	quotes := map[language.Language][]dto.ParsedQuote{
-		language.English: {{Text: "test", CharacterID: "10", Episode: 1}},
+		language.English: {{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "test", CharacterID: "10", Episode: 1}}},
 	}
 	idx := NewIndexer(quotes, dir)
 
@@ -511,7 +511,7 @@ func TestIndexer_HasAudio_WithFiles(t *testing.T) {
 	}
 
 	quotes := map[language.Language][]dto.ParsedQuote{
-		language.English: {{Text: "test", CharacterID: "10", Episode: 1}},
+		language.English: {{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "test", CharacterID: "10", Episode: 1}}},
 	}
 	idx := NewIndexer(quotes, dir)
 

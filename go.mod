@@ -4,6 +4,8 @@ go 1.26
 
 require github.com/VictoriqueMoe/umineko_script_parser v1.2.0
 
+replace github.com/VictoriqueMoe/umineko_script_parser => ../umineko_script_parser
+
 require (
 	github.com/fogleman/gg v1.3.0
 	github.com/gofiber/contrib/v3/swaggo v1.0.1

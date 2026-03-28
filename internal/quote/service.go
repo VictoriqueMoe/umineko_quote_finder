@@ -12,7 +12,10 @@ import (
 	"umineko_quote/internal/quote/language"
 	quoteparams "umineko_quote/internal/quote/params"
 
+	"umineko_quote/internal/quote/subtitle"
+
 	scriptparser "github.com/VictoriqueMoe/umineko_script_parser"
+	"github.com/VictoriqueMoe/umineko_script_parser/lexer"
 	"github.com/VictoriqueMoe/umineko_script_parser/quote/character"
 )
 
@@ -67,9 +70,36 @@ func NewService() Service {
 
 	for lang, path := range langFiles {
 		wg.Go(func() {
-			parsed := l.Load(string(lang), path)
+			parsed, subtitleRefs, validationErrors := l.Load(string(lang), path)
 			if parsed == nil {
 				return
+			}
+			if len(validationErrors) > 0 {
+				errorCount := 0
+				warningCount := 0
+				for _, ve := range validationErrors {
+					if ve.Severity == lexer.SeverityError {
+						errorCount++
+					} else {
+						warningCount++
+					}
+				}
+				log.Printf("[%s] validation: %d errors, %d warnings", lang, errorCount, warningCount)
+				limit := len(validationErrors)
+				if limit > 10 {
+					limit = 10
+				}
+				for i := 0; i < limit; i++ {
+					log.Printf("[%s]   %s", lang, validationErrors[i])
+				}
+				if len(validationErrors) > 10 {
+					log.Printf("[%s]   ... and %d more", lang, len(validationErrors)-10)
+				}
+			}
+			subQuotes := subtitle.ResolveRefs(dataFS, subtitleRefs)
+			if len(subQuotes) > 0 {
+				parsed = append(parsed, subQuotes...)
+				log.Printf("[%s] added %d subtitle quotes", lang, len(subQuotes))
 			}
 			results <- langParseResult{
 				lang:   lang,

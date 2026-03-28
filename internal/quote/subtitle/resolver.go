@@ -1,4 +1,4 @@
-package quote
+package subtitle
 
 import (
 	"fmt"
@@ -8,17 +8,16 @@ import (
 	"strings"
 
 	"umineko_quote/internal/dto"
-	"umineko_quote/internal/quote/subtitle"
 
 	"github.com/VictoriqueMoe/umineko_script_parser/lexer"
 	"github.com/VictoriqueMoe/umineko_script_parser/quote/character"
 )
 
-var subtitleStyleCharacter = map[string]string{
+var styleCharacter = map[string]string{
 	"Battler": "10",
 }
 
-func resolveSubtitleRefs(efs fs.ReadFileFS, refs []lexer.SubtitleRef) []dto.ParsedQuote {
+func ResolveRefs(efs fs.ReadFileFS, refs []lexer.SubtitleRef) []dto.ParsedQuote {
 	var quotes []dto.ParsedQuote
 
 	for _, ref := range refs {
@@ -29,10 +28,10 @@ func resolveSubtitleRefs(efs fs.ReadFileFS, refs []lexer.SubtitleRef) []dto.Pars
 			continue
 		}
 
-		entries := subtitle.ParseASS(data)
+		entries := ParseASS(data)
 		for i, entry := range entries {
 			charID := ref.CharacterID
-			if mapped, ok := subtitleStyleCharacter[entry.Style]; ok {
+			if mapped, ok := styleCharacter[entry.Style]; ok {
 				charID = mapped
 			}
 

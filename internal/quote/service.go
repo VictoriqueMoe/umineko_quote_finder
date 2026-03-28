@@ -12,6 +12,8 @@ import (
 	"umineko_quote/internal/quote/language"
 	quoteparams "umineko_quote/internal/quote/params"
 
+	"umineko_quote/internal/quote/subtitle"
+
 	scriptparser "github.com/VictoriqueMoe/umineko_script_parser"
 	"github.com/VictoriqueMoe/umineko_script_parser/lexer"
 	"github.com/VictoriqueMoe/umineko_script_parser/quote/character"
@@ -94,7 +96,7 @@ func NewService() Service {
 					log.Printf("[%s]   ... and %d more", lang, len(validationErrors)-10)
 				}
 			}
-			subQuotes := resolveSubtitleRefs(dataFS, subtitleRefs)
+			subQuotes := subtitle.ResolveRefs(dataFS, subtitleRefs)
 			if len(subQuotes) > 0 {
 				parsed = append(parsed, subQuotes...)
 				log.Printf("[%s] added %d subtitle quotes", lang, len(subQuotes))

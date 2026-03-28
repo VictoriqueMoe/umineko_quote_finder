@@ -54,8 +54,6 @@ type (
 func NewService() Service {
 	serviceStart := time.Now()
 
-	l := scriptparser.NewLoader(dataFS)
-
 	langFiles := map[language.Language]string{
 		language.English:    "data/en.file",
 		language.WitchHunt:  "data/wh.file",
@@ -70,10 +68,25 @@ func NewService() Service {
 
 	for lang, path := range langFiles {
 		wg.Go(func() {
-			parsed, subtitleRefs, validationErrors := l.Load(string(lang), path)
-			if parsed == nil {
+			f, err := dataFS.Open(path)
+			if err != nil {
+				log.Printf("[%s] failed to open %s: %v", lang, path, err)
 				return
 			}
+			defer f.Close()
+
+			timeStart := time.Now()
+			parsed, subtitleRefs, validationErrors, err := scriptparser.ParseFile(f)
+			timeEnd := time.Now()
+
+			log.Printf("[%s] parsed %d quotes took %v", lang, len(parsed), timeEnd.Sub(timeStart))
+
+			if err != nil {
+				log.Printf("[%s] failed to parse %s: %v", lang, path, err)
+				return
+			}
+			log.Printf("[%s] parsed %s: %d quotes", lang, path, len(parsed))
+
 			if len(validationErrors) > 0 {
 				errorCount := 0
 				warningCount := 0

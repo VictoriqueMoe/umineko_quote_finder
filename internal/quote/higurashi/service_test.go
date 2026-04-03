@@ -240,13 +240,15 @@ func TestService_GetByIndex_NotFound(t *testing.T) {
 func TestService_GetCharacters(t *testing.T) {
 	svc := testService
 
-	chars := svc.GetCharacters()
+	result := svc.GetCharacters()
 
-	if len(chars) == 0 {
+	if len(result.Characters) == 0 {
 		t.Fatal("expected characters map to be non-empty")
 	}
-	if chars[hicharacter.Keiichi] != hicharacter.CharacterNames[hicharacter.Keiichi] {
-		t.Errorf("chars[Keiichi]: got %q, want %q", chars[hicharacter.Keiichi], hicharacter.CharacterNames[hicharacter.Keiichi])
+	keiichiID := hicharacter.Keiichi.ID()
+	expectedName := hicharacter.CharacterNames[hicharacter.Keiichi]
+	if result.Characters[keiichiID] != expectedName {
+		t.Errorf("chars[Keiichi]: got %q, want %q", result.Characters[keiichiID], expectedName)
 	}
 }
 

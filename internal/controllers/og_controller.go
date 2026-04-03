@@ -24,7 +24,7 @@ var (
 		title:       "Higurashi Quote Search",
 		description: "Search through the words of Hinamizawa's residents from Higurashi no Naku Koro ni. When the cicadas cry, none shall escape.",
 		twitterDesc: "Search through the words of Hinamizawa's residents from Higurashi no Naku Koro ni.",
-		image:       "https://waifuvault.moe/f/5e9cf90a-8a63-48b3-802d-1bc9be9062ea/clipboard-image-1769601762638.png",
+		image:       "https://waifuvault.moe/f/d63fae0b-43a1-4d71-b40b-2324fc5309bc/clipboard-image-1775247180636.png",
 		brand:       "Higurashi Quote Search",
 		quoteSuffix: "Higurashi Quote",
 	}
@@ -315,12 +315,14 @@ func (s *Service) parseUminekoBuilderSegments(param string, lang language.Langua
 
 func (s *Service) replaceOGPlaceholders(defaults ogDefaults, title, description, twitterDesc, imageURL string) string {
 	html := s.HTMLContent
-	html = replaceMetaContent(html, "property", "og:title", defaults.title, escapeAttr(title))
-	html = replaceMetaContent(html, "property", "og:description", defaults.description, escapeAttr(description))
-	html = replaceMetaContent(html, "property", "og:image", defaults.image, imageURL)
-	html = replaceMetaContent(html, "name", "twitter:title", defaults.title, escapeAttr(title))
-	html = replaceMetaContent(html, "name", "twitter:description", defaults.twitterDesc, escapeAttr(twitterDesc))
-	html = replaceMetaContent(html, "name", "twitter:image", defaults.image, imageURL)
+	src := uminekoOGDefaults
+	html = replaceMetaContent(html, "property", "og:title", src.title, escapeAttr(title))
+	html = replaceMetaContent(html, "property", "og:description", src.description, escapeAttr(description))
+	html = replaceMetaContent(html, "property", "og:image", src.image, imageURL)
+	html = replaceMetaContent(html, "property", "og:site_name", src.title, escapeAttr(defaults.title))
+	html = replaceMetaContent(html, "name", "twitter:title", src.title, escapeAttr(title))
+	html = replaceMetaContent(html, "name", "twitter:description", src.twitterDesc, escapeAttr(twitterDesc))
+	html = replaceMetaContent(html, "name", "twitter:image", src.image, imageURL)
 	return html
 }
 

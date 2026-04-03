@@ -699,6 +699,46 @@ body {
     margin-top: 1.5rem;
 }
 
+.game-toggle {
+    display: flex;
+    justify-content: center;
+    gap: 0;
+    margin-bottom: 1rem;
+}
+
+.game-toggle-btn {
+    background: transparent;
+    border: 1px solid var(--purple-muted);
+    padding: 0.5rem 1.5rem;
+    font-family: var(--font-display);
+    font-size: 0.8rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.3s var(--ease-out);
+}
+
+.game-toggle-btn:first-child {
+    border-radius: 4px 0 0 4px;
+    border-right: none;
+}
+
+.game-toggle-btn:last-child {
+    border-radius: 0 4px 4px 0;
+}
+
+.game-toggle-btn:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+}
+
+.game-toggle-btn.active {
+    border-color: var(--gold);
+    color: var(--gold);
+    background: rgba(var(--gold-rgb), calc(var(--hover-glow) + 0.05));
+}
+
 .lang-btn {
     background: transparent;
     border: 1px solid var(--purple-muted);

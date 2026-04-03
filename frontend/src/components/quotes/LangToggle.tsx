@@ -9,10 +9,24 @@ interface LangToggleProps {
     onLangChange?: (lang: Language) => void;
     onContextRefresh?: (lang: Language) => void;
     langOverride?: Exclude<Language, "auto">;
+    textJp?: string;
+    textJpHtml?: string;
+    originalText?: string;
+    originalTextHtml?: string;
 }
 
-export function LangToggle({ audioId, onTextUpdate, onLangChange, onContextRefresh, langOverride }: LangToggleProps) {
-    const { language } = useAppContext();
+export function LangToggle({
+    audioId,
+    onTextUpdate,
+    onLangChange,
+    onContextRefresh,
+    langOverride,
+    textJp,
+    textJpHtml,
+    originalText,
+    originalTextHtml,
+}: LangToggleProps) {
+    const { language, game } = useAppContext();
     const effective = langOverride ?? (language === "auto" ? "en" : language);
     const [activeLang, setActiveLang] = useState<Language>(effective);
     const [loading, setLoading] = useState(false);
@@ -28,9 +42,23 @@ export function LangToggle({ audioId, onTextUpdate, onLangChange, onContextRefre
             if (newLang === activeLang || loading) {
                 return;
             }
+
+            if (game === "higurashi") {
+                if (newLang === "ja" && textJp) {
+                    setActiveLang("ja");
+                    onTextUpdate(textJpHtml || textJp, textJp);
+                    onLangChange?.("ja");
+                } else if (newLang === "en" && originalText) {
+                    setActiveLang("en");
+                    onTextUpdate(originalTextHtml || originalText, originalText);
+                    onLangChange?.("en");
+                }
+                return;
+            }
+
             setLoading(true);
             try {
-                const quote = await getQuoteByAudioId(firstId, newLang);
+                const quote = await getQuoteByAudioId(game, firstId, newLang);
                 if (!("error" in quote)) {
                     setActiveLang(newLang);
                     onTextUpdate(quote.textHtml || quote.text, quote.text);
@@ -43,8 +71,42 @@ export function LangToggle({ audioId, onTextUpdate, onLangChange, onContextRefre
                 setLoading(false);
             }
         },
-        [firstId, activeLang, loading, onTextUpdate, onLangChange, onContextRefresh],
+        [
+            firstId,
+            activeLang,
+            loading,
+            onTextUpdate,
+            onLangChange,
+            onContextRefresh,
+            game,
+            textJp,
+            textJpHtml,
+            originalText,
+            originalTextHtml,
+        ],
     );
+
+    if (game === "higurashi") {
+        if (!textJp) {
+            return null;
+        }
+        return (
+            <span className="lang-card-toggle" data-audio-id={firstId}>
+                <button
+                    className={`lang-card-btn${activeLang === "en" ? " active" : ""}`}
+                    onClick={() => handleToggle("en")}
+                >
+                    EN
+                </button>
+                <button
+                    className={`lang-card-btn${activeLang === "ja" ? " active" : ""}`}
+                    onClick={() => handleToggle("ja")}
+                >
+                    JA
+                </button>
+            </span>
+        );
+    }
 
     return (
         <span className="lang-card-toggle" data-audio-id={firstId}>

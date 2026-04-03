@@ -6,7 +6,7 @@ type CharacterResponse struct {
 	// Display name of the character
 	Character string `json:"character" example:"Ushiromiya Battler"`
 	// Paginated list of quotes
-	Quotes []ParsedQuote `json:"quotes"`
+	Quotes any `json:"quotes" swaggertype:"array,object"`
 	// Total number of matching quotes
 	Total int `json:"total" example:"4304"`
 	// Maximum results per page

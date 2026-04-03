@@ -46,16 +46,6 @@ fun updateBuildFile(buildFile: File, newVersionCode: Int, newVersionName: String
     buildFile.writeText(content)
 }
 
-fun runCommand(command: String): Boolean {
-    printColoured("\n→ Running: $command", BLUE)
-    val process = ProcessBuilder(*command.split(" ").toTypedArray())
-        .redirectOutput(ProcessBuilder.Redirect.INHERIT)
-        .redirectError(ProcessBuilder.Redirect.INHERIT)
-        .start()
-
-    val exitCode = process.waitFor()
-    return exitCode == 0
-}
 
 try {
     printColoured("╔════════════════════════════════════════╗", GREEN)
@@ -73,7 +63,7 @@ try {
     printColoured("\nCurrent version: $currentVersionName (code: $currentVersionCode)", BLUE)
 
     print("\n${YELLOW}Enter new version (x.x.x format): $RESET")
-    val newVersionName = readLine()?.trim() ?: ""
+    val newVersionName = readlnOrNull()?.trim() ?: ""
 
     if (newVersionName.isEmpty()) {
         printColoured("Error: Version cannot be empty!", RED)
@@ -95,35 +85,16 @@ try {
     printColoured("└─────────────────────────────────────┘", GREEN)
 
     print("\n${YELLOW}Proceed with release build? (y/n): $RESET")
-    val confirm = readLine()?.trim()?.lowercase()
+    val confirm = readlnOrNull()?.trim()?.lowercase()
 
     if (confirm != "y" && confirm != "yes") {
         printColoured("Build cancelled.", YELLOW)
         kotlin.system.exitProcess(0)
     }
 
-    printColoured("\n[1/3] Updating build.gradle.kts...", BLUE)
+    printColoured("\n[1/1] Updating build.gradle.kts...", BLUE)
     updateBuildFile(buildFile, newVersionCode, newVersionName)
-    printColoured("✓ Version updated successfully", GREEN)
-
-    printColoured("\n[2/3] Running Gradle clean...", BLUE)
-    if (!runCommand("./gradlew clean")) {
-        printColoured("✗ Gradle clean failed!", RED)
-        kotlin.system.exitProcess(1)
-    }
-    printColoured("✓ Clean completed", GREEN)
-
-    printColoured("\n[3/3] Running Gradle assembleRelease...", BLUE)
-    if (!runCommand("./gradlew assembleRelease")) {
-        printColoured("✗ Gradle assembleRelease failed!", RED)
-        kotlin.system.exitProcess(1)
-    }
-    printColoured("✓ APK build completed", GREEN)
-
-    printColoured("\n╔════════════════════════════════════════╗", GREEN)
-    printColoured("║        BUILD SUCCESSFUL! ✓             ║", GREEN)
-    printColoured("╚════════════════════════════════════════╝", GREEN)
-    printColoured("\nAPK location: app/build/outputs/apk/release/umineko-quotes-v$newVersionName.apk", BLUE)
+    printColoured("✓ Version updated to $newVersionName (code: $newVersionCode)", GREEN)
 
 } catch (e: Exception) {
     printColoured("\n✗ Error: ${e.message}", RED)

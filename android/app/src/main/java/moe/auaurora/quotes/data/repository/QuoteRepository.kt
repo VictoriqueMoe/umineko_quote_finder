@@ -132,7 +132,7 @@ class QuoteRepository(
         try {
             val response = api.getCharacters()
             if (response.isSuccessful && response.body() != null) {
-                Result.success(response.body()!!)
+                Result.success(response.body()!!.characters)
             } else {
                 Result.failure(Exception("API error: ${response.code()}"))
             }

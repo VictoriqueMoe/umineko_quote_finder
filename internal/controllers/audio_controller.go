@@ -30,10 +30,10 @@ func (s *Service) setupSeAudioRoute(routeGroup fiber.Router) {
 }
 
 func (s *Service) setupAudioRoute(routeGroup fiber.Router) {
-	routeGroup.Get("/audio/voice/:charId/:audioId", s.audio)
+	routeGroup.Get("/audio/voice/:charId/:audioId", s.uminekoAudio)
 }
 
-func (s *Service) audio(ctx fiber.Ctx) error {
+func (s *Service) uminekoAudio(ctx fiber.Ctx) error {
 	charId := ctx.Params("charId")
 	audioId := ctx.Params("audioId")
 	if !audioIdPattern.MatchString(charId) || !audioIdPattern.MatchString(audioId) {
@@ -42,7 +42,7 @@ func (s *Service) audio(ctx fiber.Ctx) error {
 		})
 	}
 
-	filePath := s.QuoteService.AudioFilePath(charId, audioId)
+	filePath := s.UminekoService.AudioFilePath(charId, audioId)
 	if filePath == "" {
 		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"error": "audio file not found",
@@ -112,7 +112,7 @@ func (s *Service) combinedAudioSegments(ctx fiber.Ctx) error {
 		segments = append(segments, audio.AudioSegment{CharID: charId, AudioID: audioId})
 	}
 
-	data, err := s.AudioCombiner.CombineOgg(segments, s.QuoteService.AudioFilePath)
+	data, err := s.AudioCombiner.CombineOgg(segments, s.UminekoService.AudioFilePath)
 	if err != nil {
 		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"error": err.Error(),

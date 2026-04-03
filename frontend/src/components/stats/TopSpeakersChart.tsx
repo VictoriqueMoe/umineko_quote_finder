@@ -1,11 +1,11 @@
 import { useEffect, useRef } from "react";
 import { Bar } from "react-chartjs-2";
 import { getGridColour, getThemeColours, zoomConfig } from "./chartConfig";
-import type { StatsResponse } from "../../types/api";
+import type { HigurashiStatsResponse, StatsResponse } from "../../types/api";
 import type { Chart } from "chart.js";
 
 interface TopSpeakersChartProps {
-    data: StatsResponse;
+    data: StatsResponse | HigurashiStatsResponse;
     onRegister: (id: string, chart: Chart) => void;
 }
 

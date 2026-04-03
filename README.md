@@ -1,6 +1,6 @@
-# Umineko Quote Search
+# Umineko & Higurashi Quote Search
 
-A quote search engine for Umineko no Naku Koro ni. Search through thousands of lines of dialogue from the visual novel.
+A quote search engine for Umineko no Naku Koro ni and Higurashi no Naku Koro ni. Search through thousands of lines of dialogue from both visual novels.
 
 ## System Architecture
 
@@ -10,45 +10,53 @@ graph TB
         App["App.tsx"]
         API["API Client<br/>(fetch)"]
         SearchUI["Quote Display<br/>& Search UI"]
-        AudioPlayer["Audio Player"]
-        VoiceBuilder["Voice Clip<br/>Builder"]
+        GameToggle["Game Toggle<br/>Umineko / Higurashi"]
+        AudioPlayer["Audio Player<br/>(Umineko only)"]
+        VoiceBuilder["Voice Clip<br/>Builder<br/>(Umineko only)"]
     end
 
     subgraph HTTP["HTTP Layer · Go Fiber v3"]
         Router["Router<br/>PublicRoutes()"]
-        QuoteCtrl["Quote<br/>Controller"]
+        UmiCtrl["Umineko<br/>Controller"]
+        HiguCtrl["Higurashi<br/>Controller"]
         OGCtrl["OG<br/>Controller"]
         SysCtrl["System<br/>Controller"]
     end
 
     subgraph QuoteService["Quote Service & Search"]
-        Service["Quote Service"]
-        Search["Search Engine<br/>(concurrent workers)"]
+        UmiService["Umineko Service"]
+        HiguService["Higurashi Service"]
+        GameStore["Generic GameStore&lt;Q&gt;<br/>Search / Browse / Random"]
         Indexer["Indexer<br/>(parallel)"]
-        Stats["Stats<br/>Aggregator"]
-        Truth["Red / Blue<br/>Truth Classifier"]
+        UmiStats["Umineko Stats<br/>(Truth, Episodes)"]
+        HiguStats["Higurashi Stats<br/>(Arcs)"]
     end
 
-    subgraph Lexar["Lexar · Lexical Analysis Pipeline"]
+    subgraph UmiParser["Umineko Lexical Analysis Pipeline"]
         Lexer["Lexer"]
-        Parser["Parser"]
+        ASTParser["Parser"]
         AST["AST"]
         Extractor["Extractor"]
         HTMLTransform["HTML<br/>Transformer"]
         PlainTransform["Plaintext<br/>Transformer"]
     end
 
+    subgraph HiguParser["Higurashi Parser"]
+        Scanner["Line Scanner"]
+        HiguAST["PlainText AST"]
+        HiguHTMLTransform["HTML<br/>Transformer"]
+        HiguPlainTransform["Plaintext<br/>Transformer"]
+    end
+
     subgraph DataLoading["Data Loading · Embedded go:embed"]
         ScriptLoader["Script Loader<br/>(ONS2 Decoder)"]
-        EN["en.file"]
-        JA["ja.file"]
-        ES["es.file"]
-        PT["pt.file"]
+        UmiData["Umineko Data<br/>en/ja/es/pt.file"]
+        HiguData["Higurashi Data<br/>en.file"]
         SubParser["Subtitle Parser<br/>(ASS)"]
         Mutations["Mutation<br/>Pipeline"]
     end
 
-    subgraph Audio["Audio Processing"]
+    subgraph Audio["Audio Processing (Umineko)"]
         Combiner["Audio<br/>Combiner"]
         OGGParser["OGG Parser<br/>& Serializer"]
         VoiceFiles[("Voice OGG<br/>Files")]
@@ -69,37 +77,45 @@ graph TB
 
     App --> API
     App --> SearchUI
+    App --> GameToggle
     App --> AudioPlayer
     App --> VoiceBuilder
-    API -- "HTTP /api/v1/*" --> Router
+    API -- "HTTP /api/v1/umineko/*" --> Router
+    API -- "HTTP /api/v1/higurashi/*" --> Router
 
-    Router --> QuoteCtrl
+    Router --> UmiCtrl
+    Router --> HiguCtrl
     Router --> OGCtrl
     Router --> SysCtrl
 
-    QuoteCtrl -- delegates --> Service
-    Service --> Search
-    Service --> Indexer
-    Service --> Stats
-    Service --> Truth
-    Search -- queries --> Indexer
+    UmiCtrl -- delegates --> UmiService
+    HiguCtrl -- delegates --> HiguService
+    UmiService --> GameStore
+    HiguService --> GameStore
+    GameStore --> Indexer
+    UmiService --> UmiStats
+    HiguService --> HiguStats
 
-    Service -- "parses via" --> Lexer
-    Lexer -- tokens --> Parser
-    Parser -- builds --> AST
+    UmiService -- "parses via" --> Lexer
+    Lexer -- tokens --> ASTParser
+    ASTParser -- builds --> AST
     AST -- feeds --> Extractor
     Extractor --> HTMLTransform
     Extractor --> PlainTransform
 
-    ScriptLoader -- decodes --> EN
-    ScriptLoader -- decodes --> JA
-    ScriptLoader -- decodes --> ES
-    ScriptLoader -- decodes --> PT
-    ScriptLoader -- feeds --> Lexer
-    SubParser -- "merges into" --> Mutations
-    Mutations -- "post-processes" --> Service
+    HiguService -- "parses via" --> Scanner
+    Scanner --> HiguAST
+    HiguAST --> HiguHTMLTransform
+    HiguAST --> HiguPlainTransform
 
-    QuoteCtrl -- "audio requests" --> Combiner
+    ScriptLoader -- decodes --> UmiData
+    ScriptLoader -- decodes --> HiguData
+    ScriptLoader -- feeds --> Lexer
+    ScriptLoader -- feeds --> Scanner
+    SubParser -- "merges into" --> Mutations
+    Mutations -- "post-processes" --> UmiService
+
+    UmiCtrl -- "audio requests" --> Combiner
     Combiner --> OGGParser
     OGGParser --> VoiceFiles
 
@@ -143,13 +159,19 @@ graph TB
 
 ## Features
 
-- Search through all dialogue
-- Filter by character and episode
+- **Multi-game support** with in-app toggle between Umineko and Higurashi
+- Search through all dialogue with full-text search
+- Filter by character, episode (Umineko), arc (Higurashi), and truth type (Umineko)
+- Character interaction pair filtering
 - Random quote generator
-- Scene context viewer, see surrounding dialogue for any quote
-- Multi-language support (English, Japanese, Spanish, Portuguese)
-- Inline audio playback for voiced lines
-- Umineko-themed web interface
+- Scene context viewer with navigation between voiced quotes
+- Multi-language support: English, English (WH), Japanese, Russian, Spanish, Portuguese (Umineko); English + inline Japanese (Higurashi)
+- Inline audio playback for voiced lines (Umineko)
+- Voice clip builder for composing custom dialogue sequences (Umineko)
+- Per-game bookmarks with localStorage persistence
+- Open Graph image generation for sharing quotes
+- Statistics dashboards with interactive charts
+- Themed web interface with multiple visual themes
 
 ## Quick Start
 
@@ -243,28 +265,63 @@ se.zip
 
 ## API Endpoints
 
-| Endpoint                             | Description                            |
-|--------------------------------------|----------------------------------------|
-| `GET /api/v1/search`                 | Search quotes                          |
-| `GET /api/v1/random`                 | Get random quote                       |
-| `GET /api/v1/character/:id`          | Get quotes by character ID             |
-| `GET /api/v1/context/:audioId`       | Get surrounding dialogue for a quote   |
-| `GET /api/v1/characters`             | List all character IDs and names       |
-| `GET /api/v1/audio/voice/:charId/:audioId` | Stream audio file for a voice line     |
-| `GET /api/v1/audio/se/:filename`     | Stream a sound effect file             |
-| `GET /api/v1/health`                 | Health check                           |
+Both games share the same endpoint structure under their respective prefixes.
+
+### Umineko — `/api/v1/umineko/`
+
+| Endpoint                                       | Description                            |
+|------------------------------------------------|----------------------------------------|
+| `GET /api/v1/umineko/search`                   | Search quotes                          |
+| `GET /api/v1/umineko/random`                   | Get random quote                       |
+| `GET /api/v1/umineko/browse`                   | Browse quotes with pagination          |
+| `GET /api/v1/umineko/quote/:audioId`           | Get quote by audio ID                  |
+| `GET /api/v1/umineko/quote/index/:index`       | Get quote by script index              |
+| `GET /api/v1/umineko/context/:audioId`         | Get surrounding dialogue for a quote   |
+| `GET /api/v1/umineko/nearest-voiced/:audioId`  | Find nearest voiced quote              |
+| `GET /api/v1/umineko/characters`               | List all character IDs and names       |
+| `GET /api/v1/umineko/stats`                    | Get quote statistics                   |
+| `GET /api/v1/umineko/audio/voice/:charId/:id`  | Stream voice audio file                |
+| `GET /api/v1/umineko/audio/voice/combined`     | Stream combined voice clips            |
+| `GET /api/v1/umineko/audio/se/:filename`       | Stream a sound effect file             |
+| `GET /api/v1/umineko/og/:audioId.png`          | Generate OG image for a quote          |
+
+### Higurashi — `/api/v1/higurashi/`
+
+| Endpoint                                        | Description                            |
+|-------------------------------------------------|----------------------------------------|
+| `GET /api/v1/higurashi/search`                  | Search quotes                          |
+| `GET /api/v1/higurashi/random`                  | Get random quote                       |
+| `GET /api/v1/higurashi/browse`                  | Browse quotes with pagination          |
+| `GET /api/v1/higurashi/quote/:audioId`          | Get quote by audio ID                  |
+| `GET /api/v1/higurashi/quote/index/:index`      | Get quote by script index              |
+| `GET /api/v1/higurashi/context/:audioId`        | Get surrounding dialogue for a quote   |
+| `GET /api/v1/higurashi/nearest-voiced/:audioId` | Find nearest voiced quote              |
+| `GET /api/v1/higurashi/characters`              | List all character IDs and names       |
+| `GET /api/v1/higurashi/stats`                   | Get quote statistics                   |
+| `GET /api/v1/higurashi/og/:audioId.png`         | Generate OG image for a quote          |
+
+### System
+
+| Endpoint               | Description   |
+|------------------------|---------------|
+| `GET /api/v1/health`   | Health check  |
+| `GET /api/v1/config`   | App config    |
 
 ### Query Parameters
 
-| Parameter   | Endpoints                          | Description                                        |
-|-------------|------------------------------------|----------------------------------------------------|
-| `q`         | search                             | Search query (required)                            |
-| `lang`      | search, random, character, context | Language: `en` (default), `ja`, `es`, `pt`         |
-| `character` | search, random                     | Filter by character ID                             |
-| `episode`   | search, random, character          | Filter by episode (1-8)                            |
-| `lines`     | context                            | Number of lines before/after (default: 5, max: 20) |
-| `limit`     | search, character                  | Results per page (default: 30)                     |
-| `offset`    | search, character                  | Pagination offset                                  |
+| Parameter      | Endpoints                    | Description                                              |
+|----------------|------------------------------|----------------------------------------------------------|
+| `q`            | search                       | Search query (required)                                  |
+| `lang`         | search, random, browse, etc. | Language: `en` (default), `wh`, `ja`, `ru`, `es`, `pt`  |
+| `character`    | search, random, browse       | Filter by character ID                                   |
+| `episode`      | search, random, browse       | Filter by episode number                                 |
+| `truth`        | search, random, browse       | Umineko only: `red`, `blue`, `gold`, `purple`            |
+| `arc`          | search, random, browse       | Higurashi only: arc name (e.g. `onikakushi`)             |
+| `interactionA` | search, browse               | First character ID for interaction pair filter            |
+| `interactionB` | search, browse               | Second character ID for interaction pair filter           |
+| `lines`        | context                      | Number of lines before/after (default: 5, max: 20)       |
+| `limit`        | search, browse               | Results per page (default: 30)                           |
+| `offset`       | search, browse               | Pagination offset                                        |
 
 ### Response Format
 
@@ -277,7 +334,7 @@ se.zip
         "textHtml": "Without love, it cannot be seen.",
         "characterId": "27",
         "character": "Beatrice",
-        "audioId": "10700001",
+        "audioId": "10100001",
         "episode": 1,
         "contentType": ""
       },
@@ -288,6 +345,8 @@ se.zip
 ```
 
 The `contentType` field distinguishes content sections: `""` for main episodes, `"tea"` for tea parties, `"ura"` for ???? chapters, and `"omake"` for omakes (bonus content).
+
+Higurashi quotes additionally include `textJp`, `textJpHtml` (inline Japanese text), and `arc` (arc name) fields.
 
 ## Swagger
 
@@ -345,23 +404,25 @@ docker compose up -d --build
 
 ## Data
 
-Quote data is parsed from Umineko no Naku Koro ni script files. The scripts are stored in ONS2-encoded `.file` format (compressed and obfuscated) and decoded at startup.
+Quote data is parsed from script files for both games. The scripts are stored in ONS2-encoded `.file` format (compressed and obfuscated) and decoded at startup.
 
 ```
 internal/quote/data/
-├── en.file         (English, ONS2 encoded)
-├── ja.file         (Japanese, ONS2 encoded)
-├── es.file         (Spanish, ONS2 encoded)
-├── pt.file         (Portuguese, ONS2 encoded)
-├── sub/            (ASS subtitle files)
-├── audio/          (extracted via setup script or Docker build)
+├── en.file              (Umineko English, ONS2 encoded)
+├── ja.file              (Umineko Japanese, ONS2 encoded)
+├── es.file              (Umineko Spanish, ONS2 encoded)
+├── pt.file              (Umineko Portuguese, ONS2 encoded)
+├── wh.file              (Umineko English WH, ONS2 encoded)
+├── ru.file              (Umineko Russian, ONS2 encoded)
+├── higurashi/
+│   └── en.file          (Higurashi English, ONS2 encoded)
+├── sub/                 (ASS subtitle files for Umineko)
+├── audio/               (Umineko voice files, extracted via setup script)
 │   ├── 00/
 │   ├── 01/
-│   ├── ...
-│   └── 99/
-└── se/             (extracted via setup script or Docker build)
+│   └── ...
+└── se/                  (Umineko sound effects, extracted via setup script)
     ├── umise_001.ogg
-    ├── umilse_001.ogg
     └── ...
 ```
 
@@ -369,7 +430,7 @@ internal/quote/data/
 
 ### Script Loader
 
-The `internal/quote/scriptloader` package owns the full data pipeline: decode → parse → subtitle resolution → mutation fixes. The service calls `loader.Load(lang, path)` and receives clean `[]dto.ParsedQuote` back.
+The `internal/quote/scriptloader` package owns the full data pipeline: decode -> parse -> subtitle resolution -> mutation fixes. The service calls `loader.Load(lang, path)` and receives clean `[]dto.ParsedQuote` back.
 
 The loader decodes the ONS2 format (XOR substitution cipher + ZLIB compression), splits the result into lines, runs the parser, resolves subtitle references from embedded `.ass` files, and applies the mutation engine pipeline before returning.
 
@@ -391,9 +452,23 @@ To add a new fix:
 
 ## Architecture: The Script Parser
 
-The [`umineko_script_parser`](https://github.com/VictoriqueMoe/umineko_script_parser) library handles parsing Umineko script files and extracting quotes. It follows a pipeline architecture that separates concerns.
+The [`umineko_script_parser`](https://github.com/VictoriqueMoe/umineko_script_parser) library handles parsing both Umineko and Higurashi script files. It uses a shared interface layer with game-specific implementations.
+
+### Shared Interfaces
+
+Both games share:
+- `dialogue.DialogueElement` interface with sub-interfaces (`TextElement`, `ContainerElement`, `SpecialCharElement`)
+- `transformer.Transformer` interface for converting AST to output format
+- `transformer.Factory` for registering and retrieving transformers
+- `dto.BaseQuote` with common fields (Text, TextHtml, CharacterID, Character, AudioID, Episode, etc.)
+
+Game-specific extensions:
+- `dto.UminekoQuote` adds truth flags (HasRedTruth, HasBlueTruth, HasGoldTruth, HasPurpleTruth)
+- `dto.HigurashiQuote` adds TextJP, TextJPHtml, and Arc fields
 
 ### Pipeline Overview
+
+**Umineko** uses a full lexer -> parser -> AST -> extractor pipeline with recursive descent parsing of nested format tags:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -464,27 +539,62 @@ The [`umineko_script_parser`](https://github.com/VictoriqueMoe/umineko_script_pa
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
+**Higurashi** uses a line-by-line state machine scanner, since the Higurashi script format is simpler (no nested tags):
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              Source Text                                    │
+│  //!file:onikakushi                                                         │
+│  PlayVoice(4, "ps3/s01/01/hrs010010", 256);                                │
+│  OutputLine(NULL, "...", NULL, "...", Line_Normal);                         │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                      │
+                                      ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                     LINE SCANNER (parser.go)                                │
+│  Processes script line-by-line with a state machine                         │
+│                                                                             │
+│  • PlayVoice()     → captures voice segment (charId, audioId)               │
+│  • OutputLine()    → captures dialogue text + character                     │
+│  • //!file:        → tracks current arc                                     │
+│  • ClearMessage()  → flushes accumulated quote                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                      │
+                                      ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                   TRANSFORMER FACTORY (transformer/)                        │
+│  Same shared interface as Umineko, game-specific implementations            │
+│                                                                             │
+│  factory.MustGet(FormatPlainText) ──► "Keiichi-san, welcome home!"          │
+│  factory.MustGet(FormatHTML)      ──► "Keiichi-san, welcome home!"          │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
 ### Package Structure
 
 The parser is an external library at [`umineko_script_parser`](https://github.com/VictoriqueMoe/umineko_script_parser):
 
 ```
-lexer/
-├── ast/                    # Abstract Syntax Tree types
-│   └── ast.go              # Token, Line, DialogueElement types
-├── transformer/            # Output format transformers
-│   ├── factory.go          # Factory for obtaining transformers
-│   ├── preset.go           # Preset colour/class context
-│   ├── plaintext.go        # Plain text output
-│   └── html.go             # HTML output with styling
-├── lexer.go                # Tokeniser
-├── parser.go               # AST builder
-├── validator.go            # Post-parse AST validation
-├── extractor.go            # Quote extraction with SE association
-├── se_dispatch.go          # SE number-to-filename dispatch table parser
-└── truth.go                # Red/blue/gold/purple truth detection
-dto/
-└── parsed_quote.go         # ParsedQuote and SoundEffect types
+dialogue/                   # Shared DialogueElement interface
+transformer/                # Shared Transformer interface + Factory
+dto/                        # Shared BaseQuote + game-specific DTOs
+umineko/
+├── lexer/
+│   ├── ast/                # Umineko AST types (implements dialogue.*)
+│   ├── transformer/        # Umineko transformers (HTML, plaintext)
+│   ├── lexer.go            # Tokeniser
+│   ├── parser.go           # Recursive descent parser
+│   ├── validator.go        # Post-parse validation
+│   ├── extractor.go        # Quote extraction with SE association
+│   └── truth.go            # Red/blue/gold/purple truth detection
+├── scriptparser.go         # Entry point: ParseFile / ParseScriptText
+└── decoder/                # ONS2 decoder
+higurashi/
+├── ast/                    # Simple PlainText AST (implements dialogue.*)
+├── transformer/            # Higurashi transformers (HTML, plaintext)
+├── character/              # Character ID mapping (39+ characters)
+├── parser.go               # Line-by-line state machine
+└── scriptparser.go         # Entry point: ParseFile / ParseScriptText
 ```
 
 ### Key Design Decisions
@@ -497,7 +607,9 @@ dto/
 
 No changes are needed to the extractor or parser.
 
-**Preset context**, colour presets (`{p:1:text}`) are defined in script headers via `preset_define`. The `PresetContext` collects these definitions and provides semantic class lookups (preset 1 → "red-truth", preset 2 → "blue-truth") and dynamic colour lookups for other presets.
+**Generic GameStore**, the consumer service uses `GameStore[Q any]` to share search, browse, random, context, and nearest-voiced logic between both games. Each game provides a `base func(*Q) *BaseQuote` accessor so the generic store can access common fields.
+
+**Preset context**, colour presets (`{p:1:text}`) are defined in script headers via `preset_define`. The `PresetContext` collects these definitions and provides semantic class lookups (preset 1 -> "red-truth", preset 2 -> "blue-truth") and dynamic colour lookups for other presets.
 
 **Truth detection**, red, blue, gold, and purple truth are detected by walking the AST looking for preset tags with semantic classes. This is stored as `TruthFlags` with `HasRed`, `HasBlue`, `HasGold`, and `HasPurple` booleans, allowing quotes with mixed truth to appear in multiple filters.
 

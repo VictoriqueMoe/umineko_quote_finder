@@ -2,9 +2,9 @@ package dto
 
 type ContextResponse struct {
 	// Dialogue lines before the target quote
-	Before []ParsedQuote `json:"before"`
+	Before any `json:"before" swaggertype:"array,object"`
 	// The target quote
-	Quote ParsedQuote `json:"quote"`
+	Quote any `json:"quote" swaggertype:"object"`
 	// Dialogue lines after the target quote
-	After []ParsedQuote `json:"after"`
+	After any `json:"after" swaggertype:"array,object"`
 }

@@ -69,14 +69,14 @@ func (g *ImageGenerator) boldOrFallback(lang language.Language) *sfnt.Font {
 	return g.boldFont
 }
 
-func (g *ImageGenerator) finalise(dc *gg.Context, cacheKey string) ([]byte, error) {
+func (g *ImageGenerator) finalise(dc *gg.Context, cacheKey string, brandName string) ([]byte, error) {
 	brandFace, err := opentype.NewFace(g.regularFont, &opentype.FaceOptions{Size: 16, DPI: 72})
 	if err != nil {
 		return nil, err
 	}
 	dc.SetFontFace(brandFace)
 	dc.SetColor(mutedColor)
-	dc.DrawStringAnchored("Umineko Quote Search", float64(imgWidth)-40, float64(imgHeight)-30, 1, 0)
+	dc.DrawStringAnchored(brandName, float64(imgWidth)-40, float64(imgHeight)-30, 1, 0)
 
 	var buf bytes.Buffer
 	if err := png.Encode(&buf, dc.Image()); err != nil {
@@ -97,9 +97,9 @@ func (g *ImageGenerator) Generate(
 	audioId string,
 	lang language.Language,
 	text, textHtml, character string,
-	episode int,
-	contentType string,
 	full bool,
+	brandName string,
+	episodeLabel string,
 ) ([]byte, error) {
 	fullStr := ""
 	if full {
@@ -157,20 +157,20 @@ func (g *ImageGenerator) Generate(
 	dc.SetColor(goldColor)
 	dc.DrawString("\u2014 "+character, 60, float64(imgHeight)-120)
 
-	if episode > 0 {
+	if episodeLabel != "" {
 		epFace, err := opentype.NewFace(g.regularFont, &opentype.FaceOptions{Size: 18, DPI: 72})
 		if err != nil {
 			return nil, err
 		}
 		dc.SetFontFace(epFace)
 		dc.SetColor(mutedColor)
-		dc.DrawString(g.episodeName(episode, contentType), 60, float64(imgHeight)-88)
+		dc.DrawString(episodeLabel, 60, float64(imgHeight)-88)
 	}
 
-	return g.finalise(dc, cacheKey)
+	return g.finalise(dc, cacheKey, brandName)
 }
 
-func (g *ImageGenerator) GenerateBuilder(segmentsParam string, lang language.Language, lines []DialogueLine) ([]byte, error) {
+func (g *ImageGenerator) GenerateBuilder(segmentsParam string, lang language.Language, lines []DialogueLine, brandName string) ([]byte, error) {
 	cacheKey := "builder:" + segmentsParam + ":" + string(lang)
 	if cached, ok := g.cache.Load(cacheKey); ok {
 		return cached.([]byte), nil
@@ -262,7 +262,7 @@ func (g *ImageGenerator) GenerateBuilder(segmentsParam string, lang language.Lan
 		curY += 8
 	}
 
-	return g.finalise(dc, cacheKey)
+	return g.finalise(dc, cacheKey, brandName)
 }
 
 func (*ImageGenerator) drawColouredText(dc *gg.Context, segments []textSegment, x, y, maxWidth, lineSpacing float64) {
@@ -349,28 +349,4 @@ func truncateText(s string, maxRunes int) string {
 		return string(runes[:maxRunes-3]) + "..."
 	}
 	return s
-}
-
-func (*ImageGenerator) episodeName(ep int, contentType string) string {
-	names := map[int]string{
-		1: "Episode 1 \u2014 Legend",
-		2: "Episode 2 \u2014 Turn",
-		3: "Episode 3 \u2014 Banquet",
-		4: "Episode 4 \u2014 Alliance",
-		5: "Episode 5 \u2014 End",
-		6: "Episode 6 \u2014 Dawn",
-		7: "Episode 7 \u2014 Requiem",
-		8: "Episode 8 \u2014 Twilight",
-	}
-	name, ok := names[ep]
-	if !ok {
-		return ""
-	}
-	if contentType == "tea" {
-		return name + " \u2014 Tea Party"
-	}
-	if contentType == "ura" {
-		return name + " \u2014 Omake"
-	}
-	return name
 }

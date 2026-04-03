@@ -21,8 +21,9 @@ export function episodeLabel(quote: Quote): string {
 }
 
 export function useQuoteDisplay(quote: Quote, langOverride?: Exclude<Language, "auto">) {
-    const { language, hasAudio } = useAppContext();
+    const { language, hasAudio, game } = useAppContext();
     const effective = langOverride ?? (language === "auto" ? "en" : language);
+    const gameHasAudio = hasAudio && game === "umineko";
 
     const [textOverride, setTextOverride] = useState<string | null>(null);
     const [langUserOverride, setLangUserOverride] = useState<Language | null>(null);
@@ -39,8 +40,12 @@ export function useQuoteDisplay(quote: Quote, langOverride?: Exclude<Language, "
         setLangUserOverride(null);
     }
 
-    const displayHtml = textOverride ?? (quote.textHtml || quote.text);
-    const lang = langUserOverride ?? effective;
+    const activeLang = langUserOverride ?? effective;
+    let displayHtml = textOverride ?? (quote.textHtml || quote.text);
+    if (!textOverride && game === "higurashi" && activeLang === "ja" && quote.textJp) {
+        displayHtml = quote.textJpHtml || quote.textJp;
+    }
+    const lang = activeLang;
 
     const handleTextUpdate = useCallback((textHtml: string) => {
         setTextOverride(textHtml);
@@ -50,5 +55,5 @@ export function useQuoteDisplay(quote: Quote, langOverride?: Exclude<Language, "
         setLangUserOverride(newLang);
     }, []);
 
-    return { displayHtml, lang, hasAudio, handleTextUpdate, handleLangChange };
+    return { displayHtml, lang, hasAudio: gameHasAudio, handleTextUpdate, handleLangChange };
 }

@@ -45,19 +45,19 @@ class AudioPlayerManager(context: Context) {
 
         val url = if (ids.size == 1) {
             val charId = quote.resolveCharId(ids.first())
-            "${BuildConfig.BASE_URL}/api/v1/audio/$charId/${ids.first()}"
+            "${BuildConfig.BASE_URL}/api/v1/umineko/audio/voice/$charId/${ids.first()}"
         } else {
             val segments = ids.joinToString(",") { id ->
                 "${quote.resolveCharId(id)}:$id"
             }
-            "${BuildConfig.BASE_URL}/api/v1/audio/combined?segments=$segments"
+            "${BuildConfig.BASE_URL}/api/v1/umineko/audio/voice/combined?segments=$segments"
         }
         play(url)
     }
 
     fun playCombined(segments: List<Pair<String, String>>) {
         val param = segments.joinToString(",") { (charId, audioId) -> "$charId:$audioId" }
-        val url = "${BuildConfig.BASE_URL}/api/v1/audio/combined?segments=$param"
+        val url = "${BuildConfig.BASE_URL}/api/v1/umineko/audio/voice/combined?segments=$param"
         _currentAudioId.value = segments.firstOrNull()?.second
         play(url)
     }

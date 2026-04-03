@@ -19,14 +19,772 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/browse": {
+        "/higurashi/browse": {
+            "get": {
+                "description": "Browse all Higurashi quotes with optional filters and pagination",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "higurashi"
+                ],
+                "summary": "Browse quotes",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "en",
+                        "description": "Language",
+                        "name": "lang",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "narrator",
+                            "misc_voices",
+                            "keiichi",
+                            "rena",
+                            "mion",
+                            "satoko",
+                            "rika",
+                            "shion",
+                            "satoshi",
+                            "tomitake",
+                            "takano",
+                            "irie",
+                            "ooishi",
+                            "hanyuu",
+                            "akasaka",
+                            "okonogi",
+                            "kasai",
+                            "kimiyoshi",
+                            "oryou",
+                            "teppei",
+                            "rina",
+                            "chie",
+                            "tomoe",
+                            "madoka",
+                            "yamaoki",
+                            "fujita",
+                            "natsumi",
+                            "chisato",
+                            "tamako",
+                            "akira",
+                            "miyuki",
+                            "otobe",
+                            "towada",
+                            "riku",
+                            "ouka",
+                            "kumagai",
+                            "nagisa",
+                            "akane",
+                            "arakawa",
+                            "maeno"
+                        ],
+                        "type": "string",
+                        "description": "Filter by character ID",
+                        "name": "character",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "narrator",
+                            "misc_voices",
+                            "keiichi",
+                            "rena",
+                            "mion",
+                            "satoko",
+                            "rika",
+                            "shion",
+                            "satoshi",
+                            "tomitake",
+                            "takano",
+                            "irie",
+                            "ooishi",
+                            "hanyuu",
+                            "akasaka",
+                            "okonogi",
+                            "kasai",
+                            "kimiyoshi",
+                            "oryou",
+                            "teppei",
+                            "rina",
+                            "chie",
+                            "tomoe",
+                            "madoka",
+                            "yamaoki",
+                            "fujita",
+                            "natsumi",
+                            "chisato",
+                            "tamako",
+                            "akira",
+                            "miyuki",
+                            "otobe",
+                            "towada",
+                            "riku",
+                            "ouka",
+                            "kumagai",
+                            "nagisa",
+                            "akane",
+                            "arakawa",
+                            "maeno"
+                        ],
+                        "type": "string",
+                        "description": "Interaction filter: first character ID (requires interactionB)",
+                        "name": "interactionA",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "narrator",
+                            "misc_voices",
+                            "keiichi",
+                            "rena",
+                            "mion",
+                            "satoko",
+                            "rika",
+                            "shion",
+                            "satoshi",
+                            "tomitake",
+                            "takano",
+                            "irie",
+                            "ooishi",
+                            "hanyuu",
+                            "akasaka",
+                            "okonogi",
+                            "kasai",
+                            "kimiyoshi",
+                            "oryou",
+                            "teppei",
+                            "rina",
+                            "chie",
+                            "tomoe",
+                            "madoka",
+                            "yamaoki",
+                            "fujita",
+                            "natsumi",
+                            "chisato",
+                            "tamako",
+                            "akira",
+                            "miyuki",
+                            "otobe",
+                            "towada",
+                            "riku",
+                            "ouka",
+                            "kumagai",
+                            "nagisa",
+                            "akane",
+                            "arakawa",
+                            "maeno"
+                        ],
+                        "type": "string",
+                        "description": "Interaction filter: second character ID (requires interactionA)",
+                        "name": "interactionB",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 50,
+                        "description": "Maximum results",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "Offset for pagination",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Filter by arc number",
+                        "name": "episode",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by arc name (e.g. onikakushi, watanagashi)",
+                        "name": "arc",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.CharacterResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/higurashi/characters": {
+            "get": {
+                "description": "Returns a map of Higurashi character IDs to character names",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "higurashi"
+                ],
+                "summary": "List all characters",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/higurashi/context/{audioId}": {
+            "get": {
+                "description": "Returns surrounding dialogue lines for a specific Higurashi quote",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "higurashi"
+                ],
+                "summary": "Get quote context",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Audio ID of the quote (e.g. ps3/s01/01/hrs010010)",
+                        "name": "audioId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "default": "en",
+                        "description": "Language",
+                        "name": "lang",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 5,
+                        "description": "Number of context lines before and after",
+                        "name": "lines",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ContextResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/higurashi/nearest-voiced/{audioId}": {
+            "get": {
+                "description": "Returns the audio ID of the nearest Higurashi quote with voice audio in a given direction",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "higurashi"
+                ],
+                "summary": "Find nearest voiced quote",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Audio ID of the reference quote (e.g. ps3/s01/01/hrs010010)",
+                        "name": "audioId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "default": "en",
+                        "description": "Language",
+                        "name": "lang",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "next",
+                            "prev"
+                        ],
+                        "type": "string",
+                        "default": "next",
+                        "description": "Direction to search",
+                        "name": "direction",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/higurashi/quote/index/{index}": {
+            "get": {
+                "description": "Returns a specific Higurashi quote identified by its position index in the parsed script",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "higurashi"
+                ],
+                "summary": "Get quote by index",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Index of the quote in the parsed script",
+                        "name": "index",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "default": "en",
+                        "description": "Language",
+                        "name": "lang",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/umineko_quote_internal_dto.HigurashiQuote"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/higurashi/quote/{audioId}": {
+            "get": {
+                "description": "Returns a specific Higurashi quote identified by its audio ID (may contain slashes)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "higurashi"
+                ],
+                "summary": "Get quote by audio ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Audio ID of the quote (e.g. ps3/s01/01/hrs010010)",
+                        "name": "audioId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "default": "en",
+                        "description": "Language",
+                        "name": "lang",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/umineko_quote_internal_dto.HigurashiQuote"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/higurashi/random": {
+            "get": {
+                "description": "Returns a random Higurashi quote with optional filters",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "higurashi"
+                ],
+                "summary": "Get random quote",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "en",
+                        "description": "Language",
+                        "name": "lang",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "narrator",
+                            "misc_voices",
+                            "keiichi",
+                            "rena",
+                            "mion",
+                            "satoko",
+                            "rika",
+                            "shion",
+                            "satoshi",
+                            "tomitake",
+                            "takano",
+                            "irie",
+                            "ooishi",
+                            "hanyuu",
+                            "akasaka",
+                            "okonogi",
+                            "kasai",
+                            "kimiyoshi",
+                            "oryou",
+                            "teppei",
+                            "rina",
+                            "chie",
+                            "tomoe",
+                            "madoka",
+                            "yamaoki",
+                            "fujita",
+                            "natsumi",
+                            "chisato",
+                            "tamako",
+                            "akira",
+                            "miyuki",
+                            "otobe",
+                            "towada",
+                            "riku",
+                            "ouka",
+                            "kumagai",
+                            "nagisa",
+                            "akane",
+                            "arakawa",
+                            "maeno"
+                        ],
+                        "type": "string",
+                        "description": "Filter by character ID",
+                        "name": "character",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Filter by arc number",
+                        "name": "episode",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by arc name (e.g. onikakushi, watanagashi)",
+                        "name": "arc",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/umineko_quote_internal_dto.HigurashiQuote"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/higurashi/search": {
+            "get": {
+                "description": "Search for Higurashi quotes by text query with optional filters",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "higurashi"
+                ],
+                "summary": "Search quotes",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Search query",
+                        "name": "q",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "default": "en",
+                        "description": "Language",
+                        "name": "lang",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 30,
+                        "description": "Maximum results",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "Offset for pagination",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "narrator",
+                            "misc_voices",
+                            "keiichi",
+                            "rena",
+                            "mion",
+                            "satoko",
+                            "rika",
+                            "shion",
+                            "satoshi",
+                            "tomitake",
+                            "takano",
+                            "irie",
+                            "ooishi",
+                            "hanyuu",
+                            "akasaka",
+                            "okonogi",
+                            "kasai",
+                            "kimiyoshi",
+                            "oryou",
+                            "teppei",
+                            "rina",
+                            "chie",
+                            "tomoe",
+                            "madoka",
+                            "yamaoki",
+                            "fujita",
+                            "natsumi",
+                            "chisato",
+                            "tamako",
+                            "akira",
+                            "miyuki",
+                            "otobe",
+                            "towada",
+                            "riku",
+                            "ouka",
+                            "kumagai",
+                            "nagisa",
+                            "akane",
+                            "arakawa",
+                            "maeno"
+                        ],
+                        "type": "string",
+                        "description": "Filter by character ID",
+                        "name": "character",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "narrator",
+                            "misc_voices",
+                            "keiichi",
+                            "rena",
+                            "mion",
+                            "satoko",
+                            "rika",
+                            "shion",
+                            "satoshi",
+                            "tomitake",
+                            "takano",
+                            "irie",
+                            "ooishi",
+                            "hanyuu",
+                            "akasaka",
+                            "okonogi",
+                            "kasai",
+                            "kimiyoshi",
+                            "oryou",
+                            "teppei",
+                            "rina",
+                            "chie",
+                            "tomoe",
+                            "madoka",
+                            "yamaoki",
+                            "fujita",
+                            "natsumi",
+                            "chisato",
+                            "tamako",
+                            "akira",
+                            "miyuki",
+                            "otobe",
+                            "towada",
+                            "riku",
+                            "ouka",
+                            "kumagai",
+                            "nagisa",
+                            "akane",
+                            "arakawa",
+                            "maeno"
+                        ],
+                        "type": "string",
+                        "description": "Interaction filter: first character ID (requires interactionB)",
+                        "name": "interactionA",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "narrator",
+                            "misc_voices",
+                            "keiichi",
+                            "rena",
+                            "mion",
+                            "satoko",
+                            "rika",
+                            "shion",
+                            "satoshi",
+                            "tomitake",
+                            "takano",
+                            "irie",
+                            "ooishi",
+                            "hanyuu",
+                            "akasaka",
+                            "okonogi",
+                            "kasai",
+                            "kimiyoshi",
+                            "oryou",
+                            "teppei",
+                            "rina",
+                            "chie",
+                            "tomoe",
+                            "madoka",
+                            "yamaoki",
+                            "fujita",
+                            "natsumi",
+                            "chisato",
+                            "tamako",
+                            "akira",
+                            "miyuki",
+                            "otobe",
+                            "towada",
+                            "riku",
+                            "ouka",
+                            "kumagai",
+                            "nagisa",
+                            "akane",
+                            "arakawa",
+                            "maeno"
+                        ],
+                        "type": "string",
+                        "description": "Interaction filter: second character ID (requires interactionA)",
+                        "name": "interactionB",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Filter by arc number",
+                        "name": "episode",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by arc name (e.g. onikakushi, watanagashi)",
+                        "name": "arc",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SearchAPIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/higurashi/stats": {
+            "get": {
+                "description": "Returns statistics about Higurashi quotes including top speakers and character interactions",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "higurashi"
+                ],
+                "summary": "Get quote statistics",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Filter by arc number, 0 for all",
+                        "name": "episode",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HigurashiStatsResult"
+                        }
+                    }
+                }
+            }
+        },
+        "/umineko/browse": {
             "get": {
                 "description": "Browse all quotes with optional filters and pagination",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "quotes"
+                    "umineko"
                 ],
                 "summary": "Browse quotes",
                 "parameters": [
@@ -301,14 +1059,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/characters": {
+        "/umineko/characters": {
             "get": {
                 "description": "Returns a map of character IDs to character names",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "quotes"
+                    "umineko"
                 ],
                 "summary": "List all characters",
                 "responses": {
@@ -324,35 +1082,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/config": {
-            "get": {
-                "description": "Returns service configuration flags",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "system"
-                ],
-                "summary": "Get configuration",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    }
-                }
-            }
-        },
-        "/context/{audioId}": {
+        "/umineko/context/{audioId}": {
             "get": {
                 "description": "Returns surrounding dialogue lines for a specific quote",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "quotes"
+                    "umineko"
                 ],
                 "summary": "Get quote context",
                 "parameters": [
@@ -408,42 +1145,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/health": {
-            "get": {
-                "description": "Returns the health status of the service including language loading status",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "system"
-                ],
-                "summary": "Health check",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    },
-                    "503": {
-                        "description": "Service Unavailable",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    }
-                }
-            }
-        },
-        "/nearest-voiced/{audioId}": {
+        "/umineko/nearest-voiced/{audioId}": {
             "get": {
                 "description": "Returns the audio ID of the nearest quote with voice audio in a given direction",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "quotes"
+                    "umineko"
                 ],
                 "summary": "Find nearest voiced quote",
                 "parameters": [
@@ -506,14 +1215,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/quote/index/{index}": {
+        "/umineko/quote/index/{index}": {
             "get": {
                 "description": "Returns a specific quote identified by its position index in the parsed script",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "quotes"
+                    "umineko"
                 ],
                 "summary": "Get quote by index",
                 "parameters": [
@@ -544,7 +1253,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/umineko_quote_internal_dto.ParsedQuote"
+                            "$ref": "#/definitions/umineko_quote_internal_dto.UminekoQuote"
                         }
                     },
                     "404": {
@@ -556,14 +1265,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/quote/{audioId}": {
+        "/umineko/quote/{audioId}": {
             "get": {
                 "description": "Returns a specific quote identified by its audio ID",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "quotes"
+                    "umineko"
                 ],
                 "summary": "Get quote by audio ID",
                 "parameters": [
@@ -594,7 +1303,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/umineko_quote_internal_dto.ParsedQuote"
+                            "$ref": "#/definitions/umineko_quote_internal_dto.UminekoQuote"
                         }
                     },
                     "404": {
@@ -606,14 +1315,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/random": {
+        "/umineko/random": {
             "get": {
                 "description": "Returns a random quote with optional filters",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "quotes"
+                    "umineko"
                 ],
                 "summary": "Get random quote",
                 "parameters": [
@@ -726,7 +1435,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/umineko_quote_internal_dto.ParsedQuote"
+                            "$ref": "#/definitions/umineko_quote_internal_dto.UminekoQuote"
                         }
                     },
                     "404": {
@@ -738,14 +1447,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/search": {
+        "/umineko/search": {
             "get": {
                 "description": "Search for quotes by text query with optional filters",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "quotes"
+                    "umineko"
                 ],
                 "summary": "Search quotes",
                 "parameters": [
@@ -1034,14 +1743,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/stats": {
+        "/umineko/stats": {
             "get": {
                 "description": "Returns statistics about quotes including top speakers, truth per episode, and character interactions",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "quotes"
+                    "umineko"
                 ],
                 "summary": "Get quote statistics",
                 "parameters": [
@@ -1073,7 +1782,7 @@ const docTemplate = `{
                     "example": "10"
                 },
                 "episodes": {
-                    "description": "Line counts per episode (index 0 = ep 1)",
+                    "description": "List of episode numbers the character appears in",
                     "type": "array",
                     "items": {
                         "type": "integer"
@@ -1113,7 +1822,7 @@ const docTemplate = `{
                     "description": "Paginated list of quotes",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/umineko_quote_internal_dto.ParsedQuote"
+                        "type": "object"
                     }
                 },
                 "total": {
@@ -1130,23 +1839,19 @@ const docTemplate = `{
                     "description": "Dialogue lines after the target quote",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/umineko_quote_internal_dto.ParsedQuote"
+                        "type": "object"
                     }
                 },
                 "before": {
                     "description": "Dialogue lines before the target quote",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/umineko_quote_internal_dto.ParsedQuote"
+                        "type": "object"
                     }
                 },
                 "quote": {
                     "description": "The target quote",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/umineko_quote_internal_dto.ParsedQuote"
-                        }
-                    ]
+                    "type": "object"
                 }
             }
         },
@@ -1212,6 +1917,49 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.HigurashiStatsResult": {
+            "type": "object",
+            "properties": {
+                "characterNames": {
+                    "description": "Map of character ID to display name",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "interactionCounts": {
+                    "description": "Map of character pair key to interaction count",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "integer"
+                    }
+                },
+                "interactions": {
+                    "description": "Top character interaction pairs",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.InteractionPair"
+                    }
+                },
+                "linesPerArc": {
+                    "description": "Dialogue line counts per arc per character",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "integer"
+                        }
+                    }
+                },
+                "topSpeakers": {
+                    "description": "Top speakers by dialogue line count",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.SpeakerStat"
+                    }
+                }
+            }
+        },
         "dto.InteractionPair": {
             "type": "object",
             "properties": {
@@ -1226,7 +1974,7 @@ const docTemplate = `{
                     "example": "27"
                 },
                 "count": {
-                    "description": "Number of adjacent dialogue exchanges",
+                    "description": "Number of shared dialogue exchanges",
                     "type": "integer",
                     "example": 1701
                 },
@@ -1279,11 +2027,7 @@ const docTemplate = `{
             "properties": {
                 "quote": {
                     "description": "The matched quote",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/umineko_quote_internal_dto.ParsedQuote"
-                        }
-                    ]
+                    "type": "object"
                 },
                 "score": {
                     "description": "Relevance score (100 = exact match)",
@@ -1296,12 +2040,10 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "afterClip": {
-                    "description": "Voice clip index this SE plays after (-1 = before all clips)",
                     "type": "integer",
                     "example": 0
                 },
                 "filename": {
-                    "description": "Sound effect filename (without extension)",
                     "type": "string",
                     "example": "umise_047"
                 }
@@ -1342,49 +2084,49 @@ const docTemplate = `{
                     }
                 },
                 "characterPresence": {
-                    "description": "Top characters with per-episode line counts",
+                    "description": "Characters and which episodes they appear in",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/dto.CharacterPresence"
                     }
                 },
                 "episodeNames": {
-                    "description": "Map of episode number to title",
+                    "description": "Map of episode number to episode title",
                     "type": "object",
                     "additionalProperties": {
                         "type": "string"
                     }
                 },
                 "interactionCounts": {
-                    "description": "Full interaction map keyed by \"charA|charB\"",
+                    "description": "Map of character pair key to interaction count",
                     "type": "object",
                     "additionalProperties": {
                         "type": "integer"
                     }
                 },
                 "interactions": {
-                    "description": "Most frequent character dialogue pairings",
+                    "description": "Top character interaction pairs",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/dto.InteractionPair"
                     }
                 },
                 "linesPerEpisode": {
-                    "description": "Per-episode line breakdown by character",
+                    "description": "Dialogue line counts per episode per character",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/dto.EpisodeCharacterLines"
                     }
                 },
                 "topSpeakers": {
-                    "description": "Characters ranked by dialogue line count",
+                    "description": "Top speakers by dialogue line count",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/dto.SpeakerStat"
                     }
                 },
                 "truthPerEpisode": {
-                    "description": "Truth counts per episode",
+                    "description": "Truth statement counts per episode",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/dto.EpisodeTruth"
@@ -1392,11 +2134,14 @@ const docTemplate = `{
                 }
             }
         },
-        "umineko_quote_internal_dto.ParsedQuote": {
+        "umineko_quote_internal_dto.HigurashiQuote": {
             "type": "object",
             "properties": {
+                "arc": {
+                    "type": "string",
+                    "example": "onikakushi"
+                },
                 "audioCharMap": {
-                    "description": "Maps each audio ID to its character ID",
                     "type": "object",
                     "additionalProperties": {
                         "type": "string"
@@ -1407,12 +2152,10 @@ const docTemplate = `{
                     }
                 },
                 "audioId": {
-                    "description": "Comma-separated audio file IDs",
                     "type": "string",
                     "example": "30101088, 30101089"
                 },
                 "audioTextMap": {
-                    "description": "Maps each audio ID to its spoken text",
                     "type": "object",
                     "additionalProperties": {
                         "type": "string"
@@ -1423,42 +2166,103 @@ const docTemplate = `{
                     }
                 },
                 "character": {
-                    "description": "Display name of the character",
                     "type": "string",
                     "example": "Ushiromiya Battler"
                 },
                 "characterId": {
-                    "description": "Numeric character identifier",
                     "type": "string",
                     "example": "10"
                 },
                 "contentType": {
-                    "description": "Content type marker",
                     "type": "string",
                     "example": ""
                 },
                 "episode": {
-                    "description": "Episode number (1-8)",
+                    "type": "integer",
+                    "example": 3
+                },
+                "index": {
+                    "description": "Position index in the parsed script (stable across text changes)",
+                    "type": "integer"
+                },
+                "soundEffects": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.SoundEffect"
+                    }
+                },
+                "text": {
+                    "type": "string",
+                    "example": "You're insane!! Stop it already, damn iiiiiiiiit!!"
+                },
+                "textHtml": {
+                    "type": "string",
+                    "example": "You\u0026#39;re insane!! Stop it already, damn iiiiiiiiit!!"
+                },
+                "textJp": {
+                    "type": "string"
+                },
+                "textJpHtml": {
+                    "type": "string"
+                }
+            }
+        },
+        "umineko_quote_internal_dto.UminekoQuote": {
+            "type": "object",
+            "properties": {
+                "audioCharMap": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "example": {
+                        "30101088": "10",
+                        "30101089": "10"
+                    }
+                },
+                "audioId": {
+                    "type": "string",
+                    "example": "30101088, 30101089"
+                },
+                "audioTextMap": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "example": {
+                        "30101088": "You're insane!!",
+                        "30101089": "Stop it already"
+                    }
+                },
+                "character": {
+                    "type": "string",
+                    "example": "Ushiromiya Battler"
+                },
+                "characterId": {
+                    "type": "string",
+                    "example": "10"
+                },
+                "contentType": {
+                    "type": "string",
+                    "example": ""
+                },
+                "episode": {
                     "type": "integer",
                     "example": 3
                 },
                 "hasBlueTruth": {
-                    "description": "Whether the quote contains blue truth",
                     "type": "boolean",
                     "example": false
                 },
                 "hasGoldTruth": {
-                    "description": "Whether the quote contains gold truth",
                     "type": "boolean",
                     "example": false
                 },
                 "hasPurpleTruth": {
-                    "description": "Whether the quote contains purple statements",
                     "type": "boolean",
                     "example": false
                 },
                 "hasRedTruth": {
-                    "description": "Whether the quote contains red truth",
                     "type": "boolean",
                     "example": false
                 },
@@ -1467,19 +2271,16 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "soundEffects": {
-                    "description": "Sound effects associated with this quote",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/dto.SoundEffect"
                     }
                 },
                 "text": {
-                    "description": "Plain text of the quote",
                     "type": "string",
                     "example": "You're insane!! Stop it already, damn iiiiiiiiit!!"
                 },
                 "textHtml": {
-                    "description": "HTML-formatted text with truth coloring",
                     "type": "string",
                     "example": "You\u0026#39;re insane!! Stop it already, damn iiiiiiiiit!!"
                 }
@@ -1494,8 +2295,8 @@ var SwaggerInfo = &swag.Spec{
 	Host:             "",
 	BasePath:         "/api/v1",
 	Schemes:          []string{"https", "http"},
-	Title:            "Umineko Quote API",
-	Description:      "API for searching and browsing Umineko no Naku Koro ni quotes",
+	Title:            "When They Cry Quote API",
+	Description:      "API for searching and browsing quotes from Umineko no Naku Koro ni and Higurashi no Naku Koro ni",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

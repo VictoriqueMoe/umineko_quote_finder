@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useTheme } from "../../hooks/useTheme";
+import { useAppContext } from "../../hooks/useAppContext";
 import type { ThemeType } from "../../types/app";
 import { ToggleSwitch } from "../common/ToggleSwitch";
 
@@ -9,18 +10,26 @@ interface ThemeDefinition {
     description: string;
 }
 
-const THEMES: ThemeDefinition[] = [
+const UMINEKO_THEMES: ThemeDefinition[] = [
     { id: "featherine", name: "Featherine", description: "Witch of Theatergoing, Drama, and Spectating" },
     { id: "bernkastel", name: "Lady Bernkastel", description: "Witch of Miracles" },
     { id: "lambdadelta", name: "Lady Lambdadelta", description: "Witch of Certainty" },
 ];
 
+const HIGURASHI_THEMES: ThemeDefinition[] = [
+    { id: "rika", name: "Rika", description: "The one who knows the truth of June 1983" },
+    { id: "mion", name: "Mion", description: "The eldest of the Sonozaki twins" },
+    { id: "satoko", name: "Satoko", description: "The master of traps" },
+];
+
 export function ThemeSelector() {
     const { theme, setTheme, particlesEnabled, setParticlesEnabled } = useTheme();
+    const { game } = useAppContext();
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
-    const currentTheme = THEMES.find(t => t.id === theme);
+    const themes = game === "higurashi" ? HIGURASHI_THEMES : UMINEKO_THEMES;
+    const currentTheme = themes.find(t => t.id === theme) || themes[0];
 
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
@@ -45,13 +54,13 @@ export function ThemeSelector() {
             >
                 <span className="theme-trigger-label">Theme</span>
                 <span className="theme-trigger-sep">{"\u2726"}</span>
-                <span className="theme-trigger-name">{currentTheme?.name}</span>
+                <span className="theme-trigger-name">{currentTheme.name}</span>
                 <span className={`theme-chevron${isOpen ? " open" : ""}`}>{"\u25BC"}</span>
             </button>
 
             {isOpen && (
                 <div className="theme-dropdown" role="listbox">
-                    {THEMES.map(t => (
+                    {themes.map(t => (
                         <button
                             key={t.id}
                             className={`theme-option${t.id === theme ? " active" : ""}`}

@@ -25,7 +25,7 @@ export function BuilderSegment({ segment, index, audioPlayer, onRemove }: Builde
     const isPlaying = isActive && audioPlayer.state.isPlaying;
 
     const handlePlay = () => {
-        const url = audioUrl(segment.charId, segment.audioId);
+        const url = audioUrl("umineko", segment.charId, segment.audioId);
         audioPlayer.play(url, `builder-${segment.id}`);
     };
 

@@ -1,4 +1,4 @@
-package quote
+package store
 
 import (
 	"runtime"
@@ -8,12 +8,12 @@ import (
 	"umineko_quote/internal/dto"
 )
 
-func concurrentExactSearch(
+func concurrentExactSearchGeneric[Q any](
 	indices []int,
 	lowerTexts []string,
-	quotes []dto.ParsedQuote,
+	quotes []Q,
 	queryLower string,
-	matchesFilter func(dto.ParsedQuote) bool,
+	matchesFilter func(int) bool,
 ) []dto.SearchResult {
 	numWorkers := runtime.NumCPU()
 	total := len(indices)
@@ -46,8 +46,8 @@ func concurrentExactSearch(
 			for j := c.start; j < c.end; j++ {
 				idx := indices[j]
 				if strings.Contains(lowerTexts[idx], queryLower) {
-					if matchesFilter(quotes[idx]) {
-						local = append(local, NewSearchResult(quotes[idx], 100))
+					if matchesFilter(idx) {
+						local = append(local, dto.SearchResult{Quote: quotes[idx], Score: 100})
 					}
 				}
 			}

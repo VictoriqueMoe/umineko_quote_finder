@@ -7,7 +7,7 @@ definitions:
         example: "10"
         type: string
       episodes:
-        description: Line counts per episode (index 0 = ep 1)
+        description: List of episode numbers the character appears in
         items:
           type: integer
         type: array
@@ -37,7 +37,7 @@ definitions:
       quotes:
         description: Paginated list of quotes
         items:
-          $ref: '#/definitions/umineko_quote_internal_dto.ParsedQuote'
+          type: object
         type: array
       total:
         description: Total number of matching quotes
@@ -49,17 +49,16 @@ definitions:
       after:
         description: Dialogue lines after the target quote
         items:
-          $ref: '#/definitions/umineko_quote_internal_dto.ParsedQuote'
+          type: object
         type: array
       before:
         description: Dialogue lines before the target quote
         items:
-          $ref: '#/definitions/umineko_quote_internal_dto.ParsedQuote'
+          type: object
         type: array
       quote:
-        allOf:
-        - $ref: '#/definitions/umineko_quote_internal_dto.ParsedQuote'
         description: The target quote
+        type: object
     type: object
   dto.EpisodeCharacterLines:
     properties:
@@ -107,6 +106,36 @@ definitions:
         example: query parameter 'q' is required
         type: string
     type: object
+  dto.HigurashiStatsResult:
+    properties:
+      characterNames:
+        additionalProperties:
+          type: string
+        description: Map of character ID to display name
+        type: object
+      interactionCounts:
+        additionalProperties:
+          type: integer
+        description: Map of character pair key to interaction count
+        type: object
+      interactions:
+        description: Top character interaction pairs
+        items:
+          $ref: '#/definitions/dto.InteractionPair'
+        type: array
+      linesPerArc:
+        additionalProperties:
+          additionalProperties:
+            type: integer
+          type: object
+        description: Dialogue line counts per arc per character
+        type: object
+      topSpeakers:
+        description: Top speakers by dialogue line count
+        items:
+          $ref: '#/definitions/dto.SpeakerStat'
+        type: array
+    type: object
   dto.InteractionPair:
     properties:
       charA:
@@ -118,7 +147,7 @@ definitions:
         example: "27"
         type: string
       count:
-        description: Number of adjacent dialogue exchanges
+        description: Number of shared dialogue exchanges
         example: 1701
         type: integer
       nameA:
@@ -157,9 +186,8 @@ definitions:
   dto.SearchResult:
     properties:
       quote:
-        allOf:
-        - $ref: '#/definitions/umineko_quote_internal_dto.ParsedQuote'
         description: The matched quote
+        type: object
       score:
         description: Relevance score (100 = exact match)
         example: 100
@@ -168,11 +196,9 @@ definitions:
   dto.SoundEffect:
     properties:
       afterClip:
-        description: Voice clip index this SE plays after (-1 = before all clips)
         example: 0
         type: integer
       filename:
-        description: Sound effect filename (without extension)
         example: umise_047
         type: string
     type: object
@@ -202,109 +228,147 @@ definitions:
           "27": Beatrice
         type: object
       characterPresence:
-        description: Top characters with per-episode line counts
+        description: Characters and which episodes they appear in
         items:
           $ref: '#/definitions/dto.CharacterPresence'
         type: array
       episodeNames:
         additionalProperties:
           type: string
-        description: Map of episode number to title
+        description: Map of episode number to episode title
         type: object
       interactionCounts:
         additionalProperties:
           type: integer
-        description: Full interaction map keyed by "charA|charB"
+        description: Map of character pair key to interaction count
         type: object
       interactions:
-        description: Most frequent character dialogue pairings
+        description: Top character interaction pairs
         items:
           $ref: '#/definitions/dto.InteractionPair'
         type: array
       linesPerEpisode:
-        description: Per-episode line breakdown by character
+        description: Dialogue line counts per episode per character
         items:
           $ref: '#/definitions/dto.EpisodeCharacterLines'
         type: array
       topSpeakers:
-        description: Characters ranked by dialogue line count
+        description: Top speakers by dialogue line count
         items:
           $ref: '#/definitions/dto.SpeakerStat'
         type: array
       truthPerEpisode:
-        description: Truth counts per episode
+        description: Truth statement counts per episode
         items:
           $ref: '#/definitions/dto.EpisodeTruth'
         type: array
     type: object
-  umineko_quote_internal_dto.ParsedQuote:
+  umineko_quote_internal_dto.HigurashiQuote:
     properties:
+      arc:
+        example: onikakushi
+        type: string
       audioCharMap:
         additionalProperties:
           type: string
-        description: Maps each audio ID to its character ID
         example:
           "30101088": "10"
           "30101089": "10"
         type: object
       audioId:
-        description: Comma-separated audio file IDs
         example: 30101088, 30101089
         type: string
       audioTextMap:
         additionalProperties:
           type: string
-        description: Maps each audio ID to its spoken text
         example:
           "30101088": You're insane!!
           "30101089": Stop it already
         type: object
       character:
-        description: Display name of the character
         example: Ushiromiya Battler
         type: string
       characterId:
-        description: Numeric character identifier
         example: "10"
         type: string
       contentType:
-        description: Content type marker
         example: ""
         type: string
       episode:
-        description: Episode number (1-8)
+        example: 3
+        type: integer
+      index:
+        description: Position index in the parsed script (stable across text changes)
+        type: integer
+      soundEffects:
+        items:
+          $ref: '#/definitions/dto.SoundEffect'
+        type: array
+      text:
+        example: You're insane!! Stop it already, damn iiiiiiiiit!!
+        type: string
+      textHtml:
+        example: You&#39;re insane!! Stop it already, damn iiiiiiiiit!!
+        type: string
+      textJp:
+        type: string
+      textJpHtml:
+        type: string
+    type: object
+  umineko_quote_internal_dto.UminekoQuote:
+    properties:
+      audioCharMap:
+        additionalProperties:
+          type: string
+        example:
+          "30101088": "10"
+          "30101089": "10"
+        type: object
+      audioId:
+        example: 30101088, 30101089
+        type: string
+      audioTextMap:
+        additionalProperties:
+          type: string
+        example:
+          "30101088": You're insane!!
+          "30101089": Stop it already
+        type: object
+      character:
+        example: Ushiromiya Battler
+        type: string
+      characterId:
+        example: "10"
+        type: string
+      contentType:
+        example: ""
+        type: string
+      episode:
         example: 3
         type: integer
       hasBlueTruth:
-        description: Whether the quote contains blue truth
         example: false
         type: boolean
       hasGoldTruth:
-        description: Whether the quote contains gold truth
         example: false
         type: boolean
       hasPurpleTruth:
-        description: Whether the quote contains purple statements
         example: false
         type: boolean
       hasRedTruth:
-        description: Whether the quote contains red truth
         example: false
         type: boolean
       index:
         description: Position index in the parsed script (stable across text changes)
         type: integer
       soundEffects:
-        description: Sound effects associated with this quote
         items:
           $ref: '#/definitions/dto.SoundEffect'
         type: array
       text:
-        description: Plain text of the quote
         example: You're insane!! Stop it already, damn iiiiiiiiit!!
         type: string
       textHtml:
-        description: HTML-formatted text with truth coloring
         example: You&#39;re insane!! Stop it already, damn iiiiiiiiit!!
         type: string
     type: object
@@ -313,11 +377,613 @@ info:
     email: FAA@auaurora.moe
     name: Featherine Augustus Aurora
     url: https://x.com/FeatherineFAA
-  description: API for searching and browsing Umineko no Naku Koro ni quotes
-  title: Umineko Quote API
+  description: API for searching and browsing quotes from Umineko no Naku Koro ni
+    and Higurashi no Naku Koro ni
+  title: When They Cry Quote API
   version: "1.0"
 paths:
-  /browse:
+  /higurashi/browse:
+    get:
+      description: Browse all Higurashi quotes with optional filters and pagination
+      parameters:
+      - default: en
+        description: Language
+        in: query
+        name: lang
+        type: string
+      - description: Filter by character ID
+        enum:
+        - narrator
+        - misc_voices
+        - keiichi
+        - rena
+        - mion
+        - satoko
+        - rika
+        - shion
+        - satoshi
+        - tomitake
+        - takano
+        - irie
+        - ooishi
+        - hanyuu
+        - akasaka
+        - okonogi
+        - kasai
+        - kimiyoshi
+        - oryou
+        - teppei
+        - rina
+        - chie
+        - tomoe
+        - madoka
+        - yamaoki
+        - fujita
+        - natsumi
+        - chisato
+        - tamako
+        - akira
+        - miyuki
+        - otobe
+        - towada
+        - riku
+        - ouka
+        - kumagai
+        - nagisa
+        - akane
+        - arakawa
+        - maeno
+        in: query
+        name: character
+        type: string
+      - description: 'Interaction filter: first character ID (requires interactionB)'
+        enum:
+        - narrator
+        - misc_voices
+        - keiichi
+        - rena
+        - mion
+        - satoko
+        - rika
+        - shion
+        - satoshi
+        - tomitake
+        - takano
+        - irie
+        - ooishi
+        - hanyuu
+        - akasaka
+        - okonogi
+        - kasai
+        - kimiyoshi
+        - oryou
+        - teppei
+        - rina
+        - chie
+        - tomoe
+        - madoka
+        - yamaoki
+        - fujita
+        - natsumi
+        - chisato
+        - tamako
+        - akira
+        - miyuki
+        - otobe
+        - towada
+        - riku
+        - ouka
+        - kumagai
+        - nagisa
+        - akane
+        - arakawa
+        - maeno
+        in: query
+        name: interactionA
+        type: string
+      - description: 'Interaction filter: second character ID (requires interactionA)'
+        enum:
+        - narrator
+        - misc_voices
+        - keiichi
+        - rena
+        - mion
+        - satoko
+        - rika
+        - shion
+        - satoshi
+        - tomitake
+        - takano
+        - irie
+        - ooishi
+        - hanyuu
+        - akasaka
+        - okonogi
+        - kasai
+        - kimiyoshi
+        - oryou
+        - teppei
+        - rina
+        - chie
+        - tomoe
+        - madoka
+        - yamaoki
+        - fujita
+        - natsumi
+        - chisato
+        - tamako
+        - akira
+        - miyuki
+        - otobe
+        - towada
+        - riku
+        - ouka
+        - kumagai
+        - nagisa
+        - akane
+        - arakawa
+        - maeno
+        in: query
+        name: interactionB
+        type: string
+      - default: 50
+        description: Maximum results
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Offset for pagination
+        in: query
+        name: offset
+        type: integer
+      - description: Filter by arc number
+        in: query
+        name: episode
+        type: integer
+      - description: Filter by arc name (e.g. onikakushi, watanagashi)
+        in: query
+        name: arc
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.CharacterResponse'
+      summary: Browse quotes
+      tags:
+      - higurashi
+  /higurashi/characters:
+    get:
+      description: Returns a map of Higurashi character IDs to character names
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: List all characters
+      tags:
+      - higurashi
+  /higurashi/context/{audioId}:
+    get:
+      description: Returns surrounding dialogue lines for a specific Higurashi quote
+      parameters:
+      - description: Audio ID of the quote (e.g. ps3/s01/01/hrs010010)
+        in: path
+        name: audioId
+        required: true
+        type: string
+      - default: en
+        description: Language
+        in: query
+        name: lang
+        type: string
+      - default: 5
+        description: Number of context lines before and after
+        in: query
+        name: lines
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.ContextResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Get quote context
+      tags:
+      - higurashi
+  /higurashi/nearest-voiced/{audioId}:
+    get:
+      description: Returns the audio ID of the nearest Higurashi quote with voice
+        audio in a given direction
+      parameters:
+      - description: Audio ID of the reference quote (e.g. ps3/s01/01/hrs010010)
+        in: path
+        name: audioId
+        required: true
+        type: string
+      - default: en
+        description: Language
+        in: query
+        name: lang
+        type: string
+      - default: next
+        description: Direction to search
+        enum:
+        - next
+        - prev
+        in: query
+        name: direction
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Find nearest voiced quote
+      tags:
+      - higurashi
+  /higurashi/quote/{audioId}:
+    get:
+      description: Returns a specific Higurashi quote identified by its audio ID (may
+        contain slashes)
+      parameters:
+      - description: Audio ID of the quote (e.g. ps3/s01/01/hrs010010)
+        in: path
+        name: audioId
+        required: true
+        type: string
+      - default: en
+        description: Language
+        in: query
+        name: lang
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/umineko_quote_internal_dto.HigurashiQuote'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Get quote by audio ID
+      tags:
+      - higurashi
+  /higurashi/quote/index/{index}:
+    get:
+      description: Returns a specific Higurashi quote identified by its position index
+        in the parsed script
+      parameters:
+      - description: Index of the quote in the parsed script
+        in: path
+        name: index
+        required: true
+        type: integer
+      - default: en
+        description: Language
+        in: query
+        name: lang
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/umineko_quote_internal_dto.HigurashiQuote'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Get quote by index
+      tags:
+      - higurashi
+  /higurashi/random:
+    get:
+      description: Returns a random Higurashi quote with optional filters
+      parameters:
+      - default: en
+        description: Language
+        in: query
+        name: lang
+        type: string
+      - description: Filter by character ID
+        enum:
+        - narrator
+        - misc_voices
+        - keiichi
+        - rena
+        - mion
+        - satoko
+        - rika
+        - shion
+        - satoshi
+        - tomitake
+        - takano
+        - irie
+        - ooishi
+        - hanyuu
+        - akasaka
+        - okonogi
+        - kasai
+        - kimiyoshi
+        - oryou
+        - teppei
+        - rina
+        - chie
+        - tomoe
+        - madoka
+        - yamaoki
+        - fujita
+        - natsumi
+        - chisato
+        - tamako
+        - akira
+        - miyuki
+        - otobe
+        - towada
+        - riku
+        - ouka
+        - kumagai
+        - nagisa
+        - akane
+        - arakawa
+        - maeno
+        in: query
+        name: character
+        type: string
+      - description: Filter by arc number
+        in: query
+        name: episode
+        type: integer
+      - description: Filter by arc name (e.g. onikakushi, watanagashi)
+        in: query
+        name: arc
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/umineko_quote_internal_dto.HigurashiQuote'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Get random quote
+      tags:
+      - higurashi
+  /higurashi/search:
+    get:
+      description: Search for Higurashi quotes by text query with optional filters
+      parameters:
+      - description: Search query
+        in: query
+        name: q
+        required: true
+        type: string
+      - default: en
+        description: Language
+        in: query
+        name: lang
+        type: string
+      - default: 30
+        description: Maximum results
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Offset for pagination
+        in: query
+        name: offset
+        type: integer
+      - description: Filter by character ID
+        enum:
+        - narrator
+        - misc_voices
+        - keiichi
+        - rena
+        - mion
+        - satoko
+        - rika
+        - shion
+        - satoshi
+        - tomitake
+        - takano
+        - irie
+        - ooishi
+        - hanyuu
+        - akasaka
+        - okonogi
+        - kasai
+        - kimiyoshi
+        - oryou
+        - teppei
+        - rina
+        - chie
+        - tomoe
+        - madoka
+        - yamaoki
+        - fujita
+        - natsumi
+        - chisato
+        - tamako
+        - akira
+        - miyuki
+        - otobe
+        - towada
+        - riku
+        - ouka
+        - kumagai
+        - nagisa
+        - akane
+        - arakawa
+        - maeno
+        in: query
+        name: character
+        type: string
+      - description: 'Interaction filter: first character ID (requires interactionB)'
+        enum:
+        - narrator
+        - misc_voices
+        - keiichi
+        - rena
+        - mion
+        - satoko
+        - rika
+        - shion
+        - satoshi
+        - tomitake
+        - takano
+        - irie
+        - ooishi
+        - hanyuu
+        - akasaka
+        - okonogi
+        - kasai
+        - kimiyoshi
+        - oryou
+        - teppei
+        - rina
+        - chie
+        - tomoe
+        - madoka
+        - yamaoki
+        - fujita
+        - natsumi
+        - chisato
+        - tamako
+        - akira
+        - miyuki
+        - otobe
+        - towada
+        - riku
+        - ouka
+        - kumagai
+        - nagisa
+        - akane
+        - arakawa
+        - maeno
+        in: query
+        name: interactionA
+        type: string
+      - description: 'Interaction filter: second character ID (requires interactionA)'
+        enum:
+        - narrator
+        - misc_voices
+        - keiichi
+        - rena
+        - mion
+        - satoko
+        - rika
+        - shion
+        - satoshi
+        - tomitake
+        - takano
+        - irie
+        - ooishi
+        - hanyuu
+        - akasaka
+        - okonogi
+        - kasai
+        - kimiyoshi
+        - oryou
+        - teppei
+        - rina
+        - chie
+        - tomoe
+        - madoka
+        - yamaoki
+        - fujita
+        - natsumi
+        - chisato
+        - tamako
+        - akira
+        - miyuki
+        - otobe
+        - towada
+        - riku
+        - ouka
+        - kumagai
+        - nagisa
+        - akane
+        - arakawa
+        - maeno
+        in: query
+        name: interactionB
+        type: string
+      - description: Filter by arc number
+        in: query
+        name: episode
+        type: integer
+      - description: Filter by arc name (e.g. onikakushi, watanagashi)
+        in: query
+        name: arc
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.SearchAPIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Search quotes
+      tags:
+      - higurashi
+  /higurashi/stats:
+    get:
+      description: Returns statistics about Higurashi quotes including top speakers
+        and character interactions
+      parameters:
+      - description: Filter by arc number, 0 for all
+        in: query
+        name: episode
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.HigurashiStatsResult'
+      summary: Get quote statistics
+      tags:
+      - higurashi
+  /umineko/browse:
     get:
       description: Browse all quotes with optional filters and pagination
       parameters:
@@ -569,8 +1235,8 @@ paths:
             $ref: '#/definitions/dto.CharacterResponse'
       summary: Browse quotes
       tags:
-      - quotes
-  /characters:
+      - umineko
+  /umineko/characters:
     get:
       description: Returns a map of character IDs to character names
       produces:
@@ -584,22 +1250,8 @@ paths:
             type: object
       summary: List all characters
       tags:
-      - quotes
-  /config:
-    get:
-      description: Returns service configuration flags
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            additionalProperties: true
-            type: object
-      summary: Get configuration
-      tags:
-      - system
-  /context/{audioId}:
+      - umineko
+  /umineko/context/{audioId}:
     get:
       description: Returns surrounding dialogue lines for a specific quote
       parameters:
@@ -642,28 +1294,8 @@ paths:
             $ref: '#/definitions/dto.ErrorResponse'
       summary: Get quote context
       tags:
-      - quotes
-  /health:
-    get:
-      description: Returns the health status of the service including language loading
-        status
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            additionalProperties: true
-            type: object
-        "503":
-          description: Service Unavailable
-          schema:
-            additionalProperties: true
-            type: object
-      summary: Health check
-      tags:
-      - system
-  /nearest-voiced/{audioId}:
+      - umineko
+  /umineko/nearest-voiced/{audioId}:
     get:
       description: Returns the audio ID of the nearest quote with voice audio in a
         given direction
@@ -712,8 +1344,8 @@ paths:
             $ref: '#/definitions/dto.ErrorResponse'
       summary: Find nearest voiced quote
       tags:
-      - quotes
-  /quote/{audioId}:
+      - umineko
+  /umineko/quote/{audioId}:
     get:
       description: Returns a specific quote identified by its audio ID
       parameters:
@@ -740,15 +1372,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/umineko_quote_internal_dto.ParsedQuote'
+            $ref: '#/definitions/umineko_quote_internal_dto.UminekoQuote'
         "404":
           description: Not Found
           schema:
             $ref: '#/definitions/dto.ErrorResponse'
       summary: Get quote by audio ID
       tags:
-      - quotes
-  /quote/index/{index}:
+      - umineko
+  /umineko/quote/index/{index}:
     get:
       description: Returns a specific quote identified by its position index in the
         parsed script
@@ -776,15 +1408,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/umineko_quote_internal_dto.ParsedQuote'
+            $ref: '#/definitions/umineko_quote_internal_dto.UminekoQuote'
         "404":
           description: Not Found
           schema:
             $ref: '#/definitions/dto.ErrorResponse'
       summary: Get quote by index
       tags:
-      - quotes
-  /random:
+      - umineko
+  /umineko/random:
     get:
       description: Returns a random quote with optional filters
       parameters:
@@ -887,15 +1519,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/umineko_quote_internal_dto.ParsedQuote'
+            $ref: '#/definitions/umineko_quote_internal_dto.UminekoQuote'
         "404":
           description: Not Found
           schema:
             $ref: '#/definitions/dto.ErrorResponse'
       summary: Get random quote
       tags:
-      - quotes
-  /search:
+      - umineko
+  /umineko/search:
     get:
       description: Search for quotes by text query with optional filters
       parameters:
@@ -1157,8 +1789,8 @@ paths:
             $ref: '#/definitions/dto.ErrorResponse'
       summary: Search quotes
       tags:
-      - quotes
-  /stats:
+      - umineko
+  /umineko/stats:
     get:
       description: Returns statistics about quotes including top speakers, truth per
         episode, and character interactions
@@ -1176,7 +1808,7 @@ paths:
             $ref: '#/definitions/dto.StatsResult'
       summary: Get quote statistics
       tags:
-      - quotes
+      - umineko
 schemes:
 - https
 - http

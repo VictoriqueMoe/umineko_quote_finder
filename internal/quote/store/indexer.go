@@ -1,4 +1,4 @@
-package quote
+package store
 
 import (
 	"os"
@@ -7,13 +7,19 @@ import (
 	"strings"
 	"sync"
 
-	"umineko_quote/internal/dto"
 	"umineko_quote/internal/quote/language"
 )
 
 var subtitleAudioIDSuffix = regexp.MustCompile(`_s\d+$`)
 
 type (
+	QuoteFields struct {
+		Texts        []string
+		CharacterIDs []string
+		Episodes     []int
+		AudioIDs     []string
+	}
+
 	Indexer interface {
 		LowerTexts(lang language.Language) []string
 		FilteredIndices(lang language.Language, characterID string, episode int) []int
@@ -32,7 +38,7 @@ type (
 		interactionIndex map[language.Language]map[string][]int
 		nonNarratorIndex map[language.Language][]int
 		audioIndex       map[language.Language]map[string]int
-		quotes           map[language.Language][]dto.ParsedQuote
+		episodeArrays    map[language.Language][]int
 		audioDir         string
 		hasAudio         bool
 	}
@@ -45,38 +51,40 @@ type (
 		interactionIdx map[string][]int
 		nonNarratorIdx []int
 		audioIdx       map[string]int
+		episodes       []int
 	}
 )
 
-func NewIndexer(quotes map[language.Language][]dto.ParsedQuote, audioDir string) Indexer {
-	results := make(chan langIndexResult, len(quotes))
+func NewIndexer(fields map[language.Language]QuoteFields, audioDir string) Indexer {
+	results := make(chan langIndexResult, len(fields))
 	var wg sync.WaitGroup
 
-	for lang, parsed := range quotes {
+	for lang, f := range fields {
 		wg.Go(func() {
-			lowerTexts := make([]string, len(parsed))
+			n := len(f.Texts)
+			lowerTexts := make([]string, n)
 			charIdx := make(map[string][]int)
 			epIdx := make(map[int][]int)
 			audioIdx := make(map[string]int)
 			var nonNarratorIdx []int
 
-			for i := 0; i < len(parsed); i++ {
-				lowerTexts[i] = strings.ToLower(parsed[i].Text)
-				charIdx[parsed[i].CharacterID] = append(charIdx[parsed[i].CharacterID], i)
-				if parsed[i].Episode > 0 {
-					epIdx[parsed[i].Episode] = append(epIdx[parsed[i].Episode], i)
+			for i := 0; i < n; i++ {
+				lowerTexts[i] = strings.ToLower(f.Texts[i])
+				charIdx[f.CharacterIDs[i]] = append(charIdx[f.CharacterIDs[i]], i)
+				if f.Episodes[i] > 0 {
+					epIdx[f.Episodes[i]] = append(epIdx[f.Episodes[i]], i)
 				}
-				if parsed[i].CharacterID != "narrator" {
+				if f.CharacterIDs[i] != "narrator" {
 					nonNarratorIdx = append(nonNarratorIdx, i)
 				}
-				if parsed[i].AudioID != "" {
-					for _, id := range strings.Split(parsed[i].AudioID, ", ") {
+				if f.AudioIDs[i] != "" {
+					for _, id := range strings.Split(f.AudioIDs[i], ", ") {
 						audioIdx[id] = i
 					}
 				}
 			}
 
-			interactionIdx := buildInteractionQuoteIndex(parsed)
+			interactionIdx := buildInteractionIndex(f.CharacterIDs, f.Episodes)
 
 			results <- langIndexResult{
 				lang:           lang,
@@ -86,6 +94,7 @@ func NewIndexer(quotes map[language.Language][]dto.ParsedQuote, audioDir string)
 				interactionIdx: interactionIdx,
 				nonNarratorIdx: nonNarratorIdx,
 				audioIdx:       audioIdx,
+				episodes:       f.Episodes,
 			}
 		})
 	}
@@ -117,7 +126,7 @@ func NewIndexer(quotes map[language.Language][]dto.ParsedQuote, audioDir string)
 		interactionIndex: make(map[language.Language]map[string][]int),
 		nonNarratorIndex: make(map[language.Language][]int),
 		audioIndex:       make(map[language.Language]map[string]int),
-		quotes:           quotes,
+		episodeArrays:    make(map[language.Language][]int),
 		audioDir:         audioDir,
 		hasAudio:         hasAudio,
 	}
@@ -129,6 +138,7 @@ func NewIndexer(quotes map[language.Language][]dto.ParsedQuote, audioDir string)
 		idx.interactionIndex[r.lang] = r.interactionIdx
 		idx.nonNarratorIndex[r.lang] = r.nonNarratorIdx
 		idx.audioIndex[r.lang] = r.audioIdx
+		idx.episodeArrays[r.lang] = r.episodes
 	}
 
 	return idx
@@ -151,7 +161,7 @@ func (idx *indexer) InteractionIndices(lang language.Language, interactionA stri
 	if interactionIdx == nil {
 		return []int{}
 	}
-	key, ok := interactionPairKey(interactionA, interactionB)
+	key, ok := InteractionPairKey(interactionA, interactionB)
 	if !ok {
 		return []int{}
 	}
@@ -223,11 +233,11 @@ func (idx *indexer) FilteredIndices(lang language.Language, characterID string, 
 		return []int{}
 	}
 	charIndices := langCharIdx[characterID]
-	quotes := idx.quotes[lang]
+	episodes := idx.episodeArrays[lang]
 
 	var result []int
 	for _, i := range charIndices {
-		if quotes[i].Episode == episode {
+		if episodes[i] == episode {
 			result = append(result, i)
 		}
 	}

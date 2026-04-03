@@ -36,6 +36,7 @@ export function BrowseView({
     const epLabel = filters.episode && filters.episode !== "0" ? ` \u2014 Episode ${filters.episode}` : "";
     const truthLabel =
         filters.truth === "red" ? " \u2014 Red Truth" : filters.truth === "blue" ? " \u2014 Blue Truth" : "";
+    const arcLabel = filters.arc ? ` \u2014 ${filters.arc}` : "";
     const titleName = data.character || "All Characters";
     const isInteractionMode = !!filters.interactionA && !!filters.interactionB;
 
@@ -66,6 +67,7 @@ export function BrowseView({
                     {titleName}
                     {epLabel}
                     {truthLabel}
+                    {arcLabel}
                 </h2>
                 <p className="browse-subtitle">
                     Showing lines {data.offset + 1}-{data.offset + data.quotes.length} of {data.total} in story order

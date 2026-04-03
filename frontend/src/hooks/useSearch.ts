@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import * as api from "../api/endpoints";
 import type { SearchResult } from "../types/api";
-import type { FilterState, Language } from "../types/app";
+import type { FilterState, Game, Language } from "../types/app";
 
 export function useSearch() {
     const [results, setResults] = useState<SearchResult[]>([]);
@@ -14,6 +14,7 @@ export function useSearch() {
 
     const search = useCallback(
         async (
+            game: Game,
             q: string,
             language: Language,
             off: number = 0,
@@ -31,6 +32,7 @@ export function useSearch() {
             setError(null);
             try {
                 const data = await api.searchQuotes(
+                    game,
                     q,
                     language,
                     off,
@@ -39,6 +41,7 @@ export function useSearch() {
                     filters?.interactionB,
                     filters?.episode,
                     filters?.truth,
+                    filters?.arc,
                 );
                 setResults(data.results || []);
                 setQuery(q);

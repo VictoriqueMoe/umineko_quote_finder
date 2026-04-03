@@ -1,16 +1,21 @@
 import { useCallback, useSyncExternalStore } from "react";
 import type { Quote } from "../types/api";
+import type { Game } from "../types/app";
 
 export interface Bookmark {
     quote: Quote;
     savedAt: number;
 }
 
-const STORAGE_KEY = "umineko-bookmarks";
 const EMPTY: Bookmark[] = [];
 
+let currentGame: Game = "umineko";
 let listeners: (() => void)[] = [];
 let cached: Bookmark[] | null = null;
+
+function storageKey(): string {
+    return `${currentGame}-bookmarks`;
+}
 
 function subscribe(listener: () => void) {
     listeners = [...listeners, listener];
@@ -24,7 +29,7 @@ function getSnapshot(): Bookmark[] {
         return cached;
     }
     try {
-        const raw = localStorage.getItem(STORAGE_KEY);
+        const raw = localStorage.getItem(storageKey());
         if (!raw) {
             cached = EMPTY;
             return cached;
@@ -38,13 +43,23 @@ function getSnapshot(): Bookmark[] {
 }
 
 function saveBookmarks(bookmarks: Bookmark[]) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(bookmarks));
+    localStorage.setItem(storageKey(), JSON.stringify(bookmarks));
     cached = bookmarks;
-    listeners.forEach(l => l());
+    for (let i = 0; i < listeners.length; i++) {
+        listeners[i]();
+    }
 }
 
 function bookmarkKey(quote: Quote): string {
     return quote.audioId?.split(", ")[0] ?? quote.text;
+}
+
+export function switchBookmarkGame(game: Game) {
+    currentGame = game;
+    cached = null;
+    for (let i = 0; i < listeners.length; i++) {
+        listeners[i]();
+    }
 }
 
 export function useBookmarks() {

@@ -1,16 +1,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Bar } from "react-chartjs-2";
 import { getGridColour, getThemeColours, zoomConfig } from "./chartConfig";
-import type { StatsResponse } from "../../types/api";
+import { useAppContext } from "../../hooks/useAppContext";
+import type { HigurashiStatsResponse, StatsResponse } from "../../types/api";
 import type { Chart } from "chart.js";
 
 interface InteractionsChartProps {
-    data: StatsResponse;
+    data: StatsResponse | HigurashiStatsResponse;
     onRegister: (id: string, chart: Chart) => void;
     onViewDialogues?: (charA: string, charB: string) => void;
 }
 
 export function InteractionsChart({ data, onRegister, onViewDialogues }: InteractionsChartProps) {
+    const { sortedCharacters } = useAppContext();
     const chartRef = useRef<Chart<"bar"> | null>(null);
     const [charA, setCharA] = useState("");
     const [charB, setCharB] = useState("");
@@ -21,9 +23,14 @@ export function InteractionsChart({ data, onRegister, onViewDialogues }: Interac
         }
     }, [onRegister]);
 
-    const characters = useMemo(
-        () => Object.entries(data.characterNames).sort((a, b) => a[1].localeCompare(b[1])),
-        [data.characterNames],
+    const curatedIds = useMemo(() => new Set(sortedCharacters.map(([id]) => id)), [sortedCharacters]);
+
+    const additionalCharacters = useMemo(
+        () =>
+            Object.entries(data.characterNames)
+                .filter(([id]) => !curatedIds.has(id))
+                .sort((a, b) => a[1].localeCompare(b[1])),
+        [data.characterNames, curatedIds],
     );
 
     const resetPairSelection = useCallback(() => {
@@ -136,11 +143,20 @@ export function InteractionsChart({ data, onRegister, onViewDialogues }: Interac
                         title="Select Character A for pair analysis"
                     >
                         <option value="">Select character</option>
-                        {characters.map(([id, name]) => (
+                        {sortedCharacters.map(([id, name]) => (
                             <option key={id} value={id}>
                                 {name}
                             </option>
                         ))}
+                        {additionalCharacters.length > 0 && (
+                            <optgroup label="Additional Characters">
+                                {additionalCharacters.map(([id, name]) => (
+                                    <option key={id} value={id}>
+                                        {name}
+                                    </option>
+                                ))}
+                            </optgroup>
+                        )}
                     </select>
                 </div>
                 <div className="interactions-control-group">
@@ -155,11 +171,20 @@ export function InteractionsChart({ data, onRegister, onViewDialogues }: Interac
                         title="Select Character B for pair analysis"
                     >
                         <option value="">Select character</option>
-                        {characters.map(([id, name]) => (
+                        {sortedCharacters.map(([id, name]) => (
                             <option key={id} value={id}>
                                 {name}
                             </option>
                         ))}
+                        {additionalCharacters.length > 0 && (
+                            <optgroup label="Additional Characters">
+                                {additionalCharacters.map(([id, name]) => (
+                                    <option key={id} value={id}>
+                                        {name}
+                                    </option>
+                                ))}
+                            </optgroup>
+                        )}
                     </select>
                 </div>
                 <button

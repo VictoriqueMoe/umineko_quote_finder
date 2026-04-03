@@ -30,17 +30,8 @@ func (s *Service) setupConfigRoute(routeGroup fiber.Router) {
 	routeGroup.Get("/config", s.config)
 }
 
-// healthCheck godoc
-//
-//	@Summary		Health check
-//	@Description	Returns the health status of the service including language loading status
-//	@Tags			system
-//	@Produce		json
-//	@Success		200	{object}	map[string]interface{}
-//	@Failure		503	{object}	map[string]interface{}
-//	@Router			/health [get]
 func (s *Service) healthCheck(ctx fiber.Ctx) error {
-	loaded := s.QuoteService.LoadedLanguages()
+	loaded := s.UminekoService.LoadedLanguages()
 
 	languages := make(fiber.Map, len(expectedLanguages))
 	healthy := true
@@ -59,24 +50,21 @@ func (s *Service) healthCheck(ctx fiber.Ctx) error {
 		httpStatus = fiber.StatusServiceUnavailable
 	}
 
+	higurashiLoaded := s.HigurashiService.LoadedLanguages()
+
 	return ctx.Status(httpStatus).JSON(fiber.Map{
 		"status":    status,
 		"service":   "umineko-quote-service",
 		"languages": languages,
-		"hasAudio":  s.QuoteService.HasAudio(),
+		"hasAudio":  s.UminekoService.HasAudio(),
+		"higurashi": fiber.Map{
+			"languages": higurashiLoaded,
+		},
 	})
 }
 
-// config godoc
-//
-//	@Summary		Get configuration
-//	@Description	Returns service configuration flags
-//	@Tags			system
-//	@Produce		json
-//	@Success		200	{object}	map[string]interface{}
-//	@Router			/config [get]
 func (s *Service) config(ctx fiber.Ctx) error {
 	return ctx.JSON(fiber.Map{
-		"hasAudio": s.QuoteService.HasAudio(),
+		"hasAudio": s.UminekoService.HasAudio(),
 	})
 }

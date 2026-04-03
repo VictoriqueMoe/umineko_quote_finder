@@ -1,3 +1,5 @@
+import type { Game } from "../types/app";
+
 const CHARACTER_KEY_TO_ID: Record<string, string> = {
     group_voices: "00",
     kinzo: "01",
@@ -68,16 +70,16 @@ const CHARACTER_ID_TO_KEY = Object.fromEntries(
     Object.entries(CHARACTER_KEY_TO_ID).map(([key, id]) => [id, key]),
 ) as Record<string, string>;
 
-export function normalizeCharacterKey(value: string): string {
-    if (!value) {
-        return "";
+export function normalizeCharacterKey(value: string, game?: Game): string {
+    if (!value || game === "higurashi") {
+        return value;
     }
     return CHARACTER_ID_TO_KEY[value] || value;
 }
 
-export function toCharacterId(value: string): string {
-    if (!value) {
-        return "";
+export function toCharacterId(value: string, game?: Game): string {
+    if (!value || game === "higurashi") {
+        return value;
     }
     return CHARACTER_KEY_TO_ID[value] || value;
 }

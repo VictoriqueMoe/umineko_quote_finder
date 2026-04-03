@@ -1,4 +1,4 @@
-package quote
+package umineko
 
 type Truth string
 

@@ -1,5 +1,6 @@
 import { useAppContext } from "../../hooks/useAppContext";
 import type { Quote } from "../../types/api";
+import type { Game } from "../../types/app";
 import { normalizeCharacterKey, toCharacterId } from "../../utils/characterIds";
 
 interface InteractionResultsProps {
@@ -33,6 +34,7 @@ function buildBlocks(
     offset: number,
     interactionA: string,
     interactionB: string,
+    game: Game,
 ): InteractionBlock[] {
     if (mode === "search") {
         return quotes.map((quote, index) => ({
@@ -42,7 +44,7 @@ function buildBlocks(
         }));
     }
 
-    const pairIds = new Set([toCharacterId(interactionA), toCharacterId(interactionB)]);
+    const pairIds = new Set([toCharacterId(interactionA, game), toCharacterId(interactionB, game)]);
     const blocks: InteractionBlock[] = [];
     let i = 0;
     while (i < quotes.length) {
@@ -106,10 +108,11 @@ export function InteractionResults({
     query,
     onContextQuoteClick,
 }: InteractionResultsProps) {
-    const { characters } = useAppContext();
-    const blocks = buildBlocks(mode, quotes, offset, interactionA, interactionB);
-    const filterText = buildFilterText(characters, characterFilter, episodeFilter, truthFilter);
-    const pairLabel = `${resolveCharacterName(characters, interactionA)} x ${resolveCharacterName(characters, interactionB)}`;
+    const { characters, game } = useAppContext();
+    const charMap = characters.characters;
+    const blocks = buildBlocks(mode, quotes, offset, interactionA, interactionB, game);
+    const filterText = buildFilterText(charMap, characterFilter, episodeFilter, truthFilter);
+    const pairLabel = `${resolveCharacterName(charMap, interactionA)} x ${resolveCharacterName(charMap, interactionB)}`;
 
     const rangeStart = offset + 1;
     const rangeEnd = offset + quotes.length;

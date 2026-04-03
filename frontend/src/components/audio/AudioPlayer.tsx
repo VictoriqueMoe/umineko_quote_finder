@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { audioUrl, combinedAudioUrl, resolveCharId } from "../../api/client";
+import { useAppContext } from "../../hooks/useAppContext";
 import { AudioControls } from "./AudioControls";
 import type { AudioPlayer as AudioPlayerType } from "../../hooks/useAudioPlayer";
 
@@ -11,13 +12,14 @@ interface AudioPlayerProps {
 }
 
 export function AudioPlayer({ audioId, characterId, audioCharMap, audioPlayer }: AudioPlayerProps) {
+    const { game } = useAppContext();
     const [showIndividual, setShowIndividual] = useState(false);
     const ids = audioId.split(", ");
     const hasMultiple = ids.length > 1;
 
     const handleClipClick = (id: string) => {
         const charId = resolveCharId(id, characterId, audioCharMap);
-        const url = audioUrl(charId, id);
+        const url = audioUrl(game, charId, id);
         audioPlayer.play(url, id);
     };
 
@@ -26,7 +28,7 @@ export function AudioPlayer({ audioId, characterId, audioCharMap, audioPlayer }:
             charId: resolveCharId(id, characterId, audioCharMap),
             audioId: id,
         }));
-        const url = combinedAudioUrl(segments);
+        const url = combinedAudioUrl(game, segments);
         audioPlayer.play(url, `combined-${ids.join(",")}`);
     };
 

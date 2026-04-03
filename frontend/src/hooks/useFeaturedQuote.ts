@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import * as api from "../api/endpoints";
 import type { Quote } from "../types/api";
-import type { FilterState, Language } from "../types/app";
+import type { FilterState, Game, Language } from "../types/app";
 
 export function useFeaturedQuote() {
     const [quote, setQuote] = useState<Quote | null>(null);
@@ -10,11 +10,22 @@ export function useFeaturedQuote() {
     const [error, setError] = useState<string | null>(null);
 
     const randomQuote = useCallback(
-        async (language: Language, filters: FilterState): Promise<{ audioId: string | null } | undefined> => {
+        async (
+            game: Game,
+            language: Language,
+            filters: FilterState,
+        ): Promise<{ audioId: string | null } | undefined> => {
             setLoading(true);
             setError(null);
             try {
-                const q = await api.getRandomQuote(language, filters.character, filters.episode, filters.truth);
+                const q = await api.getRandomQuote(
+                    game,
+                    language,
+                    filters.character,
+                    filters.episode,
+                    filters.truth,
+                    filters.arc,
+                );
                 if ("error" in q) {
                     setError("No quotes found for this character.");
                     return undefined;
@@ -34,11 +45,11 @@ export function useFeaturedQuote() {
     );
 
     const lookupByAudioId = useCallback(
-        async (audioId: string, language: Language): Promise<{ audioId: string } | undefined> => {
+        async (game: Game, audioId: string, language: Language): Promise<{ audioId: string } | undefined> => {
             setLoading(true);
             setError(null);
             try {
-                const q = await api.getQuoteByAudioId(audioId, language);
+                const q = await api.getQuoteByAudioId(game, audioId, language);
                 if ("error" in q) {
                     setError(`No quote found for audio ID "${audioId}".`);
                     return undefined;

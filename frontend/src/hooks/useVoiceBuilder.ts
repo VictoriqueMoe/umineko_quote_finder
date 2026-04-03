@@ -108,7 +108,10 @@ export function useVoiceBuilder() {
         if (segments.length === 0) {
             return null;
         }
-        return combinedAudioUrl(segments.map(s => ({ charId: s.charId, audioId: s.audioId })));
+        return combinedAudioUrl(
+            "umineko",
+            segments.map(s => ({ charId: s.charId, audioId: s.audioId })),
+        );
     }, [segments]);
 
     const shareUrl = useMemo(() => {
@@ -136,7 +139,7 @@ export function useVoiceBuilder() {
                 }
 
                 try {
-                    const quote = await getQuoteByAudioId(audioId, language);
+                    const quote = await getQuoteByAudioId("umineko", audioId, language);
                     const clipText = quote.audioTextMap?.[audioId] ?? quote.text;
                     newSegments.push({
                         id: crypto.randomUUID(),

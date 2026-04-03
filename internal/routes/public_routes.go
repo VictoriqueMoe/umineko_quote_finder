@@ -7,10 +7,23 @@ import (
 )
 
 func PublicRoutes(service controllers.Service, app *fiber.App) {
-	apiRoutes := service.GetAPIRoutes()
 	api := app.Group("/api/v1")
-	for i := 0; i < len(apiRoutes); i++ {
-		apiRoutes[i](api)
+
+	umiGroup := api.Group("/umineko")
+	umiRoutes := service.GetUminekoRoutes()
+	for i := 0; i < len(umiRoutes); i++ {
+		umiRoutes[i](umiGroup)
+	}
+
+	higuGroup := api.Group("/higurashi")
+	higuRoutes := service.GetHigurashiRoutes()
+	for i := 0; i < len(higuRoutes); i++ {
+		higuRoutes[i](higuGroup)
+	}
+
+	systemRoutes := service.GetSystemRoutes()
+	for i := 0; i < len(systemRoutes); i++ {
+		systemRoutes[i](api)
 	}
 
 	pageRoutes := service.GetPageRoutes()

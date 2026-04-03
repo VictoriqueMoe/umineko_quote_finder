@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
 import { ogImageUrl } from "../../api/client";
+import { useAppContext } from "../../hooks/useAppContext";
 
 interface DownloadButtonProps {
     audioId: string;
@@ -7,13 +8,14 @@ interface DownloadButtonProps {
 }
 
 export function DownloadButton({ audioId, lang }: DownloadButtonProps) {
+    const { game } = useAppContext();
     const [downloading, setDownloading] = useState(false);
     const firstId = audioId.split(", ")[0];
 
     const handleClick = useCallback(async () => {
         setDownloading(true);
         try {
-            const url = ogImageUrl(firstId, lang ?? "en", true);
+            const url = ogImageUrl(game, firstId, lang ?? "en", true);
             const response = await fetch(url, { cache: "no-cache" });
             if (!response.ok) {
                 throw new Error(`Failed to fetch image: ${response.status}`);
@@ -32,7 +34,7 @@ export function DownloadButton({ audioId, lang }: DownloadButtonProps) {
         } finally {
             setDownloading(false);
         }
-    }, [firstId, lang]);
+    }, [game, firstId, lang]);
 
     return (
         <button className="share-btn" onClick={handleClick} disabled={downloading}>

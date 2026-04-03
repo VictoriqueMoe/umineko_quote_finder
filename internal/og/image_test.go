@@ -102,12 +102,12 @@ func TestGenerateFullWithHTMLDoesNotTruncate(t *testing.T) {
 	gen := NewImageGenerator()
 	html := longText(400)
 
-	truncated, err := gen.Generate("test_html_trunc", language.English, "", html, "Beatrice", 1, "", false)
+	truncated, err := gen.Generate("test_html_trunc", language.English, "", html, "Beatrice", false, "Test Brand", "Episode 1")
 	if err != nil {
 		t.Fatalf("Generate(full=false) failed: %v", err)
 	}
 
-	full, err := gen.Generate("test_html_trunc", language.English, "", html, "Beatrice", 1, "", true)
+	full, err := gen.Generate("test_html_trunc", language.English, "", html, "Beatrice", true, "Test Brand", "Episode 1")
 	if err != nil {
 		t.Fatalf("Generate(full=true) failed: %v", err)
 	}
@@ -121,12 +121,12 @@ func TestGenerateCachesSeparately(t *testing.T) {
 	gen := NewImageGenerator()
 	html := longText(400)
 
-	first, err := gen.Generate("test_cache", language.English, "", html, "Beatrice", 1, "", false)
+	first, err := gen.Generate("test_cache", language.English, "", html, "Beatrice", false, "Test Brand", "Episode 1")
 	if err != nil {
 		t.Fatalf("first Generate failed: %v", err)
 	}
 
-	second, err := gen.Generate("test_cache", language.English, "", html, "Beatrice", 1, "", false)
+	second, err := gen.Generate("test_cache", language.English, "", html, "Beatrice", false, "Test Brand", "Episode 1")
 	if err != nil {
 		t.Fatalf("second Generate failed: %v", err)
 	}
@@ -135,7 +135,7 @@ func TestGenerateCachesSeparately(t *testing.T) {
 		t.Error("same params should return cached (identical) result")
 	}
 
-	full, err := gen.Generate("test_cache", language.English, "", html, "Beatrice", 1, "", true)
+	full, err := gen.Generate("test_cache", language.English, "", html, "Beatrice", true, "Test Brand", "Episode 1")
 	if err != nil {
 		t.Fatalf("full Generate failed: %v", err)
 	}
@@ -149,12 +149,12 @@ func TestGenerateShortQuoteIdenticalFullOrNot(t *testing.T) {
 	gen := NewImageGenerator()
 	html := "Short quote"
 
-	truncated, err := gen.Generate("test_short", language.English, "", html, "Beatrice", 1, "", false)
+	truncated, err := gen.Generate("test_short", language.English, "", html, "Beatrice", false, "Test Brand", "Episode 1")
 	if err != nil {
 		t.Fatalf("Generate(full=false) failed: %v", err)
 	}
 
-	full, err := gen.Generate("test_short", language.English, "", html, "Beatrice", 1, "", true)
+	full, err := gen.Generate("test_short", language.English, "", html, "Beatrice", true, "Test Brand", "Episode 1")
 	if err != nil {
 		t.Fatalf("Generate(full=true) failed: %v", err)
 	}

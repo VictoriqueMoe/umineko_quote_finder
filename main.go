@@ -7,7 +7,8 @@ import (
 	"umineko_quote/internal/audio"
 	"umineko_quote/internal/controllers"
 	"umineko_quote/internal/og"
-	"umineko_quote/internal/quote"
+	"umineko_quote/internal/quote/higurashi"
+	"umineko_quote/internal/quote/umineko"
 	"umineko_quote/internal/routes"
 	"umineko_quote/internal/utils"
 
@@ -24,9 +25,9 @@ import (
 //go:embed static/*
 var staticFiles embed.FS
 
-// @title			Umineko Quote API
+// @title			When They Cry Quote API
 // @version		1.0
-// @description	API for searching and browsing Umineko no Naku Koro ni quotes
+// @description	API for searching and browsing quotes from Umineko no Naku Koro ni and Higurashi no Naku Koro ni
 // @contact.name	Featherine Augustus Aurora
 // @contact.url	https://x.com/FeatherineFAA
 // @contact.email	FAA@auaurora.moe
@@ -42,14 +43,15 @@ func main() {
 		TimeFormat: "2006-01-02 15:04:05",
 	}))
 
-	quoteService := quote.NewService()
+	uminekoService := umineko.NewService()
+	higurashiService := higurashi.NewService()
 	ogGen := og.NewImageGenerator()
 	audioCombiner, err := audio.NewCombiner()
 	if err != nil {
 		log.Fatalf("failed to initialize audio combiner: %v", err)
 	}
 	htmlBytes, _ := staticFiles.ReadFile("static/index.html")
-	service := controllers.NewService(quoteService, ogGen, audioCombiner, string(htmlBytes))
+	service := controllers.NewService(uminekoService, higurashiService, ogGen, audioCombiner, string(htmlBytes))
 	routes.PublicRoutes(service, app)
 
 	app.Get("/swagger/*", swaggo.HandlerDefault)

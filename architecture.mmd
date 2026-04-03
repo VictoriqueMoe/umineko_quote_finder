@@ -1,0 +1,192 @@
+graph TB
+    subgraph Frontend["Frontend — React 19 / TypeScript / Vite"]
+        direction TB
+        App["App.tsx"]
+        subgraph Contexts["State Management"]
+            AppCtx["AppContext<br/>(language, characters, audio)"]
+            ThemeCtx["ThemeContext<br/>(light/dark, particles)"]
+        end
+        subgraph Hooks["Custom Hooks"]
+            useSearch["useSearch"]
+            useBrowse["useBrowse"]
+            useStats["useStats"]
+            useAudio["useAudioPlayer"]
+            useVB["useVoiceBuilder"]
+            useURL["useUrlState"]
+            useFQ["useFeaturedQuote"]
+        end
+        subgraph Components["UI Components"]
+            SearchUI["Search UI"]
+            BrowseUI["Browse / Quotes"]
+            StatsUI["Stats (Chart.js)"]
+            AudioPlayer["Audio Player"]
+            VoiceBuilder["Voice Builder<br/>(@dnd-kit)"]
+        end
+        APIClient["API Client<br/>(fetch → /api/v1/*)"]
+    end
+
+    subgraph HTTPLayer["HTTP Layer — Go Fiber v3 :3000"]
+        direction TB
+        Router["Router<br/>PublicRoutes()"]
+        subgraph Controllers["Controllers"]
+            QuoteCtrl["Quote Controller"]
+            OGCtrl["OG Controller"]
+            SystemCtrl["System Controller"]
+            AudioCtrl["Audio Controller"]
+            PageCtrl["Page Controller"]
+        end
+        Swagger["Swagger UI<br/>/swagger/*"]
+        SPA["Static SPA<br/>Serving"]
+    end
+
+    subgraph QuoteService["Quote Service & Search"]
+        direction TB
+        Service["QuoteService"]
+        subgraph Indexing["Indexing System"]
+            Indexer["Concurrent Indexer<br/>(goroutines per lang)"]
+            CharIdx["characterIndex"]
+            EpIdx["episodeIndex"]
+            AudioIdx["audioIndex"]
+            NonNarIdx["nonNarratorIndex"]
+            LowerIdx["quoteLowerTexts"]
+        end
+        subgraph SearchSys["Search"]
+            SearchEng["Search Engine<br/>(concurrent workers)"]
+            Filters["Filter Chain<br/>(char / episode / truth / text)"]
+        end
+        StatsAgg["Stats Aggregator<br/>(speakers, interactions,<br/>presence, truth/ep)"]
+        TruthClass["Red / Blue Truth<br/>Classifier"]
+    end
+
+    subgraph LexarPipeline["Lexar — Lexical Analysis Pipeline"]
+        direction TB
+        Lexer["Lexer<br/>(line / dialog mode)"]
+        Parser["Parser"]
+        AST["AST<br/>(Script → Lines → Elements)"]
+        Extractor["Extractor"]
+        Validator["Validator"]
+        subgraph Transformers["Transformers"]
+            HTMLTx["HTML Transformer<br/>(truth coloring)"]
+            PlainTx["Plaintext Transformer"]
+        end
+    end
+
+    subgraph DataLoading["Data Loading — go:embed"]
+        direction TB
+        ScriptLoader["ScriptLoader<br/>(decode .file format)"]
+        subgraph LangFiles["Embedded Language Files"]
+            EN["en.file"]
+            JA["ja.file"]
+            ES["es.file"]
+            PT["pt.file"]
+        end
+        SubParser["Subtitle Parser<br/>(ASS format)"]
+        SubFiles[("sub/*.ass")]
+        Mutations["Mutation Pipeline"]
+    end
+
+    subgraph AudioProc["Audio Processing"]
+        direction TB
+        Combiner["Audio Combiner<br/>(max 20 segments)"]
+        OGGParser["OGG Page Parser<br/>(headers, granules, CRC32)"]
+        VoiceFiles[("voice/*.ogg<br/>per character")]
+    end
+
+    subgraph OGImage["Open Graph Image Generation"]
+        direction TB
+        ImgGen["Image Generator<br/>(fogleman/gg)<br/>1200×630 PNG"]
+        Fonts["Embedded Fonts<br/>(NotoSansJP, Regular, Bold)"]
+        ImgCache["Image Cache<br/>(sync.Map)"]
+    end
+
+    subgraph CICD["CI / CD Pipeline"]
+        direction TB
+        GHActions["GitHub Actions"]
+        subgraph CIJobs["CI Jobs"]
+            FECheck["Frontend<br/>(Prettier, ESLint, TS, Vite)"]
+            BECheck["Backend<br/>(go test, build, swag)"]
+        end
+        Docker["Docker Multi-Stage<br/>(Node build → Go build → Alpine)"]
+        GHCR[("GHCR<br/>ghcr.io")]
+        SSHDeploy["SSH Deploy<br/>+ Docker Compose"]
+    end
+
+    subgraph DTOs["Data Transfer Objects"]
+        ParsedQuote["ParsedQuote"]
+        SearchResult["SearchResult"]
+        SearchResp["SearchResponse"]
+        ContextResp["ContextResponse"]
+        StatsResult["StatsResult"]
+    end
+
+    App --> Contexts
+    App --> Components
+    Components --> Hooks
+    Hooks --> APIClient
+
+    APIClient -->|"HTTP /api/v1/*"| Router
+    Router --> QuoteCtrl
+    Router --> OGCtrl
+    Router --> AudioCtrl
+    Router --> SystemCtrl
+    Router --> PageCtrl
+    Router --> Swagger
+    Router --> SPA
+
+    QuoteCtrl -->|"delegates"| Service
+    AudioCtrl -->|"audio requests"| Combiner
+    OGCtrl -->|"generates"| ImgGen
+    PageCtrl -->|"OG preview"| Service
+
+    Service --> SearchEng
+    Service --> Indexer
+    Service --> StatsAgg
+    Service --> TruthClass
+    SearchEng --> Filters
+    SearchEng --> Indexer
+    Indexer --> CharIdx
+    Indexer --> EpIdx
+    Indexer --> AudioIdx
+    Indexer --> NonNarIdx
+    Indexer --> LowerIdx
+
+    Service -->|"parses via"| Lexer
+    Lexer -->|"tokens"| Parser
+    Parser -->|"builds"| AST
+    AST --> Extractor
+    AST --> Validator
+    Extractor --> HTMLTx
+    Extractor --> PlainTx
+
+    ScriptLoader -->|"decodes"| EN
+    ScriptLoader -->|"decodes"| JA
+    ScriptLoader -->|"decodes"| ES
+    ScriptLoader -->|"decodes"| PT
+    ScriptLoader -->|"feeds"| Lexer
+    SubParser -->|"parses"| SubFiles
+    SubParser -->|"merges into"| Mutations
+    Mutations -->|"post-processes"| Service
+
+    Service --> DTOs
+
+    Combiner --> OGGParser
+    OGGParser -->|"reads"| VoiceFiles
+
+    ImgGen --> Fonts
+    ImgGen -->|"caches in"| ImgCache
+
+    GHActions --> FECheck
+    GHActions --> BECheck
+    GHActions -->|"triggers"| Docker
+    Docker -->|"pushes"| GHCR
+    Docker -->|"deploys via"| SSHDeploy
+
+    style Frontend fill:#e0f7fa,stroke:#00838f,color:#004d40
+    style HTTPLayer fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
+    style QuoteService fill:#fffde7,stroke:#f9a825,color:#6d4c00
+    style LexarPipeline fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+    style DataLoading fill:#ede7f6,stroke:#6a1b9a,color:#4a148c
+    style AudioProc fill:#fce4ec,stroke:#c62828,color:#b71c1c
+    style OGImage fill:#fff3e0,stroke:#e65100,color:#bf360c
+    style CICD fill:#f3e5f5,stroke:#7b1fa2,color:#4a148c
+    style DTOs fill:#eceff1,stroke:#546e7a,color:#37474f

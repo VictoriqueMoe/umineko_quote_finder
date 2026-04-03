@@ -8,7 +8,7 @@ import retrofit2.http.Query
 
 interface UminekoApi {
 
-    @GET("/api/v1/search")
+    @GET("/api/v1/umineko/search")
     suspend fun search(
         @Query("q") query: String,
         @Query("lang") lang: String = "en",
@@ -19,7 +19,7 @@ interface UminekoApi {
         @Query("truth") truth: String? = null
     ): Response<SearchResponseDto>
 
-    @GET("/api/v1/random")
+    @GET("/api/v1/umineko/random")
     suspend fun random(
         @Query("lang") lang: String = "en",
         @Query("character") character: String? = null,
@@ -27,7 +27,7 @@ interface UminekoApi {
         @Query("truth") truth: String? = null
     ): Response<QuoteDto>
 
-    @GET("/api/v1/browse")
+    @GET("/api/v1/umineko/browse")
     suspend fun browse(
         @Query("lang") lang: String = "en",
         @Query("limit") limit: Int = 30,
@@ -37,23 +37,23 @@ interface UminekoApi {
         @Query("truth") truth: String? = null
     ): Response<BrowseResponseDto>
 
-    @GET("/api/v1/quote/{audioId}")
+    @GET("/api/v1/umineko/quote/{audioId}")
     suspend fun getQuote(
         @Path("audioId") audioId: String,
         @Query("lang") lang: String = "en"
     ): Response<QuoteDto>
 
-    @GET("/api/v1/context/{audioId}")
+    @GET("/api/v1/umineko/context/{audioId}")
     suspend fun getContext(
         @Path("audioId") audioId: String,
         @Query("lang") lang: String = "en",
         @Query("lines") lines: Int = 5
     ): Response<ContextResponseDto>
 
-    @GET("/api/v1/characters")
-    suspend fun getCharacters(): Response<Map<String, String>>
+    @GET("/api/v1/umineko/characters")
+    suspend fun getCharacters(): Response<CharactersResponseDto>
 
-    @GET("/api/v1/stats")
+    @GET("/api/v1/umineko/stats")
     suspend fun getStats(
         @Query("episode") episode: Int? = null
     ): Response<StatsResponseDto>

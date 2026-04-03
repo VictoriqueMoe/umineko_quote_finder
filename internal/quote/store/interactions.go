@@ -1,12 +1,10 @@
-package quote
+package store
 
 import (
 	"slices"
-
-	"umineko_quote/internal/dto"
 )
 
-func interactionPairKey(charA string, charB string) (string, bool) {
+func InteractionPairKey(charA string, charB string) (string, bool) {
 	if charA == "" || charB == "" || charA == charB {
 		return "", false
 	}
@@ -16,21 +14,21 @@ func interactionPairKey(charA string, charB string) (string, bool) {
 	return charA + "|" + charB, true
 }
 
-func buildInteractionQuoteIndex(quotes []dto.ParsedQuote) map[string][]int {
+func buildInteractionIndex(characterIDs []string, episodes []int) map[string][]int {
 	sets := make(map[string]map[int]any)
 
 	var prevCharID string
 	var prevEpisode int
 	var prevIndex int
 
-	for i, q := range quotes {
-		if q.CharacterID == "narrator" {
+	for i := 0; i < len(characterIDs); i++ {
+		if characterIDs[i] == "narrator" {
 			prevCharID = ""
 			continue
 		}
 
-		if prevCharID != "" && prevEpisode == q.Episode {
-			key, ok := interactionPairKey(prevCharID, q.CharacterID)
+		if prevCharID != "" && prevEpisode == episodes[i] {
+			key, ok := InteractionPairKey(prevCharID, characterIDs[i])
 			if ok {
 				if sets[key] == nil {
 					sets[key] = make(map[int]any)
@@ -40,8 +38,8 @@ func buildInteractionQuoteIndex(quotes []dto.ParsedQuote) map[string][]int {
 			}
 		}
 
-		prevCharID = q.CharacterID
-		prevEpisode = q.Episode
+		prevCharID = characterIDs[i]
+		prevEpisode = episodes[i]
 		prevIndex = i
 	}
 

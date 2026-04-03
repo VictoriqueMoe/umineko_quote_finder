@@ -1,6 +1,9 @@
 export interface Quote {
     text: string;
     textHtml?: string;
+    textJp?: string;
+    textJpHtml?: string;
+    arc?: string;
     character: string;
     characterId?: string;
     episode?: number;
@@ -95,8 +98,19 @@ export interface StatsResponse {
     episodeNames: Record<number, string>;
 }
 
+export interface HigurashiStatsResponse {
+    topSpeakers: TopSpeaker[];
+    linesPerArc: Record<string, Record<string, number>>;
+    interactions: Interaction[];
+    interactionCounts: Record<string, number>;
+    characterNames: Record<string, string>;
+}
+
 export interface ConfigResponse {
     hasAudio: boolean;
 }
 
-export type CharactersResponse = Record<string, string>;
+export interface CharactersResponse {
+    characters: Record<string, string>;
+    additional: Record<string, string>;
+}

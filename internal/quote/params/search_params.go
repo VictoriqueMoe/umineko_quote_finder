@@ -3,8 +3,6 @@ package params
 import (
 	"strings"
 	"umineko_quote/internal/quote/language"
-
-	"github.com/VictoriqueMoe/umineko_script_parser/quote/character"
 )
 
 type SearchParams struct {
@@ -12,9 +10,8 @@ type SearchParams struct {
 	Lang         language.Language
 	Limit        int
 	Offset       int
-	Character    character.Character
+	CharacterID  string
 	Episode      int
-	Truth        string
 	InteractionA string
 	InteractionB string
 }
@@ -24,9 +21,8 @@ func NewSearchParams(
 	lang language.Language,
 	limit int,
 	offset int,
-	characterParam string,
+	characterID string,
 	episode int,
-	truthParam string,
 	interactionAParam string,
 	interactionBParam string,
 ) SearchParams {
@@ -35,10 +31,9 @@ func NewSearchParams(
 		Lang:         lang,
 		Limit:        limit,
 		Offset:       offset,
-		Character:    character.Character(strings.TrimSpace(characterParam)),
+		CharacterID:  strings.TrimSpace(characterID),
 		Episode:      episode,
-		Truth:        strings.TrimSpace(truthParam),
-		InteractionA: character.Character(strings.TrimSpace(interactionAParam)).ID(),
-		InteractionB: character.Character(strings.TrimSpace(interactionBParam)).ID(),
+		InteractionA: strings.TrimSpace(interactionAParam),
+		InteractionB: strings.TrimSpace(interactionBParam),
 	}
 }

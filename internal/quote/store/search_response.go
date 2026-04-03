@@ -1,4 +1,4 @@
-package quote
+package store
 
 import "umineko_quote/internal/dto"
 

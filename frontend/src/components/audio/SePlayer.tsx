@@ -1,4 +1,5 @@
 import { seAudioUrl } from "../../api/client";
+import { useAppContext } from "../../hooks/useAppContext";
 import type { SoundEffect } from "../../types/api";
 import type { AudioPlayer } from "../../hooks/useAudioPlayer";
 
@@ -8,6 +9,7 @@ interface SePlayerProps {
 }
 
 export function SePlayer({ soundEffects, audioPlayer }: SePlayerProps) {
+    const { game } = useAppContext();
     return (
         <div className="se-player">
             <span className="se-label">Sound Effects</span>
@@ -19,7 +21,7 @@ export function SePlayer({ soundEffects, audioPlayer }: SePlayerProps) {
                         <button
                             key={`${se.filename}-${se.afterClip}`}
                             className={`se-clip-btn${isActive ? " active" : ""}`}
-                            onClick={() => audioPlayer.play(seAudioUrl(se.filename), id)}
+                            onClick={() => audioPlayer.play(seAudioUrl(game, se.filename), id)}
                         >
                             {`\u266A ${se.filename}.ogg`}
                         </button>

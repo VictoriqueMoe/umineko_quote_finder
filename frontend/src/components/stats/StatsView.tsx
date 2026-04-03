@@ -1,31 +1,28 @@
 import { useCallback, useRef } from "react";
-import type { StatsResponse } from "../../types/api";
+import type { HigurashiStatsResponse, StatsResponse } from "../../types/api";
+import type { Game } from "../../types/app";
 import { StatsCard } from "./StatsCard";
 import { TopSpeakersChart } from "./TopSpeakersChart";
 import { LinesPerEpisodeChart } from "./LinesPerEpisodeChart";
 import { TruthChart } from "./TruthChart";
 import { InteractionsChart } from "./InteractionsChart";
 import { PresenceChart } from "./PresenceChart";
+import { LinesPerArcChart } from "./LinesPerArcChart";
 import type { Chart } from "chart.js";
 
 interface StatsViewProps {
-    data: StatsResponse;
+    data: StatsResponse | HigurashiStatsResponse;
+    game: Game;
     episode: string;
     onViewInteractionDialogues?: (charA: string, charB: string) => void;
 }
 
-export function StatsView({ data, episode, onViewInteractionDialogues }: StatsViewProps) {
+function isUminekoStats(data: StatsResponse | HigurashiStatsResponse): data is StatsResponse {
+    return "linesPerEpisode" in data;
+}
+
+export function StatsView({ data, game, episode, onViewInteractionDialogues }: StatsViewProps) {
     const chartsRef = useRef<Map<string, Chart>>(new Map());
-
-    const ep = parseInt(episode) || 0;
-    const epLabel =
-        ep > 0
-            ? data.episodeNames[ep]
-                ? `Episode ${ep} \u2014 ${data.episodeNames[ep]}`
-                : `Episode ${ep}`
-            : "All Episodes";
-
-    const hasAllEpisodes = data.linesPerEpisode && data.linesPerEpisode.length > 0;
 
     const registerChart = useCallback((id: string, chart: Chart) => {
         chartsRef.current.set(id, chart);
@@ -38,24 +35,81 @@ export function StatsView({ data, episode, onViewInteractionDialogues }: StatsVi
         }
     }, []);
 
+    if (game === "umineko" && isUminekoStats(data)) {
+        const ep = parseInt(episode) || 0;
+        const epLabel =
+            ep > 0
+                ? data.episodeNames[ep]
+                    ? `Episode ${ep} \u2014 ${data.episodeNames[ep]}`
+                    : `Episode ${ep}`
+                : "All Episodes";
+        const hasAllEpisodes = data.linesPerEpisode && data.linesPerEpisode.length > 0;
+
+        return (
+            <>
+                <div className="stats-header">
+                    <h2 className="stats-title">Umineko Statistics</h2>
+                    <p className="stats-subtitle">{epLabel} &mdash; English script lines</p>
+                </div>
+                <div className="stats-grid">
+                    <StatsCard id="chartTopSpeakers" title="Top Speakers" tall wide onResetZoom={handleResetZoom}>
+                        <TopSpeakersChart data={data} onRegister={registerChart} />
+                    </StatsCard>
+                    {hasAllEpisodes && (
+                        <StatsCard id="chartLinesPerEpisode" title="Lines per Episode" onResetZoom={handleResetZoom}>
+                            <LinesPerEpisodeChart data={data} onRegister={registerChart} />
+                        </StatsCard>
+                    )}
+                    {hasAllEpisodes && (
+                        <StatsCard id="chartTruth" title="Red Truth &amp; Blue Truth" onResetZoom={handleResetZoom}>
+                            <TruthChart data={data} onRegister={registerChart} />
+                        </StatsCard>
+                    )}
+                    <StatsCard
+                        id="chartInteractions"
+                        title="Character Interactions"
+                        tall
+                        wide
+                        chartClassName="stats-chart-interactions"
+                        onResetZoom={handleResetZoom}
+                    >
+                        <InteractionsChart
+                            data={data}
+                            onRegister={registerChart}
+                            onViewDialogues={onViewInteractionDialogues}
+                        />
+                    </StatsCard>
+                    {hasAllEpisodes && (
+                        <StatsCard
+                            id="chartPresence"
+                            title="Character Presence by Episode"
+                            wide
+                            onResetZoom={handleResetZoom}
+                        >
+                            <PresenceChart data={data} onRegister={registerChart} />
+                        </StatsCard>
+                    )}
+                </div>
+            </>
+        );
+    }
+
+    const hData = data as HigurashiStatsResponse;
+    const hasArcs = hData.linesPerArc && Object.keys(hData.linesPerArc).length > 0;
+
     return (
         <>
             <div className="stats-header">
-                <h2 className="stats-title">Umineko Statistics</h2>
-                <p className="stats-subtitle">{epLabel} &mdash; English script lines</p>
+                <h2 className="stats-title">Higurashi Statistics</h2>
+                <p className="stats-subtitle">All Arcs &mdash; English script lines</p>
             </div>
             <div className="stats-grid">
                 <StatsCard id="chartTopSpeakers" title="Top Speakers" tall wide onResetZoom={handleResetZoom}>
-                    <TopSpeakersChart data={data} onRegister={registerChart} />
+                    <TopSpeakersChart data={hData} onRegister={registerChart} />
                 </StatsCard>
-                {hasAllEpisodes && (
-                    <StatsCard id="chartLinesPerEpisode" title="Lines per Episode" onResetZoom={handleResetZoom}>
-                        <LinesPerEpisodeChart data={data} onRegister={registerChart} />
-                    </StatsCard>
-                )}
-                {hasAllEpisodes && (
-                    <StatsCard id="chartTruth" title="Red Truth &amp; Blue Truth" onResetZoom={handleResetZoom}>
-                        <TruthChart data={data} onRegister={registerChart} />
+                {hasArcs && (
+                    <StatsCard id="chartLinesPerArc" title="Lines per Arc" wide onResetZoom={handleResetZoom}>
+                        <LinesPerArcChart data={hData} onRegister={registerChart} />
                     </StatsCard>
                 )}
                 <StatsCard
@@ -67,21 +121,11 @@ export function StatsView({ data, episode, onViewInteractionDialogues }: StatsVi
                     onResetZoom={handleResetZoom}
                 >
                     <InteractionsChart
-                        data={data}
+                        data={hData}
                         onRegister={registerChart}
                         onViewDialogues={onViewInteractionDialogues}
                     />
                 </StatsCard>
-                {hasAllEpisodes && (
-                    <StatsCard
-                        id="chartPresence"
-                        title="Character Presence by Episode"
-                        wide
-                        onResetZoom={handleResetZoom}
-                    >
-                        <PresenceChart data={data} onRegister={registerChart} />
-                    </StatsCard>
-                )}
             </div>
         </>
     );

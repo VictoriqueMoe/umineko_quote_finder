@@ -9,7 +9,11 @@ export function resolveLanguage(lang: Language): Exclude<Language, "auto"> {
     return lang;
 }
 
-export type ThemeType = "featherine" | "bernkastel" | "lambdadelta";
+export type Game = "umineko" | "higurashi";
+
+export type UminekoTheme = "featherine" | "bernkastel" | "lambdadelta";
+export type HigurashiTheme = "rika" | "mion" | "satoko";
+export type ThemeType = UminekoTheme | HigurashiTheme;
 
 export type ViewMode = "search" | "browse" | "stats" | "featured" | "quoteLookup" | "voiceBuilder" | "bookmarks";
 
@@ -19,4 +23,5 @@ export interface FilterState {
     interactionB: string;
     episode: string;
     truth: string;
+    arc: string;
 }

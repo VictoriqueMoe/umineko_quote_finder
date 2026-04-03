@@ -1,10 +1,12 @@
-import type { FilterState, Language, ViewMode } from "../types/app";
+import type { FilterState, Game, Language, ViewMode } from "../types/app";
 import { normalizeCharacterKey } from "../utils/characterIds";
 
 interface CommonParams {
     lang: Language;
+    game: Game;
     episode: string;
     truth: string;
+    arc: string;
     interactionA: string;
     interactionB: string;
     offset: number;
@@ -32,7 +34,7 @@ interface SerializeContext {
 interface RouteRule {
     viewMode: ViewMode;
     match: (params: URLSearchParams) => boolean;
-    parse: (params: URLSearchParams) => Record<string, string>;
+    parse: (params: URLSearchParams, game: Game) => Record<string, string>;
     serialize: (params: URLSearchParams, ctx: SerializeContext) => void;
 }
 
@@ -40,7 +42,7 @@ const ROUTES: RouteRule[] = [
     {
         viewMode: "stats",
         match: p => p.get("stats") === "1",
-        parse: () => ({}),
+        parse: (_p, _g) => ({}),
         serialize: p => {
             p.set("stats", "1");
         },
@@ -48,7 +50,7 @@ const ROUTES: RouteRule[] = [
     {
         viewMode: "voiceBuilder",
         match: p => !!p.get("builder"),
-        parse: p => ({ segments: p.get("builder")! }),
+        parse: (p, _g) => ({ segments: p.get("builder")! }),
         serialize: p => {
             p.set("builder", "1");
         },
@@ -56,7 +58,7 @@ const ROUTES: RouteRule[] = [
     {
         viewMode: "quoteLookup",
         match: p => !!p.get("quote"),
-        parse: p => ({ audioId: p.get("quote")! }),
+        parse: (p, _g) => ({ audioId: p.get("quote")! }),
         serialize: (p, ctx) => {
             if (ctx.currentAudioId) {
                 p.set("quote", ctx.currentAudioId);
@@ -66,9 +68,9 @@ const ROUTES: RouteRule[] = [
     {
         viewMode: "browse",
         match: p => !!p.get("browse"),
-        parse: p => {
+        parse: (p, g) => {
             const browse = p.get("browse")!;
-            return { character: browse !== "1" ? normalizeCharacterKey(browse) : "" };
+            return { character: browse !== "1" ? normalizeCharacterKey(browse, g) : "" };
         },
         serialize: (p, ctx) => {
             p.set("browse", ctx.filters.character || "1");
@@ -81,9 +83,9 @@ const ROUTES: RouteRule[] = [
     {
         viewMode: "search",
         match: p => !!p.get("q"),
-        parse: p => ({
+        parse: (p, g) => ({
             query: p.get("q")!,
-            character: normalizeCharacterKey(p.get("character") || ""),
+            character: normalizeCharacterKey(p.get("character") || "", g),
         }),
         serialize: (p, ctx) => {
             if (ctx.searchQuery.trim()) {
@@ -104,16 +106,19 @@ export function parseRoute(search: string): ParsedRoute {
     const params = new URLSearchParams(search);
 
     const lang = (params.get("lang") || "auto") as Language;
+    const gameParam = params.get("game");
+    const game: Game = gameParam === "higurashi" ? "higurashi" : "umineko";
     const episode = params.get("episode") || "0";
     const truth = params.get("truth") || "";
-    const interactionA = normalizeCharacterKey(params.get("interactionA") || "");
-    const interactionB = normalizeCharacterKey(params.get("interactionB") || "");
+    const arc = params.get("arc") || "";
+    const interactionA = normalizeCharacterKey(params.get("interactionA") || "", game);
+    const interactionB = normalizeCharacterKey(params.get("interactionB") || "", game);
     const offset = parseInt(params.get("offset") || "0") || 0;
-    const common = { lang, episode, truth, interactionA, interactionB, offset };
+    const common = { lang, game, episode, truth, arc, interactionA, interactionB, offset };
 
     for (const route of ROUTES) {
         if (route.match(params)) {
-            return { ...common, viewMode: route.viewMode, ...route.parse(params) } as ParsedRoute;
+            return { ...common, viewMode: route.viewMode, ...route.parse(params, game) } as ParsedRoute;
         }
     }
 
@@ -129,9 +134,14 @@ export function buildUrl(
         browseOffset: number;
     },
     language: Language,
+    game: Game,
     searchQuery: string,
 ): string {
     const params = new URLSearchParams();
+
+    if (game !== "umineko") {
+        params.set("game", game);
+    }
 
     const route = ROUTES.find(r => r.viewMode === state.viewMode);
     if (route) {
@@ -143,6 +153,9 @@ export function buildUrl(
     }
     if (state.filters.truth) {
         params.set("truth", state.filters.truth);
+    }
+    if (state.filters.arc) {
+        params.set("arc", state.filters.arc);
     }
 
     const offset = state.viewMode === "browse" ? state.browseOffset : state.searchOffset;

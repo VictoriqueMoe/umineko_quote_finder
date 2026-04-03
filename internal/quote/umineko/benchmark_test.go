@@ -1,11 +1,11 @@
-package quote
+package umineko
 
 import (
 	"testing"
-	"umineko_quote/internal/dto"
 	"umineko_quote/internal/quote/language"
+	"umineko_quote/internal/quote/store"
 
-	"github.com/VictoriqueMoe/umineko_script_parser/quote/character"
+	"github.com/VictoriqueMoe/umineko_script_parser/umineko/character"
 )
 
 func BenchmarkSearch_BroadQuery(b *testing.B) {
@@ -100,7 +100,7 @@ func BenchmarkRandom_WithCharacter(b *testing.B) {
 	svc := testService
 	b.ResetTimer()
 	for b.Loop() {
-		svc.Random(language.English, character.Beatrice, 0, TruthAll)
+		svc.Random(language.English, character.Beatrice.ID(), 0, TruthAll)
 	}
 }
 
@@ -113,7 +113,7 @@ func BenchmarkBrowse(b *testing.B) {
 }
 
 func BenchmarkIndexer_FilteredIndices_CharOnly(b *testing.B) {
-	idx, _ := buildTestIndexerLarge()
+	idx := buildTestIndexerLarge()
 	b.ResetTimer()
 	for b.Loop() {
 		idx.FilteredIndices(language.English, "10", 0)
@@ -121,7 +121,7 @@ func BenchmarkIndexer_FilteredIndices_CharOnly(b *testing.B) {
 }
 
 func BenchmarkIndexer_FilteredIndices_EpOnly(b *testing.B) {
-	idx, _ := buildTestIndexerLarge()
+	idx := buildTestIndexerLarge()
 	b.ResetTimer()
 	for b.Loop() {
 		idx.FilteredIndices(language.English, "", 1)
@@ -129,45 +129,33 @@ func BenchmarkIndexer_FilteredIndices_EpOnly(b *testing.B) {
 }
 
 func BenchmarkIndexer_FilteredIndices_Both(b *testing.B) {
-	idx, _ := buildTestIndexerLarge()
+	idx := buildTestIndexerLarge()
 	b.ResetTimer()
 	for b.Loop() {
 		idx.FilteredIndices(language.English, "10", 1)
 	}
 }
 
-func BenchmarkConcurrentExactSearch(b *testing.B) {
-	n := 50000
-	quotes := make([]dto.ParsedQuote, n)
-	lowerTexts := make([]string, n)
-	indices := make([]int, n)
-	for i := 0; i < n; i++ {
-		quotes[i] = dto.ParsedQuote{ScriptParsedQuote: dto.ScriptParsedQuote{Text: "some text about witches and magic", CharacterID: "10"}}
-		lowerTexts[i] = "some text about witches and magic"
-		indices[i] = i
-	}
-	quotes[n/2].Text = "Beatrice is the golden witch"
-	lowerTexts[n/2] = "beatrice is the golden witch"
-
-	b.ResetTimer()
-	for b.Loop() {
-		concurrentExactSearch(indices, lowerTexts, quotes, "beatrice", func(q dto.ParsedQuote) bool { return true })
-	}
-}
-
-func buildTestIndexerLarge() (Indexer, map[language.Language][]dto.ParsedQuote) {
+func buildTestIndexerLarge() store.Indexer {
 	chars := []string{"10", "27", "narrator", "19", "00"}
 	n := 10000
-	quotes := make([]dto.ParsedQuote, n)
+	texts := make([]string, n)
+	charIDs := make([]string, n)
+	episodes := make([]int, n)
+	audioIDs := make([]string, n)
 	for i := 0; i < n; i++ {
-		quotes[i] = dto.ParsedQuote{ScriptParsedQuote: dto.ScriptParsedQuote{
-			Text:        "Test quote text number",
-			CharacterID: chars[i%len(chars)],
-			Episode:     (i % 8) + 1,
-		}}
+		texts[i] = "Test quote text number"
+		charIDs[i] = chars[i%len(chars)]
+		episodes[i] = (i % 8) + 1
+		audioIDs[i] = ""
 	}
-	m := map[language.Language][]dto.ParsedQuote{
-		language.English: quotes,
+	fields := map[language.Language]store.QuoteFields{
+		language.English: {
+			Texts:        texts,
+			CharacterIDs: charIDs,
+			Episodes:     episodes,
+			AudioIDs:     audioIDs,
+		},
 	}
-	return NewIndexer(m, ""), m
+	return store.NewIndexer(fields, "")
 }

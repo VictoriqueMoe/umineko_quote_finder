@@ -1,5 +1,5 @@
 import { useAppContext } from "../../hooks/useAppContext";
-import type { FilterState, ViewMode } from "../../types/app";
+import type { FilterState, Game, ViewMode } from "../../types/app";
 
 interface FiltersProps {
     filters: FilterState;
@@ -9,10 +9,117 @@ interface FiltersProps {
     browseDisabled: boolean;
 }
 
-const DEFAULT_FILTERS: FilterState = { character: "", interactionA: "", interactionB: "", episode: "0", truth: "" };
+const DEFAULT_FILTERS: FilterState = {
+    character: "",
+    interactionA: "",
+    interactionB: "",
+    episode: "0",
+    truth: "",
+    arc: "",
+};
+
+const HIGURASHI_ARCS: { value: string; label: string }[] = [
+    { value: "onikakushi", label: "Onikakushi" },
+    { value: "watanagashi", label: "Watanagashi" },
+    { value: "tatarigoroshi", label: "Tatarigoroshi" },
+    { value: "himatsubushi", label: "Himatsubushi" },
+    { value: "meakashi", label: "Meakashi" },
+    { value: "tsumihoroboshi", label: "Tsumihoroboshi" },
+    { value: "minagoroshi", label: "Minagoroshi" },
+    { value: "matsuribayashi", label: "Matsuribayashi" },
+    { value: "someutsushi", label: "Someutsushi" },
+    { value: "kageboshi", label: "Kageboshi" },
+    { value: "tsukiotoshi", label: "Tsukiotoshi" },
+    { value: "taraimawashi", label: "Taraimawashi" },
+    { value: "yoigoshi", label: "Yoigoshi" },
+    { value: "tokihogushi", label: "Tokihogushi" },
+    { value: "miotsukushi_omote", label: "Miotsukushi Omote" },
+    { value: "kakera", label: "Kakera" },
+    { value: "miotsukushi_ura", label: "Miotsukushi Ura" },
+    { value: "kotohogushi", label: "Kotohogushi" },
+    { value: "hajisarashi", label: "Hajisarashi" },
+];
+
+function GameSpecificFilters({
+    filters,
+    game,
+    onFilterChange,
+}: {
+    filters: FilterState;
+    game: Game;
+    onFilterChange: (f: Partial<FilterState>) => void;
+}) {
+    if (game === "higurashi") {
+        return (
+            <>
+                <div className="filter-group">
+                    <label className="filter-label" htmlFor="filter-arc">
+                        Arc
+                    </label>
+                    <select
+                        id="filter-arc"
+                        className="truth-select"
+                        value={filters.arc}
+                        onChange={e => onFilterChange({ arc: e.target.value })}
+                    >
+                        <option value="">All Arcs</option>
+                        {HIGURASHI_ARCS.map(a => (
+                            <option key={a.value} value={a.value}>
+                                {a.label}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+            </>
+        );
+    }
+
+    return (
+        <>
+            <div className="filter-group">
+                <label className="filter-label" htmlFor="filter-episode">
+                    Episode
+                </label>
+                <select
+                    id="filter-episode"
+                    className="episode-select"
+                    value={filters.episode}
+                    onChange={e => onFilterChange({ episode: e.target.value })}
+                >
+                    <option value="0">All Episodes</option>
+                    <option value="1">{"Episode 1 \u2014 Legend"}</option>
+                    <option value="2">{"Episode 2 \u2014 Turn"}</option>
+                    <option value="3">{"Episode 3 \u2014 Banquet"}</option>
+                    <option value="4">{"Episode 4 \u2014 Alliance"}</option>
+                    <option value="5">{"Episode 5 \u2014 End"}</option>
+                    <option value="6">{"Episode 6 \u2014 Dawn"}</option>
+                    <option value="7">{"Episode 7 \u2014 Requiem"}</option>
+                    <option value="8">{"Episode 8 \u2014 Twilight"}</option>
+                </select>
+            </div>
+            <div className="filter-group">
+                <label className="filter-label" htmlFor="filter-truth">
+                    Truth
+                </label>
+                <select
+                    id="filter-truth"
+                    className="truth-select"
+                    value={filters.truth}
+                    onChange={e => onFilterChange({ truth: e.target.value })}
+                >
+                    <option value="">All Quotes</option>
+                    <option value="red">Red Truth</option>
+                    <option value="blue">Blue Truth</option>
+                    <option value="gold">Gold Truth</option>
+                    <option value="purple">Purple Statements</option>
+                </select>
+            </div>
+        </>
+    );
+}
 
 export function Filters({ filters, viewMode, onFilterChange, onBrowseClick, browseDisabled }: FiltersProps) {
-    const { sortedCharacters } = useAppContext();
+    const { sortedCharacters, sortedAdditionalCharacters, game } = useAppContext();
     const characterNameById = new Map(sortedCharacters);
     const ensureValueOption = (value: string): [string, string][] => {
         if (!value) {
@@ -57,7 +164,7 @@ export function Filters({ filters, viewMode, onFilterChange, onBrowseClick, brow
     };
 
     const handleResetFilters = () => {
-        onFilterChange({ character: "", interactionA: "", interactionB: "", episode: "0", truth: "" });
+        onFilterChange({ character: "", interactionA: "", interactionB: "", episode: "0", truth: "", arc: "" });
     };
 
     const selectedInteractionAName = interactionA ? characterNameById.get(interactionA) || interactionA : "";
@@ -90,46 +197,18 @@ export function Filters({ filters, viewMode, onFilterChange, onBrowseClick, brow
                                 {name}
                             </option>
                         ))}
+                        {sortedAdditionalCharacters.length > 0 && (
+                            <optgroup label="Additional Characters">
+                                {sortedAdditionalCharacters.map(([id, name]) => (
+                                    <option key={id} value={id}>
+                                        {name}
+                                    </option>
+                                ))}
+                            </optgroup>
+                        )}
                     </select>
                 </div>
-                <div className="filter-group">
-                    <label className="filter-label" htmlFor="filter-episode">
-                        Episode
-                    </label>
-                    <select
-                        id="filter-episode"
-                        className="episode-select"
-                        value={filters.episode}
-                        onChange={e => onFilterChange({ episode: e.target.value })}
-                    >
-                        <option value="0">All Episodes</option>
-                        <option value="1">{"Episode 1 \u2014 Legend"}</option>
-                        <option value="2">{"Episode 2 \u2014 Turn"}</option>
-                        <option value="3">{"Episode 3 \u2014 Banquet"}</option>
-                        <option value="4">{"Episode 4 \u2014 Alliance"}</option>
-                        <option value="5">{"Episode 5 \u2014 End"}</option>
-                        <option value="6">{"Episode 6 \u2014 Dawn"}</option>
-                        <option value="7">{"Episode 7 \u2014 Requiem"}</option>
-                        <option value="8">{"Episode 8 \u2014 Twilight"}</option>
-                    </select>
-                </div>
-                <div className="filter-group">
-                    <label className="filter-label" htmlFor="filter-truth">
-                        Truth
-                    </label>
-                    <select
-                        id="filter-truth"
-                        className="truth-select"
-                        value={filters.truth}
-                        onChange={e => onFilterChange({ truth: e.target.value })}
-                    >
-                        <option value="">All Quotes</option>
-                        <option value="red">Red Truth</option>
-                        <option value="blue">Blue Truth</option>
-                        <option value="gold">Gold Truth</option>
-                        <option value="purple">Purple Statements</option>
-                    </select>
-                </div>
+                <GameSpecificFilters filters={filters} game={game} onFilterChange={onFilterChange} />
             </div>
             <div className="interaction-filter-panel">
                 <div className="interaction-filter-head">
@@ -153,6 +232,15 @@ export function Filters({ filters, viewMode, onFilterChange, onBrowseClick, brow
                                     {name}
                                 </option>
                             ))}
+                            {sortedAdditionalCharacters.length > 0 && (
+                                <optgroup label="Additional Characters">
+                                    {sortedAdditionalCharacters.map(([id, name]) => (
+                                        <option key={id} value={id}>
+                                            {name}
+                                        </option>
+                                    ))}
+                                </optgroup>
+                            )}
                         </select>
                     </div>
                     <div className="filter-group">
@@ -172,6 +260,15 @@ export function Filters({ filters, viewMode, onFilterChange, onBrowseClick, brow
                                     {name}
                                 </option>
                             ))}
+                            {sortedAdditionalCharacters.length > 0 && (
+                                <optgroup label="Additional Characters">
+                                    {sortedAdditionalCharacters.map(([id, name]) => (
+                                        <option key={id} value={id}>
+                                            {name}
+                                        </option>
+                                    ))}
+                                </optgroup>
+                            )}
                         </select>
                     </div>
                     <div className="filter-group">

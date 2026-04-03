@@ -1,15 +1,16 @@
-import { apiFetch, buildQueryString } from "./client";
+import { apiFetch, buildQueryString, gameApiFetch } from "./client";
 import type {
     BrowseResponse,
     CharactersResponse,
     ConfigResponse,
     ContextResponse,
+    HigurashiStatsResponse,
     NearestVoicedResponse,
     Quote,
     SearchResponse,
     StatsResponse,
 } from "../types/api";
-import type { Language } from "../types/app";
+import type { Game, Language } from "../types/app";
 import { resolveLanguage } from "../types/app";
 
 const PAGE_SIZE = 30;
@@ -17,6 +18,7 @@ const PAGE_SIZE = 30;
 export { PAGE_SIZE };
 
 export async function searchQuotes(
+    game: Game,
     query: string,
     lang: Language,
     offset: number = 0,
@@ -25,6 +27,7 @@ export async function searchQuotes(
     interactionB?: string,
     episode?: string,
     truth?: string,
+    arc?: string,
 ): Promise<SearchResponse> {
     const qs = buildQueryString({
         q: query,
@@ -36,30 +39,35 @@ export async function searchQuotes(
         interactionB: interactionB || undefined,
         episode: episode && episode !== "0" ? episode : undefined,
         truth: truth || undefined,
+        arc: arc || undefined,
     });
-    return apiFetch<SearchResponse>(`/search${qs}`);
+    return gameApiFetch<SearchResponse>(game, `/search${qs}`);
 }
 
 export async function getRandomQuote(
+    game: Game,
     lang: Language,
     characterId?: string,
     episode?: string,
     truth?: string,
+    arc?: string,
 ): Promise<Quote> {
     const qs = buildQueryString({
         lang: resolveLanguage(lang),
         character: characterId || undefined,
         episode: episode && episode !== "0" ? episode : undefined,
         truth: truth || undefined,
+        arc: arc || undefined,
     });
-    return apiFetch<Quote>(`/random${qs}`);
+    return gameApiFetch<Quote>(game, `/random${qs}`);
 }
 
-export async function getQuoteByAudioId(audioId: string, lang: Language): Promise<Quote> {
-    return apiFetch<Quote>(`/quote/${audioId}?lang=${resolveLanguage(lang)}`);
+export async function getQuoteByAudioId(game: Game, audioId: string, lang: Language): Promise<Quote> {
+    return gameApiFetch<Quote>(game, `/quote/${audioId}?lang=${resolveLanguage(lang)}`);
 }
 
 export async function browseDialogue(
+    game: Game,
     lang: Language,
     offset: number = 0,
     characterId?: string,
@@ -67,6 +75,7 @@ export async function browseDialogue(
     interactionB?: string,
     episode?: string,
     truth?: string,
+    arc?: string,
 ): Promise<BrowseResponse> {
     const qs = buildQueryString({
         limit: PAGE_SIZE,
@@ -77,33 +86,41 @@ export async function browseDialogue(
         interactionB: interactionB || undefined,
         episode: episode && episode !== "0" ? episode : undefined,
         truth: truth || undefined,
+        arc: arc || undefined,
     });
-    return apiFetch<BrowseResponse>(`/browse${qs}`);
+    return gameApiFetch<BrowseResponse>(game, `/browse${qs}`);
 }
 
-export async function getContext(audioId: string, lang: Language, lines: number = 5): Promise<ContextResponse> {
-    return apiFetch<ContextResponse>(`/context/${audioId}?lang=${resolveLanguage(lang)}&lines=${lines}`);
+export async function getContext(
+    game: Game,
+    audioId: string,
+    lang: Language,
+    lines: number = 5,
+): Promise<ContextResponse> {
+    return gameApiFetch<ContextResponse>(game, `/context/${audioId}?lang=${resolveLanguage(lang)}&lines=${lines}`);
 }
 
 export async function getNearestVoiced(
+    game: Game,
     audioId: string,
     lang: Language,
     direction: "next" | "prev",
 ): Promise<NearestVoicedResponse> {
-    return apiFetch<NearestVoicedResponse>(
+    return gameApiFetch<NearestVoicedResponse>(
+        game,
         `/nearest-voiced/${audioId}?lang=${resolveLanguage(lang)}&direction=${direction}`,
     );
 }
 
-export async function getStats(episode?: string): Promise<StatsResponse> {
+export async function getStats(game: Game, episode?: string): Promise<StatsResponse | HigurashiStatsResponse> {
     const qs = episode && episode !== "0" ? `?episode=${episode}` : "";
-    return apiFetch<StatsResponse>(`/stats${qs}`);
+    return gameApiFetch<StatsResponse | HigurashiStatsResponse>(game, `/stats${qs}`);
 }
 
 export async function getConfig(): Promise<ConfigResponse> {
     return apiFetch<ConfigResponse>("/config");
 }
 
-export async function getCharacters(): Promise<CharactersResponse> {
-    return apiFetch<CharactersResponse>("/characters");
+export async function getCharacters(game: Game): Promise<CharactersResponse> {
+    return gameApiFetch<CharactersResponse>(game, "/characters");
 }

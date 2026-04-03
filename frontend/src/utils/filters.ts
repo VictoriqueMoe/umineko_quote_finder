@@ -1,4 +1,4 @@
-import type { FilterState } from "../types/app";
+import type { FilterState, Game } from "../types/app";
 import { normalizeCharacterKey } from "./characterIds";
 
 export function enforceMutuallyExclusiveFilters(filters: FilterState): FilterState {
@@ -8,11 +8,11 @@ export function enforceMutuallyExclusiveFilters(filters: FilterState): FilterSta
     return filters;
 }
 
-export function normalizeFilterCharacters(filters: FilterState): FilterState {
+export function normalizeFilterCharacters(filters: FilterState, game?: Game): FilterState {
     return {
         ...filters,
-        character: normalizeCharacterKey(filters.character),
-        interactionA: normalizeCharacterKey(filters.interactionA),
-        interactionB: normalizeCharacterKey(filters.interactionB),
+        character: normalizeCharacterKey(filters.character, game),
+        interactionA: normalizeCharacterKey(filters.interactionA, game),
+        interactionB: normalizeCharacterKey(filters.interactionB, game),
     };
 }

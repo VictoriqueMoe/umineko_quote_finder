@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import * as api from "../api/endpoints";
 import type { BrowseResponse } from "../types/api";
-import type { Language } from "../types/app";
+import type { Game, Language } from "../types/app";
 
 export function useBrowse() {
     const [data, setData] = useState<BrowseResponse | null>(null);
@@ -12,6 +12,7 @@ export function useBrowse() {
 
     const browse = useCallback(
         async (
+            game: Game,
             characterId: string,
             language: Language,
             off: number = 0,
@@ -19,6 +20,7 @@ export function useBrowse() {
             interactionB?: string,
             episode?: string,
             truth?: string,
+            arc?: string,
         ): Promise<{ offset: number; total: number } | undefined> => {
             setLoading(true);
             setError(null);
@@ -28,6 +30,7 @@ export function useBrowse() {
                     return undefined;
                 }
                 const result = await api.browseDialogue(
+                    game,
                     language,
                     off,
                     characterId,
@@ -35,6 +38,7 @@ export function useBrowse() {
                     interactionB,
                     episode,
                     truth,
+                    arc,
                 );
                 setData(result);
                 setOffset(result.offset);

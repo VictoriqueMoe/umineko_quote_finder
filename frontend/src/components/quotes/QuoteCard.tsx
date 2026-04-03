@@ -1,5 +1,6 @@
 import { useCallback, useRef } from "react";
 import { episodeLabel, useQuoteDisplay } from "../../hooks/useQuoteDisplay";
+import { useAppContext } from "../../hooks/useAppContext";
 import { AudioPlayer } from "../audio/AudioPlayer";
 import { SePlayer } from "../audio/SePlayer";
 import { LangToggle } from "./LangToggle";
@@ -29,6 +30,7 @@ export function QuoteCard({
     langOverride,
 }: QuoteCardProps) {
     const { displayHtml, lang, hasAudio, handleTextUpdate, handleLangChange } = useQuoteDisplay(quote, langOverride);
+    const { game } = useAppContext();
     const contextRefreshRef = useRef<((lang: Language) => void) | null>(null);
 
     const handleContextRefresh = useCallback((lang: Language) => {
@@ -45,6 +47,7 @@ export function QuoteCard({
                 <span className="quote-character">&mdash; {quote.character}</span>
                 <div className="quote-details">
                     {quote.episode ? <span className="quote-episode">{episodeLabel(quote)}</span> : null}
+                    {quote.arc && <span className="quote-episode">{quote.arc}</span>}
                     {quote.audioId && (
                         <LangToggle
                             audioId={quote.audioId}
@@ -52,6 +55,10 @@ export function QuoteCard({
                             onLangChange={handleLangChange}
                             onContextRefresh={handleContextRefresh}
                             langOverride={langOverride}
+                            textJp={quote.textJp}
+                            textJpHtml={quote.textJpHtml}
+                            originalText={quote.text}
+                            originalTextHtml={quote.textHtml}
                         />
                     )}
                 </div>
@@ -64,13 +71,13 @@ export function QuoteCard({
                     audioPlayer={audioPlayer}
                 />
             )}
-            {quote.soundEffects && quote.soundEffects.length > 0 && (
+            {hasAudio && quote.soundEffects && quote.soundEffects.length > 0 && (
                 <SePlayer soundEffects={quote.soundEffects} audioPlayer={audioPlayer} />
             )}
             {quote.audioId && (
                 <div className="quote-actions">
                     <ContextViewer audioId={quote.audioId} onQuoteClick={onContextQuoteClick} langOverride={lang} />
-                    <ShareButton audioId={quote.audioId} lang={lang} />
+                    <ShareButton audioId={quote.audioId} lang={lang} game={game} />
                     <DownloadButton audioId={quote.audioId} lang={lang} />
                 </div>
             )}

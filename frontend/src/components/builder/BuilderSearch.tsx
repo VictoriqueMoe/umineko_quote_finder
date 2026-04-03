@@ -25,13 +25,14 @@ export function BuilderSearch({ builder, audioPlayer }: BuilderSearchProps) {
         interactionB: "",
         episode: "0",
         truth: "",
+        arc: "",
     });
 
     const handleSearch = useCallback(async () => {
         if (!query.trim()) {
             return;
         }
-        await search.search(query, language, 0, filters);
+        await search.search("umineko", query, language, 0, filters);
     }, [query, language, filters, search]);
 
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -42,14 +43,14 @@ export function BuilderSearch({ builder, audioPlayer }: BuilderSearchProps) {
 
     const handlePaginate = useCallback(
         async (newOffset: number) => {
-            await search.search(search.query, language, newOffset, filters);
+            await search.search("umineko", search.query, language, newOffset, filters);
         },
         [search, language, filters],
     );
 
     const handleRandom = useCallback(async () => {
         try {
-            const quote = await getRandomQuote(language, filters.character, filters.episode, filters.truth);
+            const quote = await getRandomQuote("umineko", language, filters.character, filters.episode, filters.truth);
             if (quote && quote.audioId) {
                 const ids = quote.audioId.split(", ");
                 const firstId = ids[0];
@@ -89,7 +90,7 @@ export function BuilderSearch({ builder, audioPlayer }: BuilderSearchProps) {
     const handlePreviewClip = useCallback(
         (quote: Quote, audioIdSingle: string) => {
             const charId = resolveCharId(audioIdSingle, quote.characterId ?? "", quote.audioCharMap);
-            const url = audioUrl(charId, audioIdSingle);
+            const url = audioUrl("umineko", charId, audioIdSingle);
             audioPlayer.play(url, `preview-${audioIdSingle}`);
         },
         [audioPlayer],

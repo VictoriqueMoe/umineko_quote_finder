@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { FilterState, Language, ViewMode } from "../types/app";
+import type { FilterState, Game, Language, ViewMode } from "../types/app";
 import { buildUrl, type ParsedRoute, parseRoute } from "./routeDefinitions";
 
 export type { ParsedRoute };
@@ -9,24 +9,30 @@ export interface NavigateOpts {
     browseOffset?: number;
     currentAudioId?: string | null;
     searchQuery?: string;
+    game?: Game;
 }
 
 interface UseRouterParams {
     language: Language;
+    game: Game;
     onRouteLoad: (route: ParsedRoute) => void | Promise<void>;
 }
 
-export function useRouter({ language, onRouteLoad }: UseRouterParams) {
+export function useRouter({ language, game, onRouteLoad }: UseRouterParams) {
     const [viewMode, setViewMode] = useState<ViewMode>("featured");
     const initialised = useRef(false);
     const onRouteLoadRef = useRef(onRouteLoad);
     const languageRef = useRef(language);
+    const gameRef = useRef(game);
 
     useEffect(() => {
         onRouteLoadRef.current = onRouteLoad;
     });
     useEffect(() => {
         languageRef.current = language;
+    });
+    useEffect(() => {
+        gameRef.current = game;
     });
 
     const loadFromURL = useCallback(() => {
@@ -59,6 +65,7 @@ export function useRouter({ language, onRouteLoad }: UseRouterParams) {
                 browseOffset: opts?.browseOffset ?? 0,
             },
             languageRef.current,
+            opts?.game ?? gameRef.current,
             opts?.searchQuery ?? "",
         );
         history.pushState(null, "", url);

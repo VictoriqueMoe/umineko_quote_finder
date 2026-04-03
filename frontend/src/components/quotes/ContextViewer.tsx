@@ -11,7 +11,7 @@ interface ContextViewerProps {
 }
 
 export function ContextViewer({ audioId, onQuoteClick, langOverride }: ContextViewerProps) {
-    const { language } = useAppContext();
+    const { language, game } = useAppContext();
     const [data, setData] = useState<ContextResponse | null>(null);
     const [visible, setVisible] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -28,7 +28,7 @@ export function ContextViewer({ audioId, onQuoteClick, langOverride }: ContextVi
             const effectiveLang = lang || langOverride || language;
             setLoading(true);
             try {
-                const result = await getContext(targetAudioId, effectiveLang, 5);
+                const result = await getContext(game, targetAudioId, effectiveLang, 5);
                 if (!result.error) {
                     setData(result);
                     setVisible(true);
@@ -39,7 +39,7 @@ export function ContextViewer({ audioId, onQuoteClick, langOverride }: ContextVi
                 setLoading(false);
             }
         },
-        [langOverride, language],
+        [langOverride, language, game],
     );
 
     useEffect(() => {
@@ -66,7 +66,7 @@ export function ContextViewer({ audioId, onQuoteClick, langOverride }: ContextVi
             const effectiveLang = langOverride || language;
             setNavigating(true);
             try {
-                const result = await getNearestVoiced(effectiveCenterId, effectiveLang, direction);
+                const result = await getNearestVoiced(game, effectiveCenterId, effectiveLang, direction);
                 if (result.audioId) {
                     setCenterAudioId(result.audioId);
                     await fetchContext(result.audioId);
@@ -77,7 +77,7 @@ export function ContextViewer({ audioId, onQuoteClick, langOverride }: ContextVi
                 setNavigating(false);
             }
         },
-        [effectiveCenterId, langOverride, language, fetchContext],
+        [effectiveCenterId, langOverride, language, fetchContext, game],
     );
 
     const handleReset = useCallback(() => {

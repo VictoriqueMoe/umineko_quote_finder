@@ -1,6 +1,7 @@
 package audio
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 )
@@ -54,6 +55,17 @@ func (c *combiner) CombineOgg(segments []AudioSegment, resolve FilePathResolver)
 		pages := allFilePages[fileIdx]
 		isFirst := fileIdx == 0
 		isLast := fileIdx == len(allFilePages)-1
+		if !isLast && len(pages) > 0 {
+			var blankPage = oggPage{
+				headerType:     0,
+				granulePos:     pages[len(pages)-1].granulePos + 17640,
+				serialNumber:   0,
+				sequenceNumber: 0,
+				segmentTable:   bytes.Repeat([]byte{1}, 19),
+				data:           append([]byte{0, 10}, bytes.Repeat([]byte{14}, 17)...),
+			}
+			pages = append(pages, blankPage)
+		}
 
 		var fileLastGranule int64
 		for i := len(pages) - 1; i >= 0; i-- {

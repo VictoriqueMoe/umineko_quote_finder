@@ -29,6 +29,33 @@ export function BuilderSegment({ segment, index, audioPlayer, onRemove }: Builde
         audioPlayer.play(url, `builder-${segment.id}`);
     };
 
+    if (segment.isDelay) {
+        return (
+            <div
+                ref={setNodeRef}
+                style={style}
+                className={`builder-segment builder-segment-delay${isDragging ? " dragging" : ""}`}
+            >
+                <button className="builder-segment-handle" {...attributes} {...listeners}>
+                    <span className="grip-icon">{"\u2807"}</span>
+                </button>
+                <span className="builder-segment-index">{index + 1}</span>
+                <div className="builder-segment-info">
+                    <span className="builder-segment-delay-label">{"\u23F8"} 400ms Delay</span>
+                </div>
+                <div className="builder-segment-actions">
+                    <button
+                        className="builder-segment-remove"
+                        onClick={() => onRemove(segment.id)}
+                        title="Remove delay"
+                    >
+                        {"\u2715"}
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div ref={setNodeRef} style={style} className={`builder-segment${isDragging ? " dragging" : ""}`}>
             <button className="builder-segment-handle" {...attributes} {...listeners}>

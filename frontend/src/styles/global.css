@@ -1757,6 +1757,17 @@ body {
     color: var(--gold-dark);
 }
 
+.audio-delay-btn {
+    font-size: 0.6rem;
+    padding: 0.2rem 0.5rem;
+}
+
+.audio-delay-btn.active {
+    border-color: var(--gold);
+    color: var(--gold);
+    background: rgba(var(--gold-rgb), calc(var(--hover-glow) + 0.05));
+}
+
 .audio-expand-btn {
     background: transparent;
     border: 1px solid var(--purple-muted);
@@ -3243,6 +3254,19 @@ body {
     color: var(--purple-light);
 }
 
+.builder-segment-delay {
+    border-style: dashed;
+    border-color: var(--purple-muted);
+    padding: 0.4rem 1rem;
+}
+
+.builder-segment-delay-label {
+    font-family: var(--font-display);
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+}
+
 .builder-segment-actions {
     display: flex;
     gap: 0.5rem;
@@ -3327,6 +3351,12 @@ body {
     border-color: var(--purple-muted);
     color: var(--text-muted);
     background: transparent;
+}
+
+.builder-delay.active {
+    border-color: var(--gold);
+    color: var(--gold);
+    background: rgba(var(--gold-rgb), calc(var(--hover-glow) + 0.05));
 }
 
 .builder-play-combined {

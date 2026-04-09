@@ -29,9 +29,14 @@ export function audioUrl(game: Game, charId: string, audioId: string): string {
     return `${API_BASE}/${game}/audio/voice/${charId}/${audioId}`;
 }
 
-export function combinedAudioUrl(game: Game, segments: Array<{ charId: string; audioId: string }>): string {
+export function combinedAudioUrl(
+    game: Game,
+    segments: Array<{ charId: string; audioId: string }>,
+    delay?: boolean,
+): string {
     const param = segments.map(s => `${s.charId}:${s.audioId}`).join(",");
-    return `${API_BASE}/${game}/audio/voice/combined?segments=${param}`;
+    const delayParam = delay ? "&delay=true" : "";
+    return `${API_BASE}/${game}/audio/voice/combined?segments=${param}${delayParam}`;
 }
 
 export function resolveCharId(audioId: string, defaultCharId: string, audioCharMap?: Record<string, string>): string {

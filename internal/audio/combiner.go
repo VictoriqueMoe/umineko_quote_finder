@@ -6,27 +6,35 @@ import (
 	"os"
 )
 
-type FilePathResolver func(charId, audioId string) string
+type (
+	FilePathResolver func(charId, audioId string) string
 
-type AudioSegment struct {
-	CharID  string
-	AudioID string
-}
+	AudioSegment struct {
+		CharID  string
+		AudioID string
+	}
 
-type Combiner interface {
-	CombineOgg(segments []AudioSegment, resolve FilePathResolver) ([]byte, error)
-}
+	Combiner interface {
+		CombineOgg(segments []AudioSegment, resolve FilePathResolver, delay bool) ([]byte, error)
+	}
 
-type combiner struct{}
+	combiner struct{}
+)
+
+const delaySamples int64 = 17640
 
 func NewCombiner() (Combiner, error) {
 	return &combiner{}, nil
 }
 
-func (c *combiner) CombineOgg(segments []AudioSegment, resolve FilePathResolver) ([]byte, error) {
+func (c *combiner) CombineOgg(segments []AudioSegment, resolve FilePathResolver, delay bool) ([]byte, error) {
 	var allFilePages [][]oggPage
 
 	for i := 0; i < len(segments); i++ {
+		if segments[i].IsDelay() {
+			allFilePages = append(allFilePages, []oggPage{newBlankPage(delaySamples)})
+			continue
+		}
 		filePath := resolve(segments[i].CharID, segments[i].AudioID)
 		if filePath == "" {
 			return nil, fmt.Errorf("audio file not found: %s/%s", segments[i].CharID, segments[i].AudioID)
@@ -46,25 +54,28 @@ func (c *combiner) CombineOgg(segments []AudioSegment, resolve FilePathResolver)
 		return nil, fmt.Errorf("no audio files to combine")
 	}
 
-	serialNumber := allFilePages[0][0].serialNumber
+	firstAudioIdx := -1
+	for i, pages := range allFilePages {
+		if len(pages) > 0 && !segments[i].IsDelay() {
+			firstAudioIdx = i
+			break
+		}
+	}
+	if firstAudioIdx == -1 {
+		return nil, fmt.Errorf("no audio files to combine")
+	}
+
+	serialNumber := allFilePages[firstAudioIdx][0].serialNumber
 	var result []byte
 	var sequenceNum uint32
 	var granuleOffset int64
 
-	for fileIdx := 0; fileIdx < len(allFilePages); fileIdx++ {
+	for fileIdx := firstAudioIdx; fileIdx < len(allFilePages); fileIdx++ {
 		pages := allFilePages[fileIdx]
-		isFirst := fileIdx == 0
+		isFirst := fileIdx == firstAudioIdx
 		isLast := fileIdx == len(allFilePages)-1
-		if !isLast && len(pages) > 0 {
-			var blankPage = oggPage{
-				headerType:     0,
-				granulePos:     pages[len(pages)-1].granulePos + 17640,
-				serialNumber:   0,
-				sequenceNumber: 0,
-				segmentTable:   bytes.Repeat([]byte{1}, 19),
-				data:           append([]byte{0, 10}, bytes.Repeat([]byte{14}, 17)...),
-			}
-			pages = append(pages, blankPage)
+		if delay && !isLast && len(pages) > 0 {
+			pages = append(pages, newBlankPage(pages[len(pages)-1].granulePos+delaySamples))
 		}
 
 		var fileLastGranule int64
@@ -121,4 +132,17 @@ func (c *combiner) CombineOgg(segments []AudioSegment, resolve FilePathResolver)
 	}
 
 	return result, nil
+}
+
+func (s AudioSegment) IsDelay() bool {
+	return s.CharID == "_delay" && s.AudioID == "_delay"
+}
+
+func newBlankPage(granulePos int64) oggPage {
+	return oggPage{
+		headerType:   0,
+		granulePos:   granulePos,
+		segmentTable: bytes.Repeat([]byte{1}, 19),
+		data:         append([]byte{0, 10}, bytes.Repeat([]byte{14}, 17)...),
+	}
 }

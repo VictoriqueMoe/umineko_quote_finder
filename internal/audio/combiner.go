@@ -21,8 +21,6 @@ type (
 	combiner struct{}
 )
 
-const delaySamples int64 = 17640
-
 func NewCombiner() (Combiner, error) {
 	return &combiner{}, nil
 }
@@ -32,7 +30,7 @@ func (c *combiner) CombineOgg(segments []AudioSegment, resolve FilePathResolver,
 
 	for i := 0; i < len(segments); i++ {
 		if segments[i].IsDelay() {
-			allFilePages = append(allFilePages, []oggPage{newBlankPage(delaySamples)})
+			allFilePages = append(allFilePages, []oggPage{newBlankPage(0)})
 			continue
 		}
 		filePath := resolve(segments[i].CharID, segments[i].AudioID)
@@ -75,7 +73,7 @@ func (c *combiner) CombineOgg(segments []AudioSegment, resolve FilePathResolver,
 		isFirst := fileIdx == firstAudioIdx
 		isLast := fileIdx == len(allFilePages)-1
 		if delay && !isLast && len(pages) > 0 {
-			pages = append(pages, newBlankPage(pages[len(pages)-1].granulePos+delaySamples))
+			pages = append(pages, newBlankPage(pages[len(pages)-1].granulePos))
 		}
 
 		var fileLastGranule int64
@@ -138,10 +136,10 @@ func (s AudioSegment) IsDelay() bool {
 	return s.CharID == "_delay" && s.AudioID == "_delay"
 }
 
-func newBlankPage(granulePos int64) oggPage {
+func newBlankPage(baseGranulePos int64) oggPage {
 	return oggPage{
 		headerType:   0,
-		granulePos:   granulePos,
+		granulePos:   baseGranulePos + 17640,
 		segmentTable: bytes.Repeat([]byte{1}, 19),
 		data:         append([]byte{0, 10}, bytes.Repeat([]byte{14}, 17)...),
 	}

@@ -112,7 +112,8 @@ func (s *Service) combinedAudioSegments(ctx fiber.Ctx) error {
 		segments = append(segments, audio.AudioSegment{CharID: charId, AudioID: audioId})
 	}
 
-	data, err := s.AudioCombiner.CombineOgg(segments, s.UminekoService.AudioFilePath)
+	delay := ctx.Query("delay") == "true"
+	data, err := s.AudioCombiner.CombineOgg(segments, s.UminekoService.AudioFilePath, delay)
 	if err != nil {
 		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"error": err.Error(),

@@ -80,6 +80,14 @@ export function BuilderControls({ builder, audioPlayer }: BuilderControlsProps) 
                     {isCombinedPlaying ? "\u275A\u275A Pause" : "\u25B6 Play Combined"}
                 </button>
                 <button
+                    className="builder-control-btn builder-insert-delay"
+                    disabled={!builder.canAdd}
+                    onClick={() => builder.addDelay()}
+                    title="Insert a 400ms delay into the timeline"
+                >
+                    {"\u23F8 Insert Delay"}
+                </button>
+                <button
                     className="builder-control-btn builder-download"
                     disabled={isEmpty || downloading}
                     onClick={handleDownload}

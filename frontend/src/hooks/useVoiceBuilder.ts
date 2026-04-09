@@ -12,6 +12,7 @@ export interface BuilderSegment {
     characterName: string;
     quoteText: string;
     episode?: number;
+    isDelay?: boolean;
 }
 
 const MAX_SEGMENTS = 20;
@@ -100,6 +101,28 @@ export function useVoiceBuilder() {
         [updateSegments],
     );
 
+    const addDelay = useCallback((): boolean => {
+        let added = false;
+        updateSegments(prev => {
+            if (prev.length >= MAX_SEGMENTS) {
+                return prev;
+            }
+            added = true;
+            return [
+                ...prev,
+                {
+                    id: crypto.randomUUID(),
+                    audioId: "_delay",
+                    charId: "_delay",
+                    characterName: "",
+                    quoteText: "",
+                    isDelay: true,
+                },
+            ];
+        });
+        return added;
+    }, [updateSegments]);
+
     const clearAll = useCallback(() => {
         updateSegments(() => []);
     }, [updateSegments]);
@@ -138,6 +161,18 @@ export function useVoiceBuilder() {
                     continue;
                 }
 
+                if (charId === "_delay" && audioId === "_delay") {
+                    newSegments.push({
+                        id: crypto.randomUUID(),
+                        audioId: "_delay",
+                        charId: "_delay",
+                        characterName: "",
+                        quoteText: "",
+                        isDelay: true,
+                    });
+                    continue;
+                }
+
                 try {
                     const quote = await getQuoteByAudioId("umineko", audioId, language);
                     const clipText = quote.audioTextMap?.[audioId] ?? quote.text;
@@ -150,7 +185,6 @@ export function useVoiceBuilder() {
                         episode: quote.episode,
                     });
                 } catch {
-                    // If we can't fetch metadata, still add with minimal info
                     newSegments.push({
                         id: crypto.randomUUID(),
                         audioId,
@@ -174,6 +208,7 @@ export function useVoiceBuilder() {
         segmentCount,
         maxSegments: MAX_SEGMENTS,
         addSegment,
+        addDelay,
         removeSegment,
         reorderSegments,
         clearAll,

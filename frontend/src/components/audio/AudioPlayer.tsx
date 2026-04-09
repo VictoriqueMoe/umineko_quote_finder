@@ -14,6 +14,7 @@ interface AudioPlayerProps {
 export function AudioPlayer({ audioId, characterId, audioCharMap, audioPlayer }: AudioPlayerProps) {
     const { game } = useAppContext();
     const [showIndividual, setShowIndividual] = useState(false);
+    const [delay, setDelay] = useState(false);
     const ids = audioId.split(", ");
     const hasMultiple = ids.length > 1;
 
@@ -28,12 +29,12 @@ export function AudioPlayer({ audioId, characterId, audioCharMap, audioPlayer }:
             charId: resolveCharId(id, characterId, audioCharMap),
             audioId: id,
         }));
-        const url = combinedAudioUrl(game, segments);
-        audioPlayer.play(url, `combined-${ids.join(",")}`);
+        const url = combinedAudioUrl(game, segments, delay);
+        audioPlayer.play(url, `combined-${ids.join(",")}-${delay}`);
     };
 
     const isActive = (id: string) => audioPlayer.state.activeId === id;
-    const isCombinedActive = audioPlayer.state.activeId === `combined-${ids.join(",")}`;
+    const isCombinedActive = audioPlayer.state.activeId === `combined-${ids.join(",")}-${delay}`;
     const isAnyActive = ids.some(id => isActive(id)) || isCombinedActive;
 
     return (
@@ -46,6 +47,13 @@ export function AudioPlayer({ audioId, characterId, audioCharMap, audioPlayer }:
                             onClick={handleCombinedClick}
                         >
                             {`\u25B6 Combined (${ids.length} clips)`}
+                        </button>
+                        <button
+                            className={`audio-clip-btn audio-delay-btn${delay ? " active" : ""}`}
+                            onClick={() => setDelay(!delay)}
+                            title="Add a short pause between clips"
+                        >
+                            {delay ? "\u23F8 Delay On" : "\u23F5 Delay Off"}
                         </button>
                         <button className="audio-expand-btn" onClick={() => setShowIndividual(!showIndividual)}>
                             {showIndividual ? "\u25B4 Individual" : "\u25BE Individual"}

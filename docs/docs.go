@@ -731,6 +731,13 @@ const docTemplate = `{
                         "description": "Filter by arc name (e.g. onikakushi, watanagashi)",
                         "name": "arc",
                         "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "default": false,
+                        "description": "Match whole words only",
+                        "name": "exact",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -1724,6 +1731,13 @@ const docTemplate = `{
                         "type": "string",
                         "description": "Filter by truth type",
                         "name": "truth",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "default": false,
+                        "description": "Match whole words only",
+                        "name": "exact",
                         "in": "query"
                     }
                 ],

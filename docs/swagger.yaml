@@ -950,6 +950,11 @@ paths:
         in: query
         name: arc
         type: string
+      - default: false
+        description: Match whole words only
+        in: query
+        name: exact
+        type: boolean
       produces:
       - application/json
       responses:
@@ -1776,6 +1781,11 @@ paths:
         in: query
         name: truth
         type: string
+      - default: false
+        description: Match whole words only
+        in: query
+        name: exact
+        type: boolean
       produces:
       - application/json
       responses:

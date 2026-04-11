@@ -75,6 +75,7 @@ func (s *Service) setupHigurashiStatsRoute(routeGroup fiber.Router) {
 //	@Param			interactionB	query		string	false	"Interaction filter: second character ID (requires interactionA)"	Enums(narrator, misc_voices, keiichi, rena, mion, satoko, rika, shion, satoshi, tomitake, takano, irie, ooishi, hanyuu, akasaka, okonogi, kasai, kimiyoshi, oryou, teppei, rina, chie, tomoe, madoka, yamaoki, fujita, natsumi, chisato, tamako, akira, miyuki, otobe, towada, riku, ouka, kumagai, nagisa, akane, arakawa, maeno)
 //	@Param			episode		query		int		false	"Filter by arc number"
 //	@Param			arc			query		string	false	"Filter by arc name (e.g. onikakushi, watanagashi)"
+//	@Param			exact		query		bool	false	"Match whole words only"	default(false)
 //	@Success		200			{object}	dto.SearchAPIResponse
 //	@Failure		400			{object}	dto.ErrorResponse
 //	@Router			/higurashi/search [get]
@@ -93,6 +94,7 @@ func (s *Service) higurashiSearch(ctx fiber.Ctx) error {
 	interactionAParam := ctx.Query("interactionA")
 	interactionBParam := ctx.Query("interactionB")
 	episode := fiber.Query[int](ctx, "episode", 0)
+	exact := fiber.Query[bool](ctx, "exact", false)
 
 	if errMsg, invalid := validateInteractionQueryParams(characterParam, interactionAParam, interactionBParam); invalid {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -109,6 +111,7 @@ func (s *Service) higurashiSearch(ctx fiber.Ctx) error {
 		episode,
 		strings.TrimSpace(interactionAParam),
 		strings.TrimSpace(interactionBParam),
+		exact,
 	)
 
 	response := s.HigurashiService.Search(searchParams, ctx.Query("arc"))

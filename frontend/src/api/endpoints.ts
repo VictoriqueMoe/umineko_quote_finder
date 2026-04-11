@@ -28,6 +28,7 @@ export async function searchQuotes(
     episode?: string,
     truth?: string,
     arc?: string,
+    exact?: boolean,
 ): Promise<SearchResponse> {
     const qs = buildQueryString({
         q: query,
@@ -40,6 +41,7 @@ export async function searchQuotes(
         episode: episode && episode !== "0" ? episode : undefined,
         truth: truth || undefined,
         arc: arc || undefined,
+        exact: exact ? "true" : undefined,
     });
     return gameApiFetch<SearchResponse>(game, `/search${qs}`);
 }

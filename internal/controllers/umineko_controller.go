@@ -81,6 +81,7 @@ func (s *Service) setupUminekoStatsRoute(routeGroup fiber.Router) {
 //	@Param			interactionB	query		string	false	"Interaction filter: second character ID (requires interactionA)"	Enums(group_voices, kinzo, krauss, natsuhi, jessica, eva, hideyoshi, george, rudolf, kyrie, battler, ange, rosa, maria, genji, shannon, kanon, gohda, kumasawa, nanjo, amakusa, okonogi, kasumi, professor, kawabata, nanjo_son, kumasawa_son, beatrice, bernkastel, lambdadelta, virgilia, ronove, gaap, sakutarou, eva_beatrice, chiester_45, chiester_410, chiester_00, lucifer, leviathan, satan, belphegor, mammon, beelzebub, asmodeus, goat, erika, dlanor, gertrude, cornelia, featherine, zepar, furfur, lion, will, clair, ikuko, tohya, kinzo_young, bice, beato_elder, misc_voices, narrator)
 //	@Param			episode		query		int		false	"Filter by episode (1-8)"
 //	@Param			truth		query		string	false	"Filter by truth type"	Enums(red, blue, gold, purple)
+//	@Param			exact		query		bool	false	"Match whole words only"	default(false)
 //	@Success		200			{object}	dto.SearchAPIResponse
 //	@Failure		400			{object}	dto.ErrorResponse
 //	@Router			/umineko/search [get]
@@ -99,6 +100,7 @@ func (s *Service) uminekoSearch(ctx fiber.Ctx) error {
 	interactionAParam := ctx.Query("interactionA")
 	interactionBParam := ctx.Query("interactionB")
 	episode := fiber.Query[int](ctx, "episode", 0)
+	exact := fiber.Query[bool](ctx, "exact", false)
 
 	if errMsg, invalid := validateInteractionQueryParams(characterParam, interactionAParam, interactionBParam); invalid {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -119,6 +121,7 @@ func (s *Service) uminekoSearch(ctx fiber.Ctx) error {
 		episode,
 		intA,
 		intB,
+		exact,
 	)
 
 	response := s.UminekoService.Search(searchParams, ctx.Query("truth"))

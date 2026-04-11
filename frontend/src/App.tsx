@@ -49,6 +49,7 @@ export default function App() {
 
     const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
     const [searchInputValue, setSearchInputValue] = useState("");
+    const [exactSearch, setExactSearch] = useState(false);
     const [audioIdInputValue, setAudioIdInputValue] = useState("");
     const [builderInitialSegments, setBuilderInitialSegments] = useState<string | null>(null);
     const pendingDeeplinkScroll = useRef(false);
@@ -80,7 +81,7 @@ export default function App() {
                     );
                     setSearchInputValue(route.query);
                     setFilters(prev => ({ ...prev, ...nextFilters }));
-                    await search.search(route.game, route.query, route.lang, route.offset, nextFilters);
+                    await search.search(route.game, route.query, route.lang, route.offset, nextFilters, exactSearch);
                     break;
                 }
                 case "browse": {
@@ -146,24 +147,24 @@ export default function App() {
         async (query: string) => {
             setSearchInputValue(query);
             audioPlayer.stop();
-            const result = await search.search(game, query, language, 0, filters);
+            const result = await search.search(game, query, language, 0, filters, exactSearch);
             if (result) {
                 pendingDeeplinkScroll.current = true;
                 navigate("search", filters, { searchOffset: result.offset, searchQuery: query });
             }
         },
-        [game, filters, language, audioPlayer, search, navigate],
+        [game, filters, language, audioPlayer, search, navigate, exactSearch],
     );
 
     const handleSearchPaginate = useCallback(
         async (newOffset: number) => {
             audioPlayer.stop();
-            const result = await search.search(game, search.query, language, newOffset, filters);
+            const result = await search.search(game, search.query, language, newOffset, filters, exactSearch);
             if (result) {
                 navigate("search", filters, { searchOffset: result.offset, searchQuery: search.query });
             }
         },
-        [game, filters, language, audioPlayer, search, navigate],
+        [game, filters, language, audioPlayer, search, navigate, exactSearch],
     );
 
     const handleRandomQuote = useCallback(async () => {
@@ -385,14 +386,26 @@ export default function App() {
                 }
             } else if (searchInputValue.trim()) {
                 audioPlayer.stop();
-                search.search(game, searchInputValue, language, 0, merged).then(result => {
+                search.search(game, searchInputValue, language, 0, merged, exactSearch).then(result => {
                     if (result) {
                         navigate("search", merged, { searchOffset: result.offset, searchQuery: searchInputValue });
                     }
                 });
             }
         },
-        [game, filters, viewMode, searchInputValue, language, audioPlayer, search, browse, stats, navigate],
+        [
+            game,
+            filters,
+            viewMode,
+            searchInputValue,
+            language,
+            audioPlayer,
+            search,
+            browse,
+            stats,
+            navigate,
+            exactSearch,
+        ],
     );
 
     const handleLanguageChange = useCallback(
@@ -415,14 +428,14 @@ export default function App() {
                     filters.arc,
                 );
             } else if (viewMode === "search" && searchInputValue.trim()) {
-                search.search(game, searchInputValue, lang, search.offset, filters);
+                search.search(game, searchInputValue, lang, search.offset, filters, exactSearch);
             } else if (featured.currentAudioId) {
                 featured.lookupByAudioId(game, featured.currentAudioId, resolved);
             } else {
                 featured.randomQuote(game, resolved, filters);
             }
         },
-        [game, setLanguage, viewMode, filters, searchInputValue, browse, search, featured],
+        [game, setLanguage, viewMode, filters, searchInputValue, browse, search, featured, exactSearch],
     );
 
     const handleContextQuoteClick = useCallback(
@@ -485,6 +498,8 @@ export default function App() {
                                     value={searchInputValue}
                                     onChange={setSearchInputValue}
                                     onSubmit={handleSearchSubmit}
+                                    exact={exactSearch}
+                                    onExactChange={setExactSearch}
                                 />
                                 <AudioIdLookup
                                     value={audioIdInputValue}

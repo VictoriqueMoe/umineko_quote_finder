@@ -23,6 +23,6 @@ func BenchmarkConcurrentExactSearch(b *testing.B) {
 
 	b.ResetTimer()
 	for b.Loop() {
-		concurrentExactSearchGeneric(indices, lowerTexts, quotes, "beatrice", func(idx int) bool { return true })
+		concurrentExactSearchGeneric(indices, lowerTexts, quotes, "beatrice", false, func(idx int) bool { return true })
 	}
 }

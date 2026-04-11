@@ -14,6 +14,7 @@ type SearchParams struct {
 	Episode      int
 	InteractionA string
 	InteractionB string
+	Exact        bool
 }
 
 func NewSearchParams(
@@ -25,6 +26,7 @@ func NewSearchParams(
 	episode int,
 	interactionAParam string,
 	interactionBParam string,
+	exact bool,
 ) SearchParams {
 	return SearchParams{
 		Query:        strings.TrimSpace(query),
@@ -35,5 +37,6 @@ func NewSearchParams(
 		Episode:      episode,
 		InteractionA: strings.TrimSpace(interactionAParam),
 		InteractionB: strings.TrimSpace(interactionBParam),
+		Exact:        exact,
 	}
 }

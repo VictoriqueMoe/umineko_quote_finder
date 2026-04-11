@@ -19,6 +19,7 @@ export function useSearch() {
             language: Language,
             off: number = 0,
             filters?: FilterState,
+            exact?: boolean,
         ): Promise<{ offset: number; total: number } | undefined> => {
             if (!q.trim()) {
                 setError("Enter a search term to find quotes.");
@@ -42,6 +43,7 @@ export function useSearch() {
                     filters?.episode,
                     filters?.truth,
                     filters?.arc,
+                    exact,
                 );
                 setResults(data.results || []);
                 setQuery(q);

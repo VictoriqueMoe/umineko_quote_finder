@@ -284,6 +284,86 @@ body {
     transform: scale(0.98);
 }
 
+.search-exact-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    width: fit-content;
+    margin: 0.85rem auto 0;
+    padding: 0.4rem 0.85rem;
+    background: transparent;
+    border: 1px solid var(--purple-muted);
+    border-radius: 999px;
+    font-family: var(--font-display);
+    font-size: 0.7rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.3s var(--ease-out);
+}
+
+.search-exact-toggle:hover {
+    color: var(--gold);
+    border-color: var(--gold-dark);
+    box-shadow: 0 0 18px rgba(var(--gold-rgb), 0.15);
+}
+
+.search-exact-toggle:focus-visible {
+    outline: none;
+    border-color: var(--gold);
+    box-shadow: 0 0 0 1px var(--gold-dark);
+}
+
+.search-exact-toggle.is-active {
+    color: var(--gold);
+    border-color: var(--gold-dark);
+    background: rgba(var(--gold-rgb), 0.08);
+    box-shadow:
+        inset 0 1px 0 rgba(var(--gold-rgb), 0.15),
+        0 0 22px rgba(var(--gold-rgb), 0.18);
+}
+
+.search-exact-toggle__track {
+    position: relative;
+    display: inline-block;
+    width: 1.85rem;
+    height: 0.9rem;
+    background: rgba(var(--bg-purple-rgb), 0.6);
+    border: 1px solid var(--purple-muted);
+    border-radius: 999px;
+    transition: all 0.3s var(--ease-out);
+}
+
+.search-exact-toggle.is-active .search-exact-toggle__track {
+    background: linear-gradient(135deg, var(--gold-dark) 0%, var(--gold) 100%);
+    border-color: var(--gold);
+}
+
+.search-exact-toggle__thumb {
+    position: absolute;
+    top: 50%;
+    left: 0.1rem;
+    width: 0.65rem;
+    height: 0.65rem;
+    background: var(--gold);
+    border-radius: 50%;
+    transform: translateY(-50%);
+    transition: all 0.3s var(--ease-out);
+    box-shadow: 0 0 6px rgba(var(--gold-rgb), 0.5);
+}
+
+.search-exact-toggle.is-active .search-exact-toggle__thumb {
+    left: calc(100% - 0.75rem);
+    background: var(--bg-void);
+    box-shadow: 0 0 6px rgba(0, 0, 0, 0.4);
+}
+
+.search-exact-toggle__label {
+    line-height: 1;
+}
+
 /* Action Buttons */
 .actions {
     display: flex;

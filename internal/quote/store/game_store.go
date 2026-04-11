@@ -92,6 +92,7 @@ func (gs *GameStore[Q]) Search(p params.SearchParams, filter func(*Q) bool) dto.
 	episode := p.Episode
 	interactionA := p.InteractionA
 	interactionB := p.InteractionB
+	exact := p.Exact
 
 	if limit <= 0 {
 		limit = 30
@@ -124,10 +125,10 @@ func (gs *GameStore[Q]) Search(p params.SearchParams, filter func(*Q) bool) dto.
 	var exactMatches []dto.SearchResult
 	if searchIndices != nil {
 		if len(searchIndices) > 5000 {
-			exactMatches = concurrentExactSearchGeneric(searchIndices, lowerTexts, quotes, queryLower, matchesFilter)
+			exactMatches = concurrentExactSearchGeneric(searchIndices, lowerTexts, quotes, queryLower, exact, matchesFilter)
 		} else {
 			for _, idx := range searchIndices {
-				if strings.Contains(lowerTexts[idx], queryLower) {
+				if matchText(lowerTexts[idx], queryLower, exact) {
 					if matchesFilter(idx) {
 						exactMatches = append(exactMatches, dto.SearchResult{Quote: quotes[idx], Score: 100})
 					}
@@ -139,7 +140,7 @@ func (gs *GameStore[Q]) Search(p params.SearchParams, filter func(*Q) bool) dto.
 		for i := range allIndices {
 			allIndices[i] = i
 		}
-		exactMatches = concurrentExactSearchGeneric(allIndices, lowerTexts, quotes, queryLower, matchesFilter)
+		exactMatches = concurrentExactSearchGeneric(allIndices, lowerTexts, quotes, queryLower, exact, matchesFilter)
 	}
 
 	return NewSearchResponse(exactMatches, limit, offset)

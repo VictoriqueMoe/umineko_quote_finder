@@ -9,6 +9,7 @@ export interface NavigateOpts {
     browseOffset?: number;
     currentAudioId?: string | null;
     searchQuery?: string;
+    searchExact?: boolean;
     game?: Game;
 }
 
@@ -67,6 +68,7 @@ export function useRouter({ language, game, onRouteLoad }: UseRouterParams) {
             languageRef.current,
             opts?.game ?? gameRef.current,
             opts?.searchQuery ?? "",
+            opts?.searchExact ?? false,
         );
         history.pushState(null, "", url);
     }, []);

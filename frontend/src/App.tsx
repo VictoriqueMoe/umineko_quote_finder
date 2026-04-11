@@ -80,8 +80,9 @@ export default function App() {
                         normalizeFilterCharacters({ character: route.character, ...baseFilters }, route.game),
                     );
                     setSearchInputValue(route.query);
+                    setExactSearch(route.exact);
                     setFilters(prev => ({ ...prev, ...nextFilters }));
-                    await search.search(route.game, route.query, route.lang, route.offset, nextFilters, exactSearch);
+                    await search.search(route.game, route.query, route.lang, route.offset, nextFilters, route.exact);
                     break;
                 }
                 case "browse": {
@@ -150,7 +151,11 @@ export default function App() {
             const result = await search.search(game, query, language, 0, filters, exactSearch);
             if (result) {
                 pendingDeeplinkScroll.current = true;
-                navigate("search", filters, { searchOffset: result.offset, searchQuery: query });
+                navigate("search", filters, {
+                    searchOffset: result.offset,
+                    searchQuery: query,
+                    searchExact: exactSearch,
+                });
             }
         },
         [game, filters, language, audioPlayer, search, navigate, exactSearch],
@@ -161,10 +166,33 @@ export default function App() {
             audioPlayer.stop();
             const result = await search.search(game, search.query, language, newOffset, filters, exactSearch);
             if (result) {
-                navigate("search", filters, { searchOffset: result.offset, searchQuery: search.query });
+                navigate("search", filters, {
+                    searchOffset: result.offset,
+                    searchQuery: search.query,
+                    searchExact: exactSearch,
+                });
             }
         },
         [game, filters, language, audioPlayer, search, navigate, exactSearch],
+    );
+
+    const handleExactToggle = useCallback(
+        async (next: boolean) => {
+            setExactSearch(next);
+            if (viewMode !== "search" || !search.query) {
+                return;
+            }
+            audioPlayer.stop();
+            const result = await search.search(game, search.query, language, 0, filters, next);
+            if (result) {
+                navigate("search", filters, {
+                    searchOffset: result.offset,
+                    searchQuery: search.query,
+                    searchExact: next,
+                });
+            }
+        },
+        [viewMode, game, filters, language, audioPlayer, search, navigate],
     );
 
     const handleRandomQuote = useCallback(async () => {
@@ -388,7 +416,11 @@ export default function App() {
                 audioPlayer.stop();
                 search.search(game, searchInputValue, language, 0, merged, exactSearch).then(result => {
                     if (result) {
-                        navigate("search", merged, { searchOffset: result.offset, searchQuery: searchInputValue });
+                        navigate("search", merged, {
+                            searchOffset: result.offset,
+                            searchQuery: searchInputValue,
+                            searchExact: exactSearch,
+                        });
                     }
                 });
             }
@@ -499,7 +531,7 @@ export default function App() {
                                     onChange={setSearchInputValue}
                                     onSubmit={handleSearchSubmit}
                                     exact={exactSearch}
-                                    onExactChange={setExactSearch}
+                                    onExactChange={handleExactToggle}
                                 />
                                 <AudioIdLookup
                                     value={audioIdInputValue}

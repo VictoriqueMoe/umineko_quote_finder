@@ -14,7 +14,7 @@ interface CommonParams {
 
 export type ParsedRoute = CommonParams &
     (
-        | { viewMode: "search"; query: string; character: string }
+        | { viewMode: "search"; query: string; character: string; exact: boolean }
         | { viewMode: "browse"; character: string }
         | { viewMode: "stats" }
         | { viewMode: "quoteLookup"; audioId: string }
@@ -29,12 +29,13 @@ interface SerializeContext {
     searchOffset: number;
     browseOffset: number;
     searchQuery: string;
+    searchExact: boolean;
 }
 
 interface RouteRule {
     viewMode: ViewMode;
     match: (params: URLSearchParams) => boolean;
-    parse: (params: URLSearchParams, game: Game) => Record<string, string>;
+    parse: (params: URLSearchParams, game: Game) => Record<string, string | boolean>;
     serialize: (params: URLSearchParams, ctx: SerializeContext) => void;
 }
 
@@ -86,6 +87,7 @@ const ROUTES: RouteRule[] = [
         parse: (p, g) => ({
             query: p.get("q")!,
             character: normalizeCharacterKey(p.get("character") || "", g),
+            exact: p.get("exact") === "1",
         }),
         serialize: (p, ctx) => {
             if (ctx.searchQuery.trim()) {
@@ -97,6 +99,9 @@ const ROUTES: RouteRule[] = [
             if (ctx.filters.interactionA && ctx.filters.interactionB) {
                 p.set("interactionA", ctx.filters.interactionA);
                 p.set("interactionB", ctx.filters.interactionB);
+            }
+            if (ctx.searchExact) {
+                p.set("exact", "1");
             }
         },
     },
@@ -136,6 +141,7 @@ export function buildUrl(
     language: Language,
     game: Game,
     searchQuery: string,
+    searchExact: boolean,
 ): string {
     const params = new URLSearchParams();
 
@@ -145,7 +151,7 @@ export function buildUrl(
 
     const route = ROUTES.find(r => r.viewMode === state.viewMode);
     if (route) {
-        route.serialize(params, { ...state, searchQuery });
+        route.serialize(params, { ...state, searchQuery, searchExact });
     }
 
     if (state.filters.episode && state.filters.episode !== "0") {

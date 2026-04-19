@@ -12,6 +12,7 @@ export interface Quote {
     audioCharMap?: Record<string, string>;
     audioTextMap?: Record<string, string>;
     soundEffects?: SoundEffect[];
+    chapter?: string;
 }
 
 export interface SearchResult {
@@ -101,6 +102,14 @@ export interface StatsResponse {
 export interface HigurashiStatsResponse {
     topSpeakers: TopSpeaker[];
     linesPerArc: Record<string, Record<string, number>>;
+    interactions: Interaction[];
+    interactionCounts: Record<string, number>;
+    characterNames: Record<string, string>;
+}
+
+export interface CiconiaStatsResponse {
+    topSpeakers: TopSpeaker[];
+    linesPerChapter: Record<string, Record<string, number>>;
     interactions: Interaction[];
     interactionCounts: Record<string, number>;
     characterNames: Record<string, string>;

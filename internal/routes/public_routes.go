@@ -21,6 +21,12 @@ func PublicRoutes(service controllers.Service, app *fiber.App) {
 		higuRoutes[i](higuGroup)
 	}
 
+	ciconiaGroup := api.Group("/ciconia")
+	ciconiaRoutes := service.GetCiconiaRoutes()
+	for i := 0; i < len(ciconiaRoutes); i++ {
+		ciconiaRoutes[i](ciconiaGroup)
+	}
+
 	systemRoutes := service.GetSystemRoutes()
 	for i := 0; i < len(systemRoutes); i++ {
 		systemRoutes[i](api)

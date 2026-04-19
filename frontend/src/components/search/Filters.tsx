@@ -16,7 +16,22 @@ const DEFAULT_FILTERS: FilterState = {
     episode: "0",
     truth: "",
     arc: "",
+    chapter: "",
 };
+
+const CICONIA_CHAPTERS: { value: string; label: string }[] = [
+    { value: "00", label: "Prologue" },
+    ...Array.from({ length: 25 }, (_, i) => {
+        const n = String(i + 1).padStart(2, "0");
+        return { value: n, label: `Chapter ${n}` };
+    }),
+    { value: "25b", label: "Chapter 25b (Finale)" },
+    { value: "ep", label: "Epilogue" },
+    ...Array.from({ length: 16 }, (_, i) => {
+        const n = String(i + 1).padStart(2, "0");
+        return { value: `df${n}`, label: `Data Fragment ${n}` };
+    }),
+];
 
 const HIGURASHI_ARCS: { value: string; label: string }[] = [
     { value: "onikakushi", label: "Onikakushi" },
@@ -71,6 +86,44 @@ function GameSpecificFilters({
                     </select>
                 </div>
             </>
+        );
+    }
+
+    if (game === "ciconia") {
+        return (
+            <div className="filter-group">
+                <label className="filter-label" htmlFor="filter-chapter">
+                    Chapter
+                </label>
+                <select
+                    id="filter-chapter"
+                    className="truth-select"
+                    value={filters.chapter}
+                    onChange={e => onFilterChange({ chapter: e.target.value })}
+                >
+                    <option value="">All Chapters</option>
+                    <optgroup label="Prologue">
+                        <option value="00">Prologue</option>
+                    </optgroup>
+                    <optgroup label="Main Acts">
+                        {CICONIA_CHAPTERS.filter(c => /^\d/.test(c.value)).map(c => (
+                            <option key={c.value} value={c.value}>
+                                {c.label}
+                            </option>
+                        ))}
+                    </optgroup>
+                    <optgroup label="Epilogue">
+                        <option value="ep">Epilogue</option>
+                    </optgroup>
+                    <optgroup label="Data Fragments">
+                        {CICONIA_CHAPTERS.filter(c => c.value.startsWith("df")).map(c => (
+                            <option key={c.value} value={c.value}>
+                                {c.label}
+                            </option>
+                        ))}
+                    </optgroup>
+                </select>
+            </div>
         );
     }
 
@@ -164,7 +217,15 @@ export function Filters({ filters, viewMode, onFilterChange, onBrowseClick, brow
     };
 
     const handleResetFilters = () => {
-        onFilterChange({ character: "", interactionA: "", interactionB: "", episode: "0", truth: "", arc: "" });
+        onFilterChange({
+            character: "",
+            interactionA: "",
+            interactionB: "",
+            episode: "0",
+            truth: "",
+            arc: "",
+            chapter: "",
+        });
     };
 
     const selectedInteractionAName = interactionA ? characterNameById.get(interactionA) || interactionA : "";

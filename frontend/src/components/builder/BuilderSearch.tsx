@@ -26,6 +26,7 @@ export function BuilderSearch({ builder, audioPlayer }: BuilderSearchProps) {
         episode: "0",
         truth: "",
         arc: "",
+        chapter: "",
     });
 
     const handleSearch = useCallback(async () => {

@@ -1,13 +1,15 @@
 import { useCallback, useRef, useState } from "react";
 import * as api from "../api/endpoints";
-import type { HigurashiStatsResponse, StatsResponse } from "../types/api";
+import type { CiconiaStatsResponse, HigurashiStatsResponse, StatsResponse } from "../types/api";
 import type { Game } from "../types/app";
 
+type AnyStats = StatsResponse | HigurashiStatsResponse | CiconiaStatsResponse;
+
 export function useStats() {
-    const [data, setData] = useState<StatsResponse | HigurashiStatsResponse | null>(null);
+    const [data, setData] = useState<AnyStats | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const cache = useRef<Record<string, StatsResponse | HigurashiStatsResponse>>({});
+    const cache = useRef<Record<string, AnyStats>>({});
 
     const loadStats = useCallback(async (game: Game, episode: string): Promise<void> => {
         setLoading(true);

@@ -25,6 +25,7 @@ export function useFeaturedQuote() {
                     filters.episode,
                     filters.truth,
                     filters.arc,
+                    filters.chapter,
                 );
                 if ("error" in q) {
                     setError("No quotes found for this character.");

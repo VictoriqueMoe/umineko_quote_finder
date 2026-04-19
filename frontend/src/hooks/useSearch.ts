@@ -44,6 +44,7 @@ export function useSearch() {
                     filters?.truth,
                     filters?.arc,
                     exact,
+                    filters?.chapter,
                 );
                 setResults(data.results || []);
                 setQuery(q);

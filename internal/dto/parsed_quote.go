@@ -15,6 +15,12 @@ type (
 		Index int `json:"index"`
 	}
 
+	CiconiaQuote struct {
+		scriptdto.CicroniaQuote
+		// Position index in the parsed script (stable across text changes)
+		Index int `json:"index"`
+	}
+
 	CharactersResult struct {
 		Characters map[string]string `json:"characters"`
 		Additional map[string]string `json:"additional"`

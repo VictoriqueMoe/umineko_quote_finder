@@ -7,6 +7,7 @@ interface EmptyStateProps {
 const GAME_EMPTY = {
     umineko: { icon: "\uD83E\uDD8B", title: "The Golden Land remains silent" },
     higurashi: { icon: "\uD83E\uDE77", title: "The cicadas have fallen silent" },
+    ciconia: { icon: "\uD83E\uDEB6", title: "The storks have not yet cried" },
 } as const;
 
 export function EmptyState({ message = "No quotes found in this fragment." }: EmptyStateProps) {

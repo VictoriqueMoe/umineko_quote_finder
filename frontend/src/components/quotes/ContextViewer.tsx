@@ -47,7 +47,8 @@ export function ContextViewer({ audioId, onQuoteClick, langOverride }: ContextVi
             prevFirstId.current = firstId;
             setCenterAudioId(null);
             if (visible) {
-                fetchContext(firstId);
+                // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: refetch on prop change
+                void fetchContext(firstId);
             }
         }
     }, [firstId, visible, fetchContext]);
@@ -84,15 +85,6 @@ export function ContextViewer({ audioId, onQuoteClick, langOverride }: ContextVi
         setCenterAudioId(null);
         fetchContext(firstId);
     }, [firstId, fetchContext]);
-
-    (ContextViewer as { refreshForLang?: (lang: Language) => void }).refreshForLang = useCallback(
-        (lang: Language) => {
-            if (visible) {
-                fetchContext(effectiveCenterId, lang);
-            }
-        },
-        [visible, fetchContext, effectiveCenterId],
-    );
 
     const quoteAudioId = data?.quote?.audioId || "";
 
@@ -154,5 +146,3 @@ export function ContextViewer({ audioId, onQuoteClick, langOverride }: ContextVi
         </>
     );
 }
-
-export type ContextViewerRefresh = (lang: Language) => void;

@@ -2,11 +2,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Bar } from "react-chartjs-2";
 import { getGridColour, getThemeColours, zoomConfig } from "./chartConfig";
 import { useAppContext } from "../../hooks/useAppContext";
-import type { HigurashiStatsResponse, StatsResponse } from "../../types/api";
+import type { CiconiaStatsResponse, HigurashiStatsResponse, StatsResponse } from "../../types/api";
 import type { Chart } from "chart.js";
 
 interface InteractionsChartProps {
-    data: StatsResponse | HigurashiStatsResponse;
+    data: StatsResponse | HigurashiStatsResponse | CiconiaStatsResponse;
     onRegister: (id: string, chart: Chart) => void;
     onViewDialogues?: (charA: string, charB: string) => void;
 }

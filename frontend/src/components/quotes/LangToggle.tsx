@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { useAppContext } from "../../hooks/useAppContext";
 import { getQuoteByAudioId } from "../../api/endpoints";
 import type { Language } from "../../types/app";
@@ -29,12 +29,14 @@ export function LangToggle({
     const { language, game } = useAppContext();
     const effective = langOverride ?? (language === "auto" ? "en" : language);
     const [activeLang, setActiveLang] = useState<Language>(effective);
+    const [prevEffective, setPrevEffective] = useState(effective);
     const [loading, setLoading] = useState(false);
 
-    useEffect(() => {
-        const next = langOverride ?? (language === "auto" ? "en" : language);
-        setActiveLang(next);
-    }, [language, langOverride]);
+    if (effective !== prevEffective) {
+        setPrevEffective(effective);
+        setActiveLang(effective);
+    }
+
     const firstId = audioId.split(", ")[0];
 
     const handleToggle = useCallback(
@@ -43,7 +45,7 @@ export function LangToggle({
                 return;
             }
 
-            if (game === "higurashi") {
+            if (game === "higurashi" || game === "ciconia") {
                 if (newLang === "ja" && textJp) {
                     setActiveLang("ja");
                     onTextUpdate(textJpHtml || textJp, textJp);
@@ -86,7 +88,7 @@ export function LangToggle({
         ],
     );
 
-    if (game === "higurashi") {
+    if (game === "higurashi" || game === "ciconia") {
         if (!textJp) {
             return null;
         }

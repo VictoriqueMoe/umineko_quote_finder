@@ -19,6 +19,440 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/ciconia/browse": {
+            "get": {
+                "description": "Browse all Ciconia quotes with optional filters and pagination",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ciconia"
+                ],
+                "summary": "Browse Ciconia quotes",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "en",
+                        "description": "Language",
+                        "name": "lang",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by character ID",
+                        "name": "character",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Interaction filter: first character ID (requires interactionB)",
+                        "name": "interactionA",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Interaction filter: second character ID (requires interactionA)",
+                        "name": "interactionB",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 50,
+                        "description": "Maximum results",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "Offset for pagination",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by chapter ID",
+                        "name": "chapter",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.CharacterResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/ciconia/characters": {
+            "get": {
+                "description": "Returns main cast (curated roster of named speakers) and additional (ensemble roles and other script markers) character maps",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ciconia"
+                ],
+                "summary": "List all Ciconia characters",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.CharactersResult"
+                        }
+                    }
+                }
+            }
+        },
+        "/ciconia/context/{audioId}": {
+            "get": {
+                "description": "Returns surrounding dialogue lines for a specific Ciconia quote",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ciconia"
+                ],
+                "summary": "Get Ciconia quote context",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Synthetic audio ID",
+                        "name": "audioId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "default": "en",
+                        "description": "Language",
+                        "name": "lang",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 5,
+                        "description": "Number of context lines before and after",
+                        "name": "lines",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ContextResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/ciconia/og/quote.png": {
+            "get": {
+                "description": "Renders a social-preview PNG for a Ciconia quote identified by its synthetic audio ID (e.g. c11:6d333931)",
+                "produces": [
+                    "image/png"
+                ],
+                "tags": [
+                    "ciconia"
+                ],
+                "summary": "Ciconia OG preview image",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Synthetic audio ID",
+                        "name": "audioId",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "default": "en",
+                        "description": "Language",
+                        "name": "lang",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Render the full-length layout instead of the compact preview",
+                        "name": "full",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "file"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/ciconia/quote/index/{index}": {
+            "get": {
+                "description": "Returns a specific Ciconia quote identified by its position index in the parsed script",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ciconia"
+                ],
+                "summary": "Get Ciconia quote by index",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Index of the quote in the parsed script",
+                        "name": "index",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "default": "en",
+                        "description": "Language",
+                        "name": "lang",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.CiconiaQuote"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/ciconia/quote/{audioId}": {
+            "get": {
+                "description": "Returns a specific Ciconia quote identified by its synthetic audio ID (e.g. c01:a3f2b81c, pro:xxxxxxxx, df03:xxxxxxxx)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ciconia"
+                ],
+                "summary": "Get Ciconia quote by synthetic ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Synthetic audio ID (may contain colons)",
+                        "name": "audioId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "default": "en",
+                        "description": "Language",
+                        "name": "lang",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.CiconiaQuote"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/ciconia/random": {
+            "get": {
+                "description": "Returns a random Ciconia quote with optional filters",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ciconia"
+                ],
+                "summary": "Get random Ciconia quote",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "en",
+                        "description": "Language",
+                        "name": "lang",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by character ID",
+                        "name": "character",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by chapter ID",
+                        "name": "chapter",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.CiconiaQuote"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/ciconia/search": {
+            "get": {
+                "description": "Search for Ciconia no Naku Koro ni Phase 1 quotes by text query with optional filters",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ciconia"
+                ],
+                "summary": "Search Ciconia quotes",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Search query",
+                        "name": "q",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "default": "en",
+                        "description": "Language",
+                        "name": "lang",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 30,
+                        "description": "Maximum results",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "Offset for pagination",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by character ID (e.g. miyao, jayden, keropoyo)",
+                        "name": "character",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Interaction filter: first character ID (requires interactionB)",
+                        "name": "interactionA",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Interaction filter: second character ID (requires interactionA)",
+                        "name": "interactionB",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by chapter ID (00 for prologue, 01-25 for main acts, 25b for finale, df01-df16 for data fragments)",
+                        "name": "chapter",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "default": false,
+                        "description": "Match whole words only",
+                        "name": "exact",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SearchAPIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/ciconia/stats": {
+            "get": {
+                "description": "Returns statistics about Ciconia quotes including top speakers, lines per chapter, and character interactions",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ciconia"
+                ],
+                "summary": "Get Ciconia quote statistics",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.CiconiaStatsResult"
+                        }
+                    }
+                }
+            }
+        },
         "/higurashi/browse": {
             "get": {
                 "description": "Browse all Higurashi quotes with optional filters and pagination",
@@ -1846,6 +2280,139 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.CharactersResult": {
+            "type": "object",
+            "properties": {
+                "additional": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "characters": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "dto.CiconiaQuote": {
+            "type": "object",
+            "properties": {
+                "audioCharMap": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "example": {
+                        "30101088": "10",
+                        "30101089": "10"
+                    }
+                },
+                "audioId": {
+                    "type": "string",
+                    "example": "30101088, 30101089"
+                },
+                "audioTextMap": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "example": {
+                        "30101088": "You're insane!!",
+                        "30101089": "Stop it already"
+                    }
+                },
+                "chapter": {
+                    "type": "string",
+                    "example": "01"
+                },
+                "character": {
+                    "type": "string",
+                    "example": "Ushiromiya Battler"
+                },
+                "characterId": {
+                    "type": "string",
+                    "example": "10"
+                },
+                "contentType": {
+                    "type": "string",
+                    "example": ""
+                },
+                "episode": {
+                    "type": "integer",
+                    "example": 3
+                },
+                "index": {
+                    "description": "Position index in the parsed script (stable across text changes)",
+                    "type": "integer"
+                },
+                "soundEffects": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.SoundEffect"
+                    }
+                },
+                "text": {
+                    "type": "string",
+                    "example": "You're insane!! Stop it already, damn iiiiiiiiit!!"
+                },
+                "textHtml": {
+                    "type": "string",
+                    "example": "You\u0026#39;re insane!! Stop it already, damn iiiiiiiiit!!"
+                },
+                "textJp": {
+                    "type": "string"
+                },
+                "textJpHtml": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.CiconiaStatsResult": {
+            "type": "object",
+            "properties": {
+                "characterNames": {
+                    "description": "Map of character ID to display name",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "interactionCounts": {
+                    "description": "Map of character pair key to interaction count",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "integer"
+                    }
+                },
+                "interactions": {
+                    "description": "Top character interaction pairs",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.InteractionPair"
+                    }
+                },
+                "linesPerChapter": {
+                    "description": "Dialogue line counts per chapter per character",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "integer"
+                        }
+                    }
+                },
+                "topSpeakers": {
+                    "description": "Top speakers by dialogue line count",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.SpeakerStat"
+                    }
+                }
+            }
+        },
         "dto.ContextResponse": {
             "type": "object",
             "properties": {
@@ -2310,7 +2877,7 @@ var SwaggerInfo = &swag.Spec{
 	BasePath:         "/api/v1",
 	Schemes:          []string{"https", "http"},
 	Title:            "When They Cry Quote API",
-	Description:      "API for searching and browsing quotes from Umineko no Naku Koro ni and Higurashi no Naku Koro ni",
+	Description:      "API for searching and browsing quotes from Umineko no Naku Koro ni, Higurashi no Naku Koro ni, and Ciconia no Naku Koro ni",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

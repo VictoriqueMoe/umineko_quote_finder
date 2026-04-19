@@ -2,6 +2,7 @@ import { apiFetch, buildQueryString, gameApiFetch } from "./client";
 import type {
     BrowseResponse,
     CharactersResponse,
+    CiconiaStatsResponse,
     ConfigResponse,
     ContextResponse,
     HigurashiStatsResponse,
@@ -29,6 +30,7 @@ export async function searchQuotes(
     truth?: string,
     arc?: string,
     exact?: boolean,
+    chapter?: string,
 ): Promise<SearchResponse> {
     const qs = buildQueryString({
         q: query,
@@ -41,6 +43,7 @@ export async function searchQuotes(
         episode: episode && episode !== "0" ? episode : undefined,
         truth: truth || undefined,
         arc: arc || undefined,
+        chapter: chapter || undefined,
         exact: exact ? "true" : undefined,
     });
     return gameApiFetch<SearchResponse>(game, `/search${qs}`);
@@ -53,6 +56,7 @@ export async function getRandomQuote(
     episode?: string,
     truth?: string,
     arc?: string,
+    chapter?: string,
 ): Promise<Quote> {
     const qs = buildQueryString({
         lang: resolveLanguage(lang),
@@ -60,6 +64,7 @@ export async function getRandomQuote(
         episode: episode && episode !== "0" ? episode : undefined,
         truth: truth || undefined,
         arc: arc || undefined,
+        chapter: chapter || undefined,
     });
     return gameApiFetch<Quote>(game, `/random${qs}`);
 }
@@ -78,6 +83,7 @@ export async function browseDialogue(
     episode?: string,
     truth?: string,
     arc?: string,
+    chapter?: string,
 ): Promise<BrowseResponse> {
     const qs = buildQueryString({
         limit: PAGE_SIZE,
@@ -89,6 +95,7 @@ export async function browseDialogue(
         episode: episode && episode !== "0" ? episode : undefined,
         truth: truth || undefined,
         arc: arc || undefined,
+        chapter: chapter || undefined,
     });
     return gameApiFetch<BrowseResponse>(game, `/browse${qs}`);
 }
@@ -114,9 +121,12 @@ export async function getNearestVoiced(
     );
 }
 
-export async function getStats(game: Game, episode?: string): Promise<StatsResponse | HigurashiStatsResponse> {
+export async function getStats(
+    game: Game,
+    episode?: string,
+): Promise<StatsResponse | HigurashiStatsResponse | CiconiaStatsResponse> {
     const qs = episode && episode !== "0" ? `?episode=${episode}` : "";
-    return gameApiFetch<StatsResponse | HigurashiStatsResponse>(game, `/stats${qs}`);
+    return gameApiFetch<StatsResponse | HigurashiStatsResponse | CiconiaStatsResponse>(game, `/stats${qs}`);
 }
 
 export async function getConfig(): Promise<ConfigResponse> {

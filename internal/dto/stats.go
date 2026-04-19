@@ -85,4 +85,17 @@ type (
 		// Map of character ID to display name
 		CharacterNames map[string]string `json:"characterNames"`
 	}
+
+	CiconiaStatsResult struct {
+		// Top speakers by dialogue line count
+		TopSpeakers []SpeakerStat `json:"topSpeakers"`
+		// Dialogue line counts per chapter per character
+		LinesPerChapter map[string]map[string]int `json:"linesPerChapter"`
+		// Top character interaction pairs
+		Interactions []InteractionPair `json:"interactions"`
+		// Map of character pair key to interaction count
+		InteractionCounts map[string]int `json:"interactionCounts"`
+		// Map of character ID to display name
+		CharacterNames map[string]string `json:"characterNames"`
+	}
 )

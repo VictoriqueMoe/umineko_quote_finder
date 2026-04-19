@@ -22,13 +22,19 @@ const HIGURASHI_THEMES: ThemeDefinition[] = [
     { id: "satoko", name: "Satoko", description: "The master of traps" },
 ];
 
+const CICONIA_THEMES: ThemeDefinition[] = [
+    { id: "miyao", name: "Miyao", description: "AOU Gauntlet Knight — sky and sun" },
+    { id: "lingji", name: "Lingji", description: "COU Gauntlet Knight — red banner, gold star" },
+    { id: "stanislaw", name: "Stanisław", description: "ABN Gauntlet Knight — constellation over the void" },
+];
+
 export function ThemeSelector() {
     const { theme, setTheme, particlesEnabled, setParticlesEnabled } = useTheme();
     const { game } = useAppContext();
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
-    const themes = game === "higurashi" ? HIGURASHI_THEMES : UMINEKO_THEMES;
+    const themes = game === "higurashi" ? HIGURASHI_THEMES : game === "ciconia" ? CICONIA_THEMES : UMINEKO_THEMES;
     const currentTheme = themes.find(t => t.id === theme) || themes[0];
 
     useEffect(() => {

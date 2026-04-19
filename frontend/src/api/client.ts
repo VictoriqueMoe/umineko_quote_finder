@@ -52,7 +52,7 @@ export function ogImageUrl(game: Game, audioId: string, lang: string, full?: boo
     if (full) {
         params.set("full", "true");
     }
-    if (game === "higurashi") {
+    if (game === "higurashi" || game === "ciconia") {
         params.set("audioId", audioId);
         return `${API_BASE}/${game}/og/quote.png?${params.toString()}`;
     }

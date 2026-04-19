@@ -1,5 +1,5 @@
 import { useCallback, useRef } from "react";
-import type { HigurashiStatsResponse, StatsResponse } from "../../types/api";
+import type { CiconiaStatsResponse, HigurashiStatsResponse, StatsResponse } from "../../types/api";
 import type { Game } from "../../types/app";
 import { StatsCard } from "./StatsCard";
 import { TopSpeakersChart } from "./TopSpeakersChart";
@@ -8,17 +8,24 @@ import { TruthChart } from "./TruthChart";
 import { InteractionsChart } from "./InteractionsChart";
 import { PresenceChart } from "./PresenceChart";
 import { LinesPerArcChart } from "./LinesPerArcChart";
+import { LinesPerChapterChart } from "./LinesPerChapterChart";
 import type { Chart } from "chart.js";
 
+type AnyStats = StatsResponse | HigurashiStatsResponse | CiconiaStatsResponse;
+
 interface StatsViewProps {
-    data: StatsResponse | HigurashiStatsResponse;
+    data: AnyStats;
     game: Game;
     episode: string;
     onViewInteractionDialogues?: (charA: string, charB: string) => void;
 }
 
-function isUminekoStats(data: StatsResponse | HigurashiStatsResponse): data is StatsResponse {
+function isUminekoStats(data: AnyStats): data is StatsResponse {
     return "linesPerEpisode" in data;
+}
+
+function isCiconiaStats(data: AnyStats): data is CiconiaStatsResponse {
+    return "linesPerChapter" in data;
 }
 
 export function StatsView({ data, game, episode, onViewInteractionDialogues }: StatsViewProps) {
@@ -89,6 +96,49 @@ export function StatsView({ data, game, episode, onViewInteractionDialogues }: S
                             <PresenceChart data={data} onRegister={registerChart} />
                         </StatsCard>
                     )}
+                </div>
+            </>
+        );
+    }
+
+    if (game === "ciconia" && isCiconiaStats(data)) {
+        const cData = data;
+        const hasChapters = cData.linesPerChapter && Object.keys(cData.linesPerChapter).length > 0;
+
+        return (
+            <>
+                <div className="stats-header">
+                    <h2 className="stats-title">Ciconia Statistics</h2>
+                    <p className="stats-subtitle">Phase 1 &mdash; English script lines</p>
+                </div>
+                <div className="stats-grid">
+                    <StatsCard id="chartTopSpeakers" title="Top Speakers" tall wide onResetZoom={handleResetZoom}>
+                        <TopSpeakersChart data={cData} onRegister={registerChart} />
+                    </StatsCard>
+                    {hasChapters && (
+                        <StatsCard
+                            id="chartLinesPerChapter"
+                            title="Lines per Chapter"
+                            wide
+                            onResetZoom={handleResetZoom}
+                        >
+                            <LinesPerChapterChart data={cData} onRegister={registerChart} />
+                        </StatsCard>
+                    )}
+                    <StatsCard
+                        id="chartInteractions"
+                        title="Character Interactions"
+                        tall
+                        wide
+                        chartClassName="stats-chart-interactions"
+                        onResetZoom={handleResetZoom}
+                    >
+                        <InteractionsChart
+                            data={cData}
+                            onRegister={registerChart}
+                            onViewDialogues={onViewInteractionDialogues}
+                        />
+                    </StatsCard>
                 </div>
             </>
         );

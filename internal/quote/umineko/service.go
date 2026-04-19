@@ -72,7 +72,9 @@ func NewService() Service {
 			defer f.Close()
 
 			timeStart := time.Now()
-			parsed, subtitleRefs, validationErrors, err := umineko.ParseFile(f)
+			parser := umineko.NewParser()
+			parsed, validationErrors, err := scriptparser.ParseReader(f, parser)
+			subtitleRefs := parser.SubtitleRefs()
 			timeEnd := time.Now()
 
 			log.Printf("[umineko/%s] parsed %d quotes took %v", lang, len(parsed), timeEnd.Sub(timeStart))

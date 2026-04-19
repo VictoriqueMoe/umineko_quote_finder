@@ -9,11 +9,12 @@ export function resolveLanguage(lang: Language): Exclude<Language, "auto"> {
     return lang;
 }
 
-export type Game = "umineko" | "higurashi";
+export type Game = "umineko" | "higurashi" | "ciconia";
 
 export type UminekoTheme = "featherine" | "bernkastel" | "lambdadelta";
 export type HigurashiTheme = "rika" | "mion" | "satoko";
-export type ThemeType = UminekoTheme | HigurashiTheme;
+export type CiconiaTheme = "miyao" | "lingji" | "stanislaw";
+export type ThemeType = UminekoTheme | HigurashiTheme | CiconiaTheme;
 
 export type ViewMode = "search" | "browse" | "stats" | "featured" | "quoteLookup" | "voiceBuilder" | "bookmarks";
 
@@ -24,4 +25,5 @@ export interface FilterState {
     episode: string;
     truth: string;
     arc: string;
+    chapter: string;
 }

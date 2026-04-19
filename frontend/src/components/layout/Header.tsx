@@ -12,6 +12,10 @@ const GAME_CONFIG = {
         title: "Higurashi Quotes",
         subtitle: "When the cicadas cry, none shall escape",
     },
+    ciconia: {
+        title: "Ciconia Quotes",
+        subtitle: "When the storks cry, none shall know peace",
+    },
 } as const;
 
 interface HeaderProps {
@@ -56,6 +60,12 @@ export function Header({
                 >
                     Higurashi
                 </button>
+                <button
+                    className={`game-toggle-btn${game === "ciconia" ? " active" : ""}`}
+                    onClick={() => onGameChange("ciconia")}
+                >
+                    Ciconia
+                </button>
             </div>
             <div className="ornament">{"\u2726 \u2726 \u2726"}</div>
             <h1 className="title" onClick={onHomeClick} style={{ cursor: "pointer" }}>
@@ -76,7 +86,7 @@ export function Header({
                 >
                     English
                 </button>
-                {game === "higurashi" && (
+                {(game === "higurashi" || game === "ciconia") && (
                     <button
                         className={`lang-btn${language === "ja" ? " active" : ""}`}
                         onClick={() => onLanguageChange("ja")}

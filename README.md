@@ -1,6 +1,6 @@
-# Umineko & Higurashi Quote Search
+# When They Cry Quote Search
 
-A quote search engine for Umineko no Naku Koro ni and Higurashi no Naku Koro ni. Search through thousands of lines of dialogue from both visual novels.
+A quote search engine for Umineko no Naku Koro ni, Higurashi no Naku Koro ni, and Ciconia no Naku Koro ni (Phase 1). Search through thousands of lines of dialogue across all three visual novels.
 
 ## System Architecture
 
@@ -10,7 +10,7 @@ graph TB
         App["App.tsx"]
         API["API Client<br/>(fetch)"]
         SearchUI["Quote Display<br/>& Search UI"]
-        GameToggle["Game Toggle<br/>Umineko / Higurashi"]
+        GameToggle["Game Toggle<br/>Umineko / Higurashi / Ciconia"]
         AudioPlayer["Audio Player<br/>(Umineko only)"]
         VoiceBuilder["Voice Clip<br/>Builder<br/>(Umineko only)"]
     end
@@ -19,6 +19,7 @@ graph TB
         Router["Router<br/>PublicRoutes()"]
         UmiCtrl["Umineko<br/>Controller"]
         HiguCtrl["Higurashi<br/>Controller"]
+        CiconiaCtrl["Ciconia<br/>Controller"]
         OGCtrl["OG<br/>Controller"]
         SysCtrl["System<br/>Controller"]
     end
@@ -26,10 +27,12 @@ graph TB
     subgraph QuoteService["Quote Service & Search"]
         UmiService["Umineko Service"]
         HiguService["Higurashi Service"]
+        CiconiaService["Ciconia Service"]
         GameStore["Generic GameStore&lt;Q&gt;<br/>Search / Browse / Random"]
         Indexer["Indexer<br/>(parallel)"]
         UmiStats["Umineko Stats<br/>(Truth, Episodes)"]
         HiguStats["Higurashi Stats<br/>(Arcs)"]
+        CiconiaStats["Ciconia Stats<br/>(Chapters)"]
     end
 
     subgraph UmiParser["Umineko Lexical Analysis Pipeline"]
@@ -48,10 +51,18 @@ graph TB
         HiguPlainTransform["Plaintext<br/>Transformer"]
     end
 
+    subgraph CiconiaParser["Ciconia Parser"]
+        CiconiaScanner["Line State Machine<br/>(langen/langjp pairs)"]
+        CiconiaAST["PlainText + ColoredText<br/>AST"]
+        CiconiaHTMLTransform["HTML<br/>Transformer<br/>(inline color spans)"]
+        CiconiaPlainTransform["Plaintext<br/>Transformer"]
+    end
+
     subgraph DataLoading["Data Loading · Embedded go:embed"]
         ScriptLoader["Script Loader<br/>(ONS2 Decoder)"]
         UmiData["Umineko Data<br/>en/ja/es/pt.file"]
         HiguData["Higurashi Data<br/>en.file"]
+        CiconiaData["Ciconia Data<br/>en.file"]
         SubParser["Subtitle Parser<br/>(ASS)"]
         Mutations["Mutation<br/>Pipeline"]
     end
@@ -82,19 +93,24 @@ graph TB
     App --> VoiceBuilder
     API -- "HTTP /api/v1/umineko/*" --> Router
     API -- "HTTP /api/v1/higurashi/*" --> Router
+    API -- "HTTP /api/v1/ciconia/*" --> Router
 
     Router --> UmiCtrl
     Router --> HiguCtrl
+    Router --> CiconiaCtrl
     Router --> OGCtrl
     Router --> SysCtrl
 
     UmiCtrl -- delegates --> UmiService
     HiguCtrl -- delegates --> HiguService
+    CiconiaCtrl -- delegates --> CiconiaService
     UmiService --> GameStore
     HiguService --> GameStore
+    CiconiaService --> GameStore
     GameStore --> Indexer
     UmiService --> UmiStats
     HiguService --> HiguStats
+    CiconiaService --> CiconiaStats
 
     UmiService -- "parses via" --> Lexer
     Lexer -- tokens --> ASTParser
@@ -108,10 +124,17 @@ graph TB
     HiguAST --> HiguHTMLTransform
     HiguAST --> HiguPlainTransform
 
+    CiconiaService -- "parses via" --> CiconiaScanner
+    CiconiaScanner --> CiconiaAST
+    CiconiaAST --> CiconiaHTMLTransform
+    CiconiaAST --> CiconiaPlainTransform
+
     ScriptLoader -- decodes --> UmiData
     ScriptLoader -- decodes --> HiguData
+    ScriptLoader -- decodes --> CiconiaData
     ScriptLoader -- feeds --> Lexer
     ScriptLoader -- feeds --> Scanner
+    ScriptLoader -- feeds --> CiconiaScanner
     SubParser -- "merges into" --> Mutations
     Mutations -- "post-processes" --> UmiService
 
@@ -159,19 +182,19 @@ graph TB
 
 ## Features
 
-- **Multi-game support** with in-app toggle between Umineko and Higurashi
+- **Multi-game support** with in-app toggle between Umineko, Higurashi, and Ciconia
 - Search through all dialogue with full-text search
-- Filter by character, episode (Umineko), arc (Higurashi), and truth type (Umineko)
+- Filter by character, episode (Umineko), arc (Higurashi), chapter (Ciconia), and truth type (Umineko)
 - Character interaction pair filtering
 - Random quote generator
 - Scene context viewer with navigation between voiced quotes
-- Multi-language support: English, English (WH), Japanese, Russian, Spanish, Portuguese (Umineko); English + inline Japanese (Higurashi)
+- Multi-language support: English, English (WH), Japanese, Russian, Spanish, Portuguese (Umineko); English + inline Japanese (Higurashi, Ciconia)
 - Inline audio playback for voiced lines (Umineko)
 - Voice clip builder for composing custom dialogue sequences (Umineko)
 - Per-game bookmarks with localStorage persistence
 - Open Graph image generation for sharing quotes
 - Statistics dashboards with interactive charts
-- Themed web interface with multiple visual themes
+- Themed web interface with game-specific palettes (Umineko witches, Higurashi trio, Ciconia faction flags)
 
 ## Quick Start
 
@@ -265,7 +288,7 @@ se.zip
 
 ## API Endpoints
 
-Both games share the same endpoint structure under their respective prefixes.
+All three games share the same endpoint structure under their respective prefixes. Voiceless games (Higurashi, Ciconia) omit audio/voice routes; Ciconia additionally uses a `chapter` query parameter in place of `episode`/`truth`/`arc`.
 
 ### Umineko — `/api/v1/umineko/`
 
@@ -287,18 +310,34 @@ Both games share the same endpoint structure under their respective prefixes.
 
 ### Higurashi — `/api/v1/higurashi/`
 
-| Endpoint                                        | Description                            |
-|-------------------------------------------------|----------------------------------------|
-| `GET /api/v1/higurashi/search`                  | Search quotes                          |
-| `GET /api/v1/higurashi/random`                  | Get random quote                       |
-| `GET /api/v1/higurashi/browse`                  | Browse quotes with pagination          |
-| `GET /api/v1/higurashi/quote/:audioId`          | Get quote by audio ID                  |
-| `GET /api/v1/higurashi/quote/index/:index`      | Get quote by script index              |
-| `GET /api/v1/higurashi/context/:audioId`        | Get surrounding dialogue for a quote   |
-| `GET /api/v1/higurashi/nearest-voiced/:audioId` | Find nearest voiced quote              |
-| `GET /api/v1/higurashi/characters`              | List all character IDs and names       |
-| `GET /api/v1/higurashi/stats`                   | Get quote statistics                   |
-| `GET /api/v1/higurashi/og/:audioId.png`         | Generate OG image for a quote          |
+| Endpoint                                        | Description                                           |
+|-------------------------------------------------|-------------------------------------------------------|
+| `GET /api/v1/higurashi/search`                  | Search quotes                                         |
+| `GET /api/v1/higurashi/random`                  | Get random quote                                      |
+| `GET /api/v1/higurashi/browse`                  | Browse quotes with pagination                         |
+| `GET /api/v1/higurashi/quote/:audioId`          | Get quote by audio ID                                 |
+| `GET /api/v1/higurashi/quote/index/:index`      | Get quote by script index                             |
+| `GET /api/v1/higurashi/context/:audioId`        | Get surrounding dialogue for a quote                  |
+| `GET /api/v1/higurashi/nearest-voiced/:audioId` | Find nearest voiced quote                             |
+| `GET /api/v1/higurashi/characters`              | List all character IDs and names                      |
+| `GET /api/v1/higurashi/stats`                   | Get quote statistics                                  |
+| `GET /api/v1/higurashi/og/quote.png`            | Generate OG image for a quote (query param `audioId`) |
+
+### Ciconia — `/api/v1/ciconia/`
+
+| Endpoint                                     | Description                                                               |
+|----------------------------------------------|---------------------------------------------------------------------------|
+| `GET /api/v1/ciconia/search`                 | Search quotes                                                             |
+| `GET /api/v1/ciconia/random`                 | Get random quote                                                          |
+| `GET /api/v1/ciconia/browse`                 | Browse quotes with pagination                                             |
+| `GET /api/v1/ciconia/quote/:audioId`         | Get quote by synthetic audio ID (e.g. `c11:6d333931`, `ep:a3f2b81c`)      |
+| `GET /api/v1/ciconia/quote/index/:index`     | Get quote by script index                                                 |
+| `GET /api/v1/ciconia/context/:audioId`       | Get surrounding dialogue for a quote                                      |
+| `GET /api/v1/ciconia/characters`             | List main-cast + additional character IDs and names                       |
+| `GET /api/v1/ciconia/stats`                  | Get quote statistics (top speakers, lines-per-chapter, interactions)      |
+| `GET /api/v1/ciconia/og/quote.png`           | Generate OG image for a quote (query param `audioId`)                     |
+
+Ciconia has no voice audio, so no `/audio/...` or `/nearest-voiced/...` routes.
 
 ### System
 
@@ -309,19 +348,20 @@ Both games share the same endpoint structure under their respective prefixes.
 
 ### Query Parameters
 
-| Parameter      | Endpoints                    | Description                                              |
-|----------------|------------------------------|----------------------------------------------------------|
-| `q`            | search                       | Search query (required)                                  |
-| `lang`         | search, random, browse, etc. | Language: `en` (default), `wh`, `ja`, `ru`, `es`, `pt`  |
-| `character`    | search, random, browse       | Filter by character ID                                   |
-| `episode`      | search, random, browse       | Filter by episode number                                 |
-| `truth`        | search, random, browse       | Umineko only: `red`, `blue`, `gold`, `purple`            |
-| `arc`          | search, random, browse       | Higurashi only: arc name (e.g. `onikakushi`)             |
-| `interactionA` | search, browse               | First character ID for interaction pair filter            |
-| `interactionB` | search, browse               | Second character ID for interaction pair filter           |
-| `lines`        | context                      | Number of lines before/after (default: 5, max: 20)       |
-| `limit`        | search, browse               | Results per page (default: 30)                           |
-| `offset`       | search, browse               | Pagination offset                                        |
+| Parameter      | Endpoints                    | Description                                                            |
+|----------------|------------------------------|------------------------------------------------------------------------|
+| `q`            | search                       | Search query (required)                                                |
+| `lang`         | search, random, browse, etc. | Language: `en` (default), `wh`, `ja`, `ru`, `es`, `pt`                 |
+| `character`    | search, random, browse       | Filter by character ID                                                 |
+| `episode`      | search, random, browse       | Filter by episode number                                               |
+| `truth`        | search, random, browse       | Umineko only: `red`, `blue`, `gold`, `purple`                          |
+| `arc`          | search, random, browse       | Higurashi only: arc name (e.g. `onikakushi`)                           |
+| `chapter`      | search, random, browse       | Ciconia only: chapter id (`00`, `01`–`25`, `25b`, `ep`, `df01`–`df16`) |
+| `interactionA` | search, browse               | First character ID for interaction pair filter                         |
+| `interactionB` | search, browse               | Second character ID for interaction pair filter                        |
+| `lines`        | context                      | Number of lines before/after (default: 5, max: 20)                     |
+| `limit`        | search, browse               | Results per page (default: 30)                                         |
+| `offset`       | search, browse               | Pagination offset                                                      |
 
 ### Response Format
 
@@ -347,6 +387,8 @@ Both games share the same endpoint structure under their respective prefixes.
 The `contentType` field distinguishes content sections: `""` for main episodes, `"tea"` for tea parties, `"ura"` for ???? chapters, and `"omake"` for omakes (bonus content).
 
 Higurashi quotes additionally include `textJp`, `textJpHtml` (inline Japanese text), and `arc` (arc name) fields.
+
+Ciconia quotes additionally include `textJp`, `textJpHtml`, and `chapter` (chapter id, e.g. `"01"` / `"25b"` / `"ep"` / `"df03"`) fields. Because Ciconia is voiceless, its `audioId` is a synthetic stable hash (e.g. `c11:6d333931`, `ep:a3f2b81c`) rather than a real voice file path.
 
 ## Swagger
 
@@ -404,7 +446,7 @@ docker compose up -d --build
 
 ## Data
 
-Quote data is parsed from script files for both games. The scripts are stored in ONS2-encoded `.file` format (compressed and obfuscated) and decoded at startup.
+Quote data is parsed from script files for all three games. The scripts are stored in ONS2-encoded `.file` format (compressed and obfuscated) and decoded at startup.
 
 ```
 internal/quote/data/
@@ -416,6 +458,8 @@ internal/quote/data/
 ├── ru.file              (Umineko Russian, ONS2 encoded)
 ├── higurashi/
 │   └── en.file          (Higurashi English, ONS2 encoded)
+├── Ciconia/
+│   └── en.file          (Ciconia Phase 1 bilingual EN/JP, ONS2 encoded)
 ├── sub/                 (ASS subtitle files for Umineko)
 ├── audio/               (Umineko voice files, extracted via setup script)
 │   ├── 00/
@@ -452,19 +496,21 @@ To add a new fix:
 
 ## Architecture: The Script Parser
 
-The [`umineko_script_parser`](https://github.com/VictoriqueMoe/umineko_script_parser) library handles parsing both Umineko and Higurashi script files. It uses a shared interface layer with game-specific implementations.
+The [`umineko_script_parser`](https://github.com/VictoriqueMoe/umineko_script_parser) library handles parsing Umineko, Higurashi, and Ciconia script files. It uses a shared interface layer with game-specific implementations and a generic `scriptparser.Parser[Q]` contract (one `ParseLines([]string) ([]Q, []ValidationError)` method per game).
 
 ### Shared Interfaces
 
-Both games share:
+All three games share:
 - `dialogue.DialogueElement` interface with sub-interfaces (`TextElement`, `ContainerElement`, `SpecialCharElement`)
 - `transformer.Transformer` interface for converting AST to output format
 - `transformer.Factory` for registering and retrieving transformers
 - `dto.BaseQuote` with common fields (Text, TextHtml, CharacterID, Character, AudioID, Episode, etc.)
+- Generic entry: `scriptparser.ParseReader(reader, parser)` (decodes ONS2) and `scriptparser.ParseText(string, parser)` (skips decode)
 
 Game-specific extensions:
-- `dto.UminekoQuote` adds truth flags (HasRedTruth, HasBlueTruth, HasGoldTruth, HasPurpleTruth)
+- `dto.UminekoQuote` adds truth flags (HasRedTruth, HasBlueTruth, HasGoldTruth, HasPurpleTruth); `umineko.NewParser()` additionally exposes a `SubtitleRefs()` accessor for game-specific side output
 - `dto.HigurashiQuote` adds TextJP, TextJPHtml, and Arc fields
+- `dto.CicroniaQuote` adds TextJP, TextJPHtml, and Chapter fields; the parser auto-attributes `#8df270`-colored lines to Keropoyo and splits the Epilogue from act25b at the `p1last` cutscene marker
 
 ### Pipeline Overview
 
@@ -575,8 +621,10 @@ Game-specific extensions:
 The parser is an external library at [`umineko_script_parser`](https://github.com/VictoriqueMoe/umineko_script_parser):
 
 ```
+.                           # Root: generic ParseText[Q] / ParseReader[Q], Parser[Q] interface, ValidationError
 dialogue/                   # Shared DialogueElement interface
 transformer/                # Shared Transformer interface + Factory
+decoder/                    # ONS2 decoder/encoder (shared by all games)
 dto/                        # Shared BaseQuote + game-specific DTOs
 umineko/
 ├── lexer/
@@ -587,14 +635,20 @@ umineko/
 │   ├── validator.go        # Post-parse validation
 │   ├── extractor.go        # Quote extraction with SE association
 │   └── truth.go            # Red/blue/gold/purple truth detection
-├── scriptparser.go         # Entry point: ParseFile / ParseScriptText
-└── decoder/                # ONS2 decoder
+└── scriptparser.go         # umineko.NewParser() + SubtitleRefs() accessor
 higurashi/
 ├── ast/                    # Simple PlainText AST (implements dialogue.*)
 ├── transformer/            # Higurashi transformers (HTML, plaintext)
 ├── character/              # Character ID mapping (39+ characters)
 ├── parser.go               # Line-by-line state machine
-└── scriptparser.go         # Entry point: ParseFile / ParseScriptText
+└── scriptparser.go         # higurashi.NewParser()
+ciconia/
+├── ast/                    # PlainText + ColoredText AST (implements dialogue.*)
+├── transformer/            # Ciconia transformers (HTML emits inline color spans)
+├── character/              # 148 marker enums + MainCharacterNames 49-entry subset
+├── parser.go               # Line-by-line state machine with Ciconia dialect + Keropoyo color heuristic
+└── scriptparser.go         # ciconia.NewParser() + synthetic hash-based audio IDs
+cmd/encoder/                # CLI tool: plain script text → ONS2 .file
 ```
 
 ### Key Design Decisions
@@ -725,6 +779,12 @@ These are replaced before other processing.
       <a href="https://github.com/nakedmcse">
         <img src="https://avatars.githubusercontent.com/u/133156975?v=4" width="100px;" alt="Walker Boh"/><br />
         <sub><b>Walker Boh</b></sub>
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/kotcrab">
+        <img src="https://avatars.githubusercontent.com/u/4594081?v=4" width="100px;" alt="kotcrab"/><br />
+        <sub><b>kotcrab</b></sub>
       </a>
     </td>
   </tr>

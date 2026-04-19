@@ -7,6 +7,7 @@ interface CommonParams {
     episode: string;
     truth: string;
     arc: string;
+    chapter: string;
     interactionA: string;
     interactionB: string;
     offset: number;
@@ -112,14 +113,15 @@ export function parseRoute(search: string): ParsedRoute {
 
     const lang = (params.get("lang") || "auto") as Language;
     const gameParam = params.get("game");
-    const game: Game = gameParam === "higurashi" ? "higurashi" : "umineko";
+    const game: Game = gameParam === "higurashi" ? "higurashi" : gameParam === "ciconia" ? "ciconia" : "umineko";
     const episode = params.get("episode") || "0";
     const truth = params.get("truth") || "";
     const arc = params.get("arc") || "";
+    const chapter = params.get("chapter") || "";
     const interactionA = normalizeCharacterKey(params.get("interactionA") || "", game);
     const interactionB = normalizeCharacterKey(params.get("interactionB") || "", game);
     const offset = parseInt(params.get("offset") || "0") || 0;
-    const common = { lang, game, episode, truth, arc, interactionA, interactionB, offset };
+    const common = { lang, game, episode, truth, arc, chapter, interactionA, interactionB, offset };
 
     for (const route of ROUTES) {
         if (route.match(params)) {
@@ -162,6 +164,9 @@ export function buildUrl(
     }
     if (state.filters.arc) {
         params.set("arc", state.filters.arc);
+    }
+    if (state.filters.chapter) {
+        params.set("chapter", state.filters.chapter);
     }
 
     const offset = state.viewMode === "browse" ? state.browseOffset : state.searchOffset;

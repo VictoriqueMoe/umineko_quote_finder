@@ -10,6 +10,7 @@ import (
 	"umineko_quote/internal/quote/params"
 	"umineko_quote/internal/quote/store"
 
+	scriptparser "github.com/VictoriqueMoe/umineko_script_parser"
 	scriptdto "github.com/VictoriqueMoe/umineko_script_parser/dto"
 	"github.com/VictoriqueMoe/umineko_script_parser/higurashi"
 	hicharacter "github.com/VictoriqueMoe/umineko_script_parser/higurashi/character"
@@ -53,7 +54,7 @@ func NewService() Service {
 	defer f.Close()
 
 	timeStart := time.Now()
-	parsed, _, err := higurashi.ParseFile(f)
+	parsed, _, err := scriptparser.ParseReader(f, higurashi.NewParser())
 	timeEnd := time.Now()
 
 	log.Printf("[higurashi/en] parsed %d quotes took %v", len(parsed), timeEnd.Sub(timeStart))

@@ -44,6 +44,99 @@ definitions:
         example: 4304
         type: integer
     type: object
+  dto.CharactersResult:
+    properties:
+      additional:
+        additionalProperties:
+          type: string
+        type: object
+      characters:
+        additionalProperties:
+          type: string
+        type: object
+    type: object
+  dto.CiconiaQuote:
+    properties:
+      audioCharMap:
+        additionalProperties:
+          type: string
+        example:
+          "30101088": "10"
+          "30101089": "10"
+        type: object
+      audioId:
+        example: 30101088, 30101089
+        type: string
+      audioTextMap:
+        additionalProperties:
+          type: string
+        example:
+          "30101088": You're insane!!
+          "30101089": Stop it already
+        type: object
+      chapter:
+        example: "01"
+        type: string
+      character:
+        example: Ushiromiya Battler
+        type: string
+      characterId:
+        example: "10"
+        type: string
+      contentType:
+        example: ""
+        type: string
+      episode:
+        example: 3
+        type: integer
+      index:
+        description: Position index in the parsed script (stable across text changes)
+        type: integer
+      soundEffects:
+        items:
+          $ref: '#/definitions/dto.SoundEffect'
+        type: array
+      text:
+        example: You're insane!! Stop it already, damn iiiiiiiiit!!
+        type: string
+      textHtml:
+        example: You&#39;re insane!! Stop it already, damn iiiiiiiiit!!
+        type: string
+      textJp:
+        type: string
+      textJpHtml:
+        type: string
+    type: object
+  dto.CiconiaStatsResult:
+    properties:
+      characterNames:
+        additionalProperties:
+          type: string
+        description: Map of character ID to display name
+        type: object
+      interactionCounts:
+        additionalProperties:
+          type: integer
+        description: Map of character pair key to interaction count
+        type: object
+      interactions:
+        description: Top character interaction pairs
+        items:
+          $ref: '#/definitions/dto.InteractionPair'
+        type: array
+      linesPerChapter:
+        additionalProperties:
+          additionalProperties:
+            type: integer
+          type: object
+        description: Dialogue line counts per chapter per character
+        type: object
+      topSpeakers:
+        description: Top speakers by dialogue line count
+        items:
+          $ref: '#/definitions/dto.SpeakerStat'
+        type: array
+    type: object
   dto.ContextResponse:
     properties:
       after:
@@ -377,11 +470,308 @@ info:
     email: FAA@auaurora.moe
     name: Featherine Augustus Aurora
     url: https://x.com/FeatherineFAA
-  description: API for searching and browsing quotes from Umineko no Naku Koro ni
-    and Higurashi no Naku Koro ni
+  description: API for searching and browsing quotes from Umineko no Naku Koro ni,
+    Higurashi no Naku Koro ni, and Ciconia no Naku Koro ni
   title: When They Cry Quote API
   version: "1.0"
 paths:
+  /ciconia/browse:
+    get:
+      description: Browse all Ciconia quotes with optional filters and pagination
+      parameters:
+      - default: en
+        description: Language
+        in: query
+        name: lang
+        type: string
+      - description: Filter by character ID
+        in: query
+        name: character
+        type: string
+      - description: 'Interaction filter: first character ID (requires interactionB)'
+        in: query
+        name: interactionA
+        type: string
+      - description: 'Interaction filter: second character ID (requires interactionA)'
+        in: query
+        name: interactionB
+        type: string
+      - default: 50
+        description: Maximum results
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Offset for pagination
+        in: query
+        name: offset
+        type: integer
+      - description: Filter by chapter ID
+        in: query
+        name: chapter
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.CharacterResponse'
+      summary: Browse Ciconia quotes
+      tags:
+      - ciconia
+  /ciconia/characters:
+    get:
+      description: Returns main cast (curated roster of named speakers) and additional
+        (ensemble roles and other script markers) character maps
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.CharactersResult'
+      summary: List all Ciconia characters
+      tags:
+      - ciconia
+  /ciconia/context/{audioId}:
+    get:
+      description: Returns surrounding dialogue lines for a specific Ciconia quote
+      parameters:
+      - description: Synthetic audio ID
+        in: path
+        name: audioId
+        required: true
+        type: string
+      - default: en
+        description: Language
+        in: query
+        name: lang
+        type: string
+      - default: 5
+        description: Number of context lines before and after
+        in: query
+        name: lines
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.ContextResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Get Ciconia quote context
+      tags:
+      - ciconia
+  /ciconia/og/quote.png:
+    get:
+      description: Renders a social-preview PNG for a Ciconia quote identified by
+        its synthetic audio ID (e.g. c11:6d333931)
+      parameters:
+      - description: Synthetic audio ID
+        in: query
+        name: audioId
+        required: true
+        type: string
+      - default: en
+        description: Language
+        in: query
+        name: lang
+        type: string
+      - description: Render the full-length layout instead of the compact preview
+        in: query
+        name: full
+        type: boolean
+      produces:
+      - image/png
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: file
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Ciconia OG preview image
+      tags:
+      - ciconia
+  /ciconia/quote/{audioId}:
+    get:
+      description: Returns a specific Ciconia quote identified by its synthetic audio
+        ID (e.g. c01:a3f2b81c, pro:xxxxxxxx, df03:xxxxxxxx)
+      parameters:
+      - description: Synthetic audio ID (may contain colons)
+        in: path
+        name: audioId
+        required: true
+        type: string
+      - default: en
+        description: Language
+        in: query
+        name: lang
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.CiconiaQuote'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Get Ciconia quote by synthetic ID
+      tags:
+      - ciconia
+  /ciconia/quote/index/{index}:
+    get:
+      description: Returns a specific Ciconia quote identified by its position index
+        in the parsed script
+      parameters:
+      - description: Index of the quote in the parsed script
+        in: path
+        name: index
+        required: true
+        type: integer
+      - default: en
+        description: Language
+        in: query
+        name: lang
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.CiconiaQuote'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Get Ciconia quote by index
+      tags:
+      - ciconia
+  /ciconia/random:
+    get:
+      description: Returns a random Ciconia quote with optional filters
+      parameters:
+      - default: en
+        description: Language
+        in: query
+        name: lang
+        type: string
+      - description: Filter by character ID
+        in: query
+        name: character
+        type: string
+      - description: Filter by chapter ID
+        in: query
+        name: chapter
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.CiconiaQuote'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Get random Ciconia quote
+      tags:
+      - ciconia
+  /ciconia/search:
+    get:
+      description: Search for Ciconia no Naku Koro ni Phase 1 quotes by text query
+        with optional filters
+      parameters:
+      - description: Search query
+        in: query
+        name: q
+        required: true
+        type: string
+      - default: en
+        description: Language
+        in: query
+        name: lang
+        type: string
+      - default: 30
+        description: Maximum results
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Offset for pagination
+        in: query
+        name: offset
+        type: integer
+      - description: Filter by character ID (e.g. miyao, jayden, keropoyo)
+        in: query
+        name: character
+        type: string
+      - description: 'Interaction filter: first character ID (requires interactionB)'
+        in: query
+        name: interactionA
+        type: string
+      - description: 'Interaction filter: second character ID (requires interactionA)'
+        in: query
+        name: interactionB
+        type: string
+      - description: Filter by chapter ID (00 for prologue, 01-25 for main acts, 25b
+          for finale, df01-df16 for data fragments)
+        in: query
+        name: chapter
+        type: string
+      - default: false
+        description: Match whole words only
+        in: query
+        name: exact
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.SearchAPIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Search Ciconia quotes
+      tags:
+      - ciconia
+  /ciconia/stats:
+    get:
+      description: Returns statistics about Ciconia quotes including top speakers,
+        lines per chapter, and character interactions
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.CiconiaStatsResult'
+      summary: Get Ciconia quote statistics
+      tags:
+      - ciconia
   /higurashi/browse:
     get:
       description: Browse all Higurashi quotes with optional filters and pagination

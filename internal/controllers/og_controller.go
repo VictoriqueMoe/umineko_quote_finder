@@ -29,6 +29,15 @@ var (
 		quoteSuffix: "Higurashi Quote",
 	}
 
+	ciconiaOGDefaults = ogDefaults{
+		title:       "Ciconia Quote Search",
+		description: "Search through the words of the Gauntlet Knights from Ciconia no Naku Koro ni Phase 1. When the storks cry, none shall know peace.",
+		twitterDesc: "Search through the words of the Gauntlet Knights from Ciconia no Naku Koro ni Phase 1.",
+		image:       "https://waifuvault.moe/f/782f63c2-7cb6-4e9e-b4f6-0db2674f9afd/clipboard-image-1776558004540.png",
+		brand:       "Ciconia Quote Search",
+		quoteSuffix: "Ciconia Quote",
+	}
+
 	uminekoEpisodeNames = map[int]string{
 		1: "Episode 1 \u2014 Legend",
 		2: "Episode 2 \u2014 Turn",
@@ -85,6 +94,12 @@ func (s *Service) getHigurashiOGRoutes() []FSetupRoute {
 	}
 }
 
+func (s *Service) getCiconiaOGRoutes() []FSetupRoute {
+	return []FSetupRoute{
+		func(r fiber.Router) { r.Get("/og/quote.png", s.ciconiaOGImage) },
+	}
+}
+
 func (s *Service) getAllOGPageRoutes() []FSetupRoute {
 	return []FSetupRoute{
 		func(r fiber.Router) { r.Get("/", s.ogPage) },
@@ -137,6 +152,42 @@ func (s *Service) higurashiOGImage(ctx fiber.Ctx) error {
 	return ctx.Send(data)
 }
 
+// ciconiaOGImage godoc
+//
+//	@Summary		Ciconia OG preview image
+//	@Description	Renders a social-preview PNG for a Ciconia quote identified by its synthetic audio ID (e.g. c11:6d333931)
+//	@Tags			ciconia
+//	@Produce		image/png
+//	@Param			audioId	query		string	true	"Synthetic audio ID"
+//	@Param			lang	query		string	false	"Language"	default(en)
+//	@Param			full	query		bool	false	"Render the full-length layout instead of the compact preview"
+//	@Success		200		{file}		binary
+//	@Failure		400		{object}	dto.ErrorResponse
+//	@Failure		404		{object}	dto.ErrorResponse
+//	@Router			/ciconia/og/quote.png [get]
+func (s *Service) ciconiaOGImage(ctx fiber.Ctx) error {
+	audioId := ctx.Query("audioId")
+	if audioId == "" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "audioId query parameter is required"})
+	}
+
+	lang := language.English.Parse(ctx.Query("lang"))
+	q := s.CiconiaService.GetByAudioID(lang, audioId)
+	if q == nil {
+		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "quote not found"})
+	}
+
+	full := ctx.Query("full") == "true"
+	data, err := s.OGImageGenerator.Generate(audioId, lang, q.Text, q.TextHtml, q.Character, full, ciconiaOGDefaults.brand, ciconiaChapterLabel(q.Chapter))
+	if err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to generate image"})
+	}
+
+	ctx.Set("Content-Type", "image/png")
+	ctx.Set("Cache-Control", "public, max-age=86400")
+	return ctx.Send(data)
+}
+
 func (s *Service) uminekoOGBuilderImage(ctx fiber.Ctx) error {
 	segmentsParam := ctx.Query("segments")
 	if segmentsParam == "" {
@@ -174,6 +225,8 @@ func (s *Service) ogPage(ctx fiber.Ctx) error {
 	defaults := uminekoOGDefaults
 	if game == "higurashi" {
 		defaults = higurashiOGDefaults
+	} else if game == "ciconia" {
+		defaults = ciconiaOGDefaults
 	}
 
 	if audioId == "" && builderParam == "" {
@@ -185,7 +238,7 @@ func (s *Service) ogPage(ctx fiber.Ctx) error {
 	lang := language.English.Parse(ctx.Query("lang"))
 	base := s.baseURL(ctx)
 
-	if builderParam != "" && game != "higurashi" {
+	if builderParam != "" && game != "higurashi" && game != "ciconia" {
 		segments := s.parseUminekoBuilderSegments(builderParam, lang)
 		if len(segments) == 0 {
 			html := s.replaceOGPlaceholders(defaults, defaults.title, defaults.description, defaults.twitterDesc, defaults.image)
@@ -240,6 +293,25 @@ func (s *Service) ogPage(ctx fiber.Ctx) error {
 			description = description[:197] + "..."
 		}
 		imageURL := fmt.Sprintf("%s/api/v1/higurashi/og/quote.png?audioId=%s&lang=%s", base, audioId, lang)
+		html := s.replaceOGPlaceholders(defaults, title, description, description, imageURL)
+		ctx.Set("Content-Type", "text/html; charset=utf-8")
+		return ctx.SendString(html)
+	}
+
+	if game == "ciconia" {
+		q := s.CiconiaService.GetByAudioID(lang, audioId)
+		if q == nil {
+			html := s.replaceOGPlaceholders(defaults, defaults.title, defaults.description, defaults.twitterDesc, defaults.image)
+			ctx.Set("Content-Type", "text/html; charset=utf-8")
+			return ctx.SendString(html)
+		}
+
+		title := fmt.Sprintf("%s \u2014 %s", q.Character, defaults.quoteSuffix)
+		description := q.Text
+		if len(description) > 200 {
+			description = description[:197] + "..."
+		}
+		imageURL := fmt.Sprintf("%s/api/v1/ciconia/og/quote.png?audioId=%s&lang=%s", base, audioId, lang)
 		html := s.replaceOGPlaceholders(defaults, title, description, description, imageURL)
 		ctx.Set("Content-Type", "text/html; charset=utf-8")
 		return ctx.SendString(html)
@@ -363,6 +435,26 @@ func higurashiArcLabel(arc string) string {
 		return name
 	}
 	return arc
+}
+
+func ciconiaChapterLabel(chapter string) string {
+	if chapter == "" {
+		return ""
+	}
+	if chapter == "00" {
+		return "Prologue"
+	}
+	if chapter == "ep" {
+		return "Epilogue"
+	}
+	if chapter == "25b" {
+		return "Chapter 25b"
+	}
+	if strings.HasPrefix(chapter, "df") {
+		n := strings.TrimPrefix(chapter, "df")
+		return "Data Fragment " + n
+	}
+	return "Chapter " + chapter
 }
 
 func escapeAttr(s string) string {

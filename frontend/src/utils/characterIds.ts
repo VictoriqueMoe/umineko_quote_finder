@@ -71,14 +71,14 @@ const CHARACTER_ID_TO_KEY = Object.fromEntries(
 ) as Record<string, string>;
 
 export function normalizeCharacterKey(value: string, game?: Game): string {
-    if (!value || game === "higurashi") {
+    if (!value || game === "higurashi" || game === "ciconia") {
         return value;
     }
     return CHARACTER_ID_TO_KEY[value] || value;
 }
 
 export function toCharacterId(value: string, game?: Game): string {
-    if (!value || game === "higurashi") {
+    if (!value || game === "higurashi" || game === "ciconia") {
         return value;
     }
     return CHARACTER_KEY_TO_ID[value] || value;

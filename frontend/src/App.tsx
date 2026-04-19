@@ -35,6 +35,7 @@ const DEFAULT_FILTERS: FilterState = {
     episode: "0",
     truth: "",
     arc: "",
+    chapter: "",
 };
 
 export default function App() {
@@ -70,6 +71,7 @@ export default function App() {
                 episode: route.episode,
                 truth: route.truth,
                 arc: route.arc,
+                chapter: route.chapter,
                 interactionA: route.interactionA,
                 interactionB: route.interactionB,
             };
@@ -100,6 +102,7 @@ export default function App() {
                         nextFilters.episode,
                         nextFilters.truth,
                         nextFilters.arc,
+                        nextFilters.chapter,
                     );
                     break;
                 }
@@ -228,7 +231,14 @@ export default function App() {
         const hasInteractionPair = !!filters.interactionA && !!filters.interactionB;
         const hasEpisodeFilter = filters.episode !== "0";
         const hasArcFilter = !!filters.arc;
-        if (!filters.character && !filters.truth && !hasInteractionPair && !hasEpisodeFilter && !hasArcFilter) {
+        if (
+            !filters.character &&
+            !filters.truth &&
+            !hasInteractionPair &&
+            !hasEpisodeFilter &&
+            !hasArcFilter &&
+            !filters.chapter
+        ) {
             return;
         }
         audioPlayer.stop();
@@ -243,6 +253,7 @@ export default function App() {
             filters.episode,
             filters.truth,
             filters.arc,
+            filters.chapter,
         );
         if (result) {
             navigate("browse", filters, { browseOffset: result.offset });
@@ -262,6 +273,7 @@ export default function App() {
                 filters.episode,
                 filters.truth,
                 filters.arc,
+                filters.chapter,
             );
             if (result) {
                 navigate("browse", filters, { browseOffset: result.offset });
@@ -303,6 +315,7 @@ export default function App() {
                 nextFilters.episode,
                 nextFilters.truth,
                 nextFilters.arc,
+                nextFilters.chapter,
             );
             if (result) {
                 navigate("browse", nextFilters, { browseOffset: result.offset });
@@ -443,7 +456,7 @@ export default function App() {
     const handleLanguageChange = useCallback(
         (lang: Language) => {
             setLanguage(lang);
-            if (game === "higurashi") {
+            if (game === "higurashi" || game === "ciconia") {
                 return;
             }
             const resolved = resolveLanguage(lang);

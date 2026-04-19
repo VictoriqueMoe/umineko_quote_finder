@@ -21,6 +21,7 @@ export function useBrowse() {
             episode?: string,
             truth?: string,
             arc?: string,
+            chapter?: string,
         ): Promise<{ offset: number; total: number } | undefined> => {
             setLoading(true);
             setError(null);
@@ -39,6 +40,7 @@ export function useBrowse() {
                     episode,
                     truth,
                     arc,
+                    chapter,
                 );
                 setData(result);
                 setOffset(result.offset);

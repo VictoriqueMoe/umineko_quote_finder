@@ -42,7 +42,7 @@ export function useQuoteDisplay(quote: Quote, langOverride?: Exclude<Language, "
 
     const activeLang = langUserOverride ?? effective;
     let displayHtml = textOverride ?? (quote.textHtml || quote.text);
-    if (!textOverride && game === "higurashi" && activeLang === "ja" && quote.textJp) {
+    if (!textOverride && (game === "higurashi" || game === "ciconia") && activeLang === "ja" && quote.textJp) {
         displayHtml = quote.textJpHtml || quote.textJp;
     }
     const lang = activeLang;

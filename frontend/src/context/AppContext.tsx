@@ -4,13 +4,11 @@ import type { CharactersResponse } from "../types/api";
 import { getCharacters, getConfig } from "../api/endpoints";
 import { AppContext } from "./appContextValue";
 
+const VALID_GAMES: readonly Game[] = ["umineko", "higurashi", "ciconia"];
+
 function parseInitialGame(): Game {
-    const params = new URLSearchParams(window.location.search);
-    const g = params.get("game");
-    if (g === "higurashi") {
-        return "higurashi";
-    }
-    return "umineko";
+    const g = new URLSearchParams(window.location.search).get("game");
+    return VALID_GAMES.find(v => v === g) ?? "umineko";
 }
 
 const EMPTY_CHARS: CharactersResponse = { characters: {}, additional: {} };

@@ -239,7 +239,13 @@ func (s *quoteDAO[Q]) FindQuotes(f params.QuoteFilter, limit int, offset int) ([
 	clauses, args := s.filterClauses(f)
 	where, args := s.where(f.Lang, clauses, args)
 
-	rows, err := s.db.Query(`SELECT `+selectColumns+`, COUNT(*) OVER () FROM quotes`+where+` ORDER BY idx LIMIT ? OFFSET ?`, append(args, limit, offset)...)
+	rows, err := s.db.Query(
+		`WITH matches AS MATERIALIZED (SELECT idx FROM quotes`+where+`)
+		SELECT `+selectColumns+`, (SELECT COUNT(*) FROM matches) FROM quotes
+		WHERE game = ? AND lang = ? AND idx IN (SELECT idx FROM matches ORDER BY idx LIMIT ? OFFSET ?)
+		ORDER BY idx`,
+		append(args, s.game.Name(), string(f.Lang), limit, offset)...,
+	)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -271,7 +277,7 @@ func (s *quoteDAO[Q]) RandomQuote(f params.QuoteFilter) (*Q, error) {
 	clauses, args := s.filterClauses(f)
 	where, args := s.where(f.Lang, clauses, args)
 
-	return s.getQuote(`SELECT `+selectColumns+` FROM quotes`+where+` ORDER BY RANDOM() LIMIT 1`, args...)
+	return s.getQuote(`SELECT `+selectColumns+` FROM quotes WHERE rowid = (SELECT rowid FROM quotes`+where+` ORDER BY RANDOM() LIMIT 1)`, args...)
 }
 
 func (s *quoteDAO[Q]) QuoteIndexByAudioID(lang language.Language, audioID string) (int, bool, error) {

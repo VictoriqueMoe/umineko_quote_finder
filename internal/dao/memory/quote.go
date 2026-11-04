@@ -66,8 +66,7 @@ func (d *quoteDAO[Q]) RandomQuote(f params.QuoteFilter) (*Q, error) {
 		return nil, nil
 	}
 
-	q := d.quotes[f.Lang][matches[rand.IntN(len(matches))]]
-	return &q, nil
+	return &d.quotes[f.Lang][matches[rand.IntN(len(matches))]], nil
 }
 
 func (d *quoteDAO[Q]) QuoteIndexByAudioID(lang language.Language, audioID string) (int, bool, error) {
@@ -81,8 +80,7 @@ func (d *quoteDAO[Q]) QuoteByIndex(lang language.Language, index int) (*Q, error
 		return nil, nil
 	}
 
-	q := quotes[index]
-	return &q, nil
+	return &quotes[index], nil
 }
 
 func (d *quoteDAO[Q]) QuotesBetween(lang language.Language, from int, to int) ([]Q, error) {

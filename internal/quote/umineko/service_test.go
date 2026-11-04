@@ -36,7 +36,7 @@ func TestMain(m *testing.M) {
 }
 
 func searchWithParams(
-	t testing.TB,
+	t *testing.T,
 	svc Service,
 	query string,
 	lang language.Language,
@@ -67,7 +67,7 @@ func searchWithParams(
 }
 
 func browseWithParams(
-	t testing.TB,
+	t *testing.T,
 	svc Service,
 	lang language.Language,
 	characterFilter character.Character,
@@ -95,7 +95,7 @@ func browseWithParams(
 	return resp
 }
 
-func byAudioID(t testing.TB, lang language.Language, audioID string) *dto.UminekoQuote {
+func byAudioID(t *testing.T, lang language.Language, audioID string) *dto.UminekoQuote {
 	t.Helper()
 
 	q, err := testService.GetByAudioID(lang, audioID)
@@ -105,7 +105,7 @@ func byAudioID(t testing.TB, lang language.Language, audioID string) *dto.Uminek
 	return q
 }
 
-func randomQuote(t testing.TB, lang language.Language, characterID string, episode int, scope quoteparams.QuoteScope) *dto.UminekoQuote {
+func randomQuote(t *testing.T, lang language.Language, characterID string, episode int, scope quoteparams.QuoteScope) *dto.UminekoQuote {
 	t.Helper()
 
 	q, err := testService.Random(lang, characterID, episode, scope)
@@ -115,7 +115,7 @@ func randomQuote(t testing.TB, lang language.Language, characterID string, episo
 	return q
 }
 
-func context(t testing.TB, lang language.Language, audioID string, lines int) *dto.ContextResponse {
+func context(t *testing.T, lang language.Language, audioID string, lines int) *dto.ContextResponse {
 	t.Helper()
 
 	result, err := testService.GetContext(lang, audioID, lines)

@@ -2361,12 +2361,6 @@ const docTemplate = `{
                 "textHtml": {
                     "type": "string",
                     "example": "You\u0026#39;re insane!! Stop it already, damn iiiiiiiiit!!"
-                },
-                "textJp": {
-                    "type": "string"
-                },
-                "textJpHtml": {
-                    "type": "string"
                 }
             }
         },
@@ -2779,12 +2773,6 @@ const docTemplate = `{
                 "textHtml": {
                     "type": "string",
                     "example": "You\u0026#39;re insane!! Stop it already, damn iiiiiiiiit!!"
-                },
-                "textJp": {
-                    "type": "string"
-                },
-                "textJpHtml": {
-                    "type": "string"
                 }
             }
         },

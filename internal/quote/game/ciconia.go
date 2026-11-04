@@ -1,15 +1,9 @@
 package game
 
 import (
-	"fmt"
-	"log"
-	"time"
-
 	"umineko_quote/internal/dto"
-	"umineko_quote/internal/quote"
 	"umineko_quote/internal/quote/language"
 
-	scriptparser "github.com/VictoriqueMoe/umineko_script_parser"
 	"github.com/VictoriqueMoe/umineko_script_parser/ciconia"
 	scriptdto "github.com/VictoriqueMoe/umineko_script_parser/dto"
 )
@@ -18,41 +12,30 @@ type Ciconia struct{}
 
 const ciconiaDataFile = "data/Ciconia/en.file"
 
+var (
+	ciconiaSources = map[language.Language]scriptSource[ciconia.ParsedQuote]{
+		language.English:  {path: ciconiaDataFile, parser: ciconia.NewParser()},
+		language.Japanese: {path: ciconiaDataFile, parser: ciconia.NewJapaneseParser()},
+	}
+
+	ciconiaLoader = scriptLoader[ciconia.ParsedQuote, dto.CiconiaQuote]{
+		name: "ciconia",
+		index: func(q ciconia.ParsedQuote, i int) dto.CiconiaQuote {
+			return dto.CiconiaQuote{CicroniaQuote: q, Index: i}
+		},
+	}
+)
+
 func (Ciconia) Name() string {
 	return "ciconia"
 }
 
 func (Ciconia) DataFiles() ([]string, error) {
-	return []string{ciconiaDataFile}, nil
+	return sourceFiles(ciconiaSources), nil
 }
 
 func (Ciconia) Load() (map[language.Language][]dto.CiconiaQuote, error) {
-	f, err := quote.DataFS.Open(ciconiaDataFile)
-	if err != nil {
-		return nil, fmt.Errorf("open ciconia script %s: %w", ciconiaDataFile, err)
-	}
-	defer f.Close()
-
-	timeStart := time.Now()
-	parsed, _, err := scriptparser.ParseReader(f, ciconia.NewParser())
-	timeEnd := time.Now()
-
-	if err != nil {
-		return nil, fmt.Errorf("parse ciconia script %s: %w", ciconiaDataFile, err)
-	}
-	log.Printf("[ciconia/en] parsed %d quotes in %v", len(parsed), timeEnd.Sub(timeStart))
-
-	indexed := make([]dto.CiconiaQuote, len(parsed))
-	for i, q := range parsed {
-		indexed[i] = dto.CiconiaQuote{
-			CicroniaQuote: q,
-			Index:         i,
-		}
-	}
-
-	return map[language.Language][]dto.CiconiaQuote{
-		language.English: indexed,
-	}, nil
+	return loadLanguages(ciconiaSources, ciconiaLoader.load)
 }
 
 func (Ciconia) Base(q *dto.CiconiaQuote) *scriptdto.BaseQuote {
@@ -61,19 +44,15 @@ func (Ciconia) Base(q *dto.CiconiaQuote) *scriptdto.BaseQuote {
 
 func (Ciconia) Row(q *dto.CiconiaQuote) QuoteRow {
 	return QuoteRow{
-		Index:      q.Index,
-		Segment:    q.Chapter,
-		TextJP:     q.TextJP,
-		TextJPHtml: q.TextJPHtml,
+		Index:   q.Index,
+		Segment: q.Chapter,
 	}
 }
 
 func (Ciconia) Build(base scriptdto.BaseQuote, r QuoteRow) dto.CiconiaQuote {
 	return dto.CiconiaQuote{
-		BaseQuote:  base,
-		TextJP:     r.TextJP,
-		TextJPHtml: r.TextJPHtml,
-		Chapter:    r.Segment,
-		Index:      r.Index,
+		BaseQuote: base,
+		Chapter:   r.Segment,
+		Index:     r.Index,
 	}
 }

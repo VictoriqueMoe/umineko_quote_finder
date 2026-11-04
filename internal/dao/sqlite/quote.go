@@ -29,9 +29,9 @@ type quoteDAO[Q any] struct {
 }
 
 const (
-	seedVersion   = "4"
+	seedVersion   = "5"
 	parserModule  = "github.com/VictoriqueMoe/umineko_script_parser"
-	selectColumns = `idx, text, text_html, character_id, character_name, audio_id, audio_char_map, audio_text_map, episode, segment, content_type, sound_effects, has_red_truth, has_blue_truth, has_gold_truth, has_purple_truth, text_jp, text_jp_html`
+	selectColumns = `idx, text, text_html, character_id, character_name, audio_id, audio_char_map, audio_text_map, episode, segment, content_type, sound_effects, has_red_truth, has_blue_truth, has_gold_truth, has_purple_truth`
 	insertColumns = `game, lang, ` + selectColumns + `, text_lower, text_words`
 )
 
@@ -185,7 +185,6 @@ func (s *quoteDAO[Q]) Seed(quotes map[language.Language][]Q, dataHash string) er
 				row.Index, bq.Text, bq.TextHtml, bq.CharacterID, bq.Character, bq.AudioID, charMap, textMap,
 				bq.Episode, row.Segment, bq.ContentType, sfx,
 				row.HasRedTruth, row.HasBlueTruth, row.HasGoldTruth, row.HasPurpleTruth,
-				row.TextJP, row.TextJPHtml,
 				strings.ToLower(bq.Text), " "+wordText(bq.Text)+" ",
 			)
 			if err != nil {
@@ -550,7 +549,6 @@ func (s *quoteDAO[Q]) scanQuote(rows *sql.Rows, extra ...any) (Q, error) {
 		&row.Index, &bq.Text, &bq.TextHtml, &bq.CharacterID, &bq.Character, &bq.AudioID,
 		&charMap, &textMap, &bq.Episode, &row.Segment, &bq.ContentType, &sfx,
 		&row.HasRedTruth, &row.HasBlueTruth, &row.HasGoldTruth, &row.HasPurpleTruth,
-		&row.TextJP, &row.TextJPHtml,
 	}
 
 	if err := rows.Scan(append(dest, extra...)...); err != nil {

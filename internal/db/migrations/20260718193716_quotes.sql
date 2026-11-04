@@ -20,8 +20,6 @@ CREATE TABLE quotes (
     has_blue_truth   INTEGER NOT NULL DEFAULT 0,
     has_gold_truth   INTEGER NOT NULL DEFAULT 0,
     has_purple_truth INTEGER NOT NULL DEFAULT 0,
-    text_jp          TEXT    NOT NULL DEFAULT '',
-    text_jp_html     TEXT    NOT NULL DEFAULT '',
     PRIMARY KEY (game, lang, idx)
 );
 

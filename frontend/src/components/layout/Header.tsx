@@ -1,4 +1,5 @@
 import type { Game, Language, ViewMode } from "../../types/app";
+import { GAME_LANGUAGES, LANGUAGE_LABELS } from "../../types/app";
 import { ThemeSelector } from "./ThemeSelector";
 
 const HOME_VIEWS = new Set<ViewMode>(["featured", "search", "browse", "quoteLookup"]);
@@ -80,54 +81,15 @@ export function Header({
                 >
                     Auto
                 </button>
-                <button
-                    className={`lang-btn${language === "en" ? " active" : ""}`}
-                    onClick={() => onLanguageChange("en")}
-                >
-                    English
-                </button>
-                {(game === "higurashi" || game === "ciconia") && (
+                {GAME_LANGUAGES[game].map(lang => (
                     <button
-                        className={`lang-btn${language === "ja" ? " active" : ""}`}
-                        onClick={() => onLanguageChange("ja")}
+                        key={lang}
+                        className={`lang-btn${language === lang ? " active" : ""}`}
+                        onClick={() => onLanguageChange(lang)}
                     >
-                        {"日本語"}
+                        {LANGUAGE_LABELS[lang]}
                     </button>
-                )}
-                {game === "umineko" && (
-                    <>
-                        <button
-                            className={`lang-btn${language === "wh" ? " active" : ""}`}
-                            onClick={() => onLanguageChange("wh")}
-                        >
-                            English (WH)
-                        </button>
-                        <button
-                            className={`lang-btn${language === "ja" ? " active" : ""}`}
-                            onClick={() => onLanguageChange("ja")}
-                        >
-                            {"日本語"}
-                        </button>
-                        <button
-                            className={`lang-btn${language === "ru" ? " active" : ""}`}
-                            onClick={() => onLanguageChange("ru")}
-                        >
-                            {"Русский"}
-                        </button>
-                        <button
-                            className={`lang-btn${language === "es" ? " active" : ""}`}
-                            onClick={() => onLanguageChange("es")}
-                        >
-                            Español
-                        </button>
-                        <button
-                            className={`lang-btn${language === "pt" ? " active" : ""}`}
-                            onClick={() => onLanguageChange("pt")}
-                        >
-                            Português
-                        </button>
-                    </>
-                )}
+                ))}
             </div>
             <nav className="header-nav">
                 <button className={`header-nav-btn${HOME_VIEWS.has(viewMode) ? " active" : ""}`} onClick={onHomeClick}>

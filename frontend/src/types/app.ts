@@ -11,6 +11,21 @@ export function resolveLanguage(lang: Language): Exclude<Language, "auto"> {
 
 export type Game = "umineko" | "higurashi" | "ciconia";
 
+export const GAME_LANGUAGES: Record<Game, Exclude<Language, "auto">[]> = {
+    umineko: ["en", "wh", "ja", "ru", "es", "pt"],
+    higurashi: ["en", "ja"],
+    ciconia: ["en", "ja"],
+};
+
+export const LANGUAGE_LABELS: Record<Exclude<Language, "auto">, string> = {
+    en: "English",
+    wh: "English (WH)",
+    ja: "日本語",
+    ru: "Русский",
+    es: "Español",
+    pt: "Português",
+};
+
 export type UminekoTheme = "featherine" | "bernkastel" | "lambdadelta";
 export type HigurashiTheme = "rika" | "mion" | "satoko";
 export type CiconiaTheme = "miyao" | "lingji" | "stanislaw";

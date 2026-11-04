@@ -1,8 +1,6 @@
 export interface Quote {
     text: string;
     textHtml?: string;
-    textJp?: string;
-    textJpHtml?: string;
     arc?: string;
     character: string;
     characterId?: string;

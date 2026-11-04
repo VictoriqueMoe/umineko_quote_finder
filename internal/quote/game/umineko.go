@@ -1,14 +1,12 @@
 package game
 
 import (
-	"errors"
 	"fmt"
 	"io/fs"
 	"log"
 	"maps"
 	"slices"
 	"strconv"
-	"sync"
 	"time"
 
 	"umineko_quote/internal/dto"
@@ -21,15 +19,7 @@ import (
 	"github.com/VictoriqueMoe/umineko_script_parser/umineko"
 )
 
-type (
-	Umineko struct{}
-
-	uminekoLangParseResult struct {
-		lang   language.Language
-		parsed []dto.UminekoQuote
-		err    error
-	}
-)
+type Umineko struct{}
 
 const (
 	UminekoAudioDir     = "internal/quote/data/audio"
@@ -62,37 +52,7 @@ func (Umineko) DataFiles() ([]string, error) {
 }
 
 func (Umineko) Load() (map[language.Language][]dto.UminekoQuote, error) {
-	results := make(chan uminekoLangParseResult, len(uminekoLangFiles))
-	var wg sync.WaitGroup
-
-	for lang, path := range uminekoLangFiles {
-		wg.Go(func() {
-			parsed, err := loadUminekoLanguage(lang, path)
-			results <- uminekoLangParseResult{lang: lang, parsed: parsed, err: err}
-		})
-	}
-
-	go func() {
-		wg.Wait()
-		close(results)
-	}()
-
-	quotes := make(map[language.Language][]dto.UminekoQuote)
-	var errs []error
-
-	for r := range results {
-		if r.err != nil {
-			errs = append(errs, r.err)
-			continue
-		}
-		quotes[r.lang] = r.parsed
-	}
-
-	if err := errors.Join(errs...); err != nil {
-		return nil, err
-	}
-
-	return quotes, nil
+	return loadLanguages(uminekoLangFiles, loadUminekoLanguage)
 }
 
 func loadUminekoLanguage(lang language.Language, path string) ([]dto.UminekoQuote, error) {

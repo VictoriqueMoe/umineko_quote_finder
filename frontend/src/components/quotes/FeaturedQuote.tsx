@@ -40,15 +40,7 @@ export function FeaturedQuote({ quote, audioPlayer, onContextQuoteClick }: Featu
                 <SePlayer soundEffects={quote.soundEffects} audioPlayer={audioPlayer} />
             )}
             {quote.audioId && (
-                <LangToggle
-                    audioId={quote.audioId}
-                    onTextUpdate={handleTextUpdate}
-                    onLangChange={handleLangChange}
-                    textJp={quote.textJp}
-                    textJpHtml={quote.textJpHtml}
-                    originalText={quote.text}
-                    originalTextHtml={quote.textHtml}
-                />
+                <LangToggle audioId={quote.audioId} onTextUpdate={handleTextUpdate} onLangChange={handleLangChange} />
             )}
             {quote.audioId && (
                 <div className="quote-actions">

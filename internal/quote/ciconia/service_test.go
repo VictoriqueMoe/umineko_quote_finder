@@ -314,18 +314,31 @@ func TestService_GetStats(t *testing.T) {
 	}
 }
 
-func TestService_Search_HasJapaneseText(t *testing.T) {
+func TestService_Search_Japanese(t *testing.T) {
 	svc := testService
 
-	resp := searchWithParams(t, svc, "Miyao", language.English, 5, 0, "", "", "", "")
+	resp := searchWithParams(t, svc, "ケロポヨ", language.Japanese, 5, 0, "", "", "", "")
 
 	if resp.Total == 0 {
-		t.Fatal("expected results")
+		t.Fatal("expected Japanese results for ケロポヨ")
 	}
 
 	q := resp.Results[0].Quote.(dto.CiconiaQuote)
-	if q.TextJP == "" {
-		t.Error("expected TextJP to be populated")
+	if !strings.Contains(q.Text, "ケロポヨ") {
+		t.Errorf("Text = %q, want it to contain ケロポヨ", q.Text)
+	}
+}
+
+func TestService_Search_AutoFindsJapanese(t *testing.T) {
+	svc := testService
+
+	resp := searchWithParams(t, svc, "ケロポヨ", language.Auto, 5, 0, "", "", "", "")
+
+	if resp.Total == 0 {
+		t.Fatal("expected auto search to find ケロポヨ")
+	}
+	if resp.Lang != string(language.Japanese) {
+		t.Errorf("Lang = %q, want %q", resp.Lang, language.Japanese)
 	}
 }
 

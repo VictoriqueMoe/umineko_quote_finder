@@ -198,7 +198,7 @@ graph TB
 - Character interaction pair filtering
 - Random quote generator
 - Scene context viewer with navigation between voiced quotes
-- Multi-language support: English, English (WH), Japanese, Russian, Spanish, Portuguese (Umineko); English + inline Japanese (Higurashi, Ciconia)
+- Multi-language support: English, English (WH), Japanese, Russian, Spanish, Portuguese (Umineko); English and Japanese (Higurashi, Ciconia)
 - Inline audio playback for voiced lines (Umineko)
 - Voice clip builder for composing custom dialogue sequences (Umineko)
 - Per-game bookmarks with localStorage persistence
@@ -410,9 +410,9 @@ Ciconia has no voice audio, so no `/audio/...` or `/nearest-voiced/...` routes.
 
 The `contentType` field distinguishes content sections: `""` for main episodes, `"tea"` for tea parties, `"ura"` for ???? chapters, and `"omake"` for omakes (bonus content).
 
-Higurashi quotes additionally include `textJp`, `textJpHtml` (inline Japanese text), and `arc` (arc name) fields.
+Higurashi quotes additionally include an `arc` (arc name) field. Request `lang=ja` for the Japanese text; each quote carries one language, the same as Umineko.
 
-Ciconia quotes additionally include `textJp`, `textJpHtml`, and `chapter` (chapter id, e.g. `"01"` / `"25b"` / `"ep"` / `"df03"`) fields. Because Ciconia is voiceless, its `audioId` is a synthetic stable hash (e.g. `c11:6d333931`, `ep:a3f2b81c`) rather than a real voice file path.
+Ciconia quotes additionally include a `chapter` (chapter id, e.g. `"01"` / `"25b"` / `"ep"` / `"df03"`) field, and serve Japanese under `lang=ja` the same way. Because Ciconia is voiceless, its `audioId` is a synthetic stable hash (e.g. `c11:6d333931`, `ep:a3f2b81c`) rather than a real voice file path.
 
 ## Swagger
 
@@ -481,7 +481,7 @@ internal/quote/data/
 ├── wh.file              (Umineko English WH, ONS2 encoded)
 ├── ru.file              (Umineko Russian, ONS2 encoded)
 ├── higurashi/
-│   └── en.file          (Higurashi English, ONS2 encoded)
+│   └── en.file          (Higurashi bilingual EN/JP, ONS2 encoded)
 ├── Ciconia/
 │   └── en.file          (Ciconia Phase 1 bilingual EN/JP, ONS2 encoded)
 ├── sub/                 (ASS subtitle files for Umineko)
@@ -533,8 +533,8 @@ All three games share:
 
 Game-specific extensions:
 - `dto.UminekoQuote` adds truth flags (HasRedTruth, HasBlueTruth, HasGoldTruth, HasPurpleTruth); `umineko.NewParser()` additionally exposes a `SubtitleRefs()` accessor for game-specific side output
-- `dto.HigurashiQuote` adds TextJP, TextJPHtml, and Arc fields
-- `dto.CicroniaQuote` adds TextJP, TextJPHtml, and Chapter fields; the parser auto-attributes `#8df270`-colored lines to Keropoyo and splits the Epilogue from act25b at the `p1last` cutscene marker
+- `dto.HigurashiQuote` adds the Arc field; `higurashi.NewParser()` reads the translation side of each `OutputLine` and `higurashi.NewJapaneseParser()` the Japanese side, and the app loads both from the one bilingual file as the `en` and `ja` languages
+- `dto.CicroniaQuote` adds the Chapter field; `ciconia.NewParser()` / `ciconia.NewJapaneseParser()` pick the `langen` or `langjp` lines the same way; the parser auto-attributes `#8df270`-colored lines to Keropoyo and splits the Epilogue from act25b at the `p1last` cutscene marker
 
 ### Pipeline Overview
 

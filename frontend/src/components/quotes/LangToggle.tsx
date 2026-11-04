@@ -2,30 +2,17 @@ import { useCallback, useState } from "react";
 import { useAppContext } from "../../hooks/useAppContext";
 import { getQuoteByAudioId } from "../../api/endpoints";
 import type { Language } from "../../types/app";
+import { GAME_LANGUAGES } from "../../types/app";
 
-interface LangToggleProps {
+type LangToggleProps = {
     audioId: string;
     onTextUpdate: (textHtml: string, text: string) => void;
     onLangChange?: (lang: Language) => void;
     onContextRefresh?: (lang: Language) => void;
     langOverride?: Exclude<Language, "auto">;
-    textJp?: string;
-    textJpHtml?: string;
-    originalText?: string;
-    originalTextHtml?: string;
-}
+};
 
-export function LangToggle({
-    audioId,
-    onTextUpdate,
-    onLangChange,
-    onContextRefresh,
-    langOverride,
-    textJp,
-    textJpHtml,
-    originalText,
-    originalTextHtml,
-}: LangToggleProps) {
+export function LangToggle({ audioId, onTextUpdate, onLangChange, onContextRefresh, langOverride }: LangToggleProps) {
     const { language, game } = useAppContext();
     const effective = langOverride ?? (language === "auto" ? "en" : language);
     const [activeLang, setActiveLang] = useState<Language>(effective);
@@ -45,19 +32,6 @@ export function LangToggle({
                 return;
             }
 
-            if (game === "higurashi" || game === "ciconia") {
-                if (newLang === "ja" && textJp) {
-                    setActiveLang("ja");
-                    onTextUpdate(textJpHtml || textJp, textJp);
-                    onLangChange?.("ja");
-                } else if (newLang === "en" && originalText) {
-                    setActiveLang("en");
-                    onTextUpdate(originalTextHtml || originalText, originalText);
-                    onLangChange?.("en");
-                }
-                return;
-            }
-
             setLoading(true);
             try {
                 const quote = await getQuoteByAudioId(game, firstId, newLang);
@@ -73,87 +47,21 @@ export function LangToggle({
                 setLoading(false);
             }
         },
-        [
-            firstId,
-            activeLang,
-            loading,
-            onTextUpdate,
-            onLangChange,
-            onContextRefresh,
-            game,
-            textJp,
-            textJpHtml,
-            originalText,
-            originalTextHtml,
-        ],
+        [firstId, activeLang, loading, onTextUpdate, onLangChange, onContextRefresh, game],
     );
-
-    if (game === "higurashi" || game === "ciconia") {
-        if (!textJp) {
-            return null;
-        }
-        return (
-            <span className="lang-card-toggle" data-audio-id={firstId}>
-                <button
-                    className={`lang-card-btn${activeLang === "en" ? " active" : ""}`}
-                    onClick={() => handleToggle("en")}
-                >
-                    EN
-                </button>
-                <button
-                    className={`lang-card-btn${activeLang === "ja" ? " active" : ""}`}
-                    onClick={() => handleToggle("ja")}
-                >
-                    JA
-                </button>
-            </span>
-        );
-    }
 
     return (
         <span className="lang-card-toggle" data-audio-id={firstId}>
-            <button
-                className={`lang-card-btn${activeLang === "en" ? " active" : ""}`}
-                disabled={loading}
-                onClick={() => handleToggle("en")}
-            >
-                EN
-            </button>
-            <button
-                className={`lang-card-btn${activeLang === "wh" ? " active" : ""}`}
-                disabled={loading}
-                onClick={() => handleToggle("wh")}
-            >
-                WH
-            </button>
-            <button
-                className={`lang-card-btn${activeLang === "ja" ? " active" : ""}`}
-                disabled={loading}
-                onClick={() => handleToggle("ja")}
-            >
-                JA
-            </button>
-            <button
-                className={`lang-card-btn${activeLang === "ru" ? " active" : ""}`}
-                disabled={loading}
-                onClick={() => handleToggle("ru")}
-            >
-                RU
-            </button>
-            <button
-                className={`lang-card-btn${activeLang === "es" ? " active" : ""}`}
-                disabled={loading}
-                onClick={() => handleToggle("es")}
-            >
-                ES
-            </button>
-            <button
-                className={`lang-card-btn${activeLang === "pt" ? " active" : ""}`}
-                disabled={loading}
-                onClick={() => handleToggle("pt")}
-            >
-                PT
-            </button>
+            {GAME_LANGUAGES[game].map(lang => (
+                <button
+                    key={lang}
+                    className={`lang-card-btn${activeLang === lang ? " active" : ""}`}
+                    disabled={loading}
+                    onClick={() => handleToggle(lang)}
+                >
+                    {lang.toUpperCase()}
+                </button>
+            ))}
         </span>
     );
 }

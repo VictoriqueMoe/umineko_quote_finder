@@ -62,7 +62,6 @@ func ciconiaTestQuotes() map[language.Language][]dto.CiconiaQuote {
 			CharacterID: charID,
 			Character:   charName,
 			Episode:     1,
-			TextJP:      "テキスト",
 			Chapter:     chapter,
 			Index:       idx,
 		}
@@ -77,8 +76,15 @@ func ciconiaTestQuotes() map[language.Language][]dto.CiconiaQuote {
 		mk(5, "jayden", "Jayden", "02"),
 	}
 
+	ja := make([]dto.CiconiaQuote, len(en))
+	for i, q := range en {
+		q.Text = "テキスト"
+		ja[i] = q
+	}
+
 	return map[language.Language][]dto.CiconiaQuote{
-		language.English: en,
+		language.English:  en,
+		language.Japanese: ja,
 	}
 }
 
@@ -432,12 +438,22 @@ func TestSpeakersParity(t *testing.T) {
 }
 
 func TestCiconiaRoundTrip(t *testing.T) {
-	q, err := newSeededDAO(t, game.Ciconia{}, ciconiaTestQuotes()).QuoteByIndex(language.English, 4)
+	d := newSeededDAO(t, game.Ciconia{}, ciconiaTestQuotes())
+
+	en, err := d.QuoteByIndex(language.English, 4)
 	if err != nil {
-		t.Fatalf("QuoteByIndex: %v", err)
+		t.Fatalf("QuoteByIndex en: %v", err)
 	}
-	if q == nil || q.Chapter != "02" || q.TextJP != "テキスト" {
-		t.Errorf("round trip: got %+v", q)
+	if en == nil || en.Chapter != "02" || en.Text != "text" {
+		t.Errorf("english round trip: got %+v", en)
+	}
+
+	ja, err := d.QuoteByIndex(language.Japanese, 4)
+	if err != nil {
+		t.Fatalf("QuoteByIndex ja: %v", err)
+	}
+	if ja == nil || ja.Chapter != "02" || ja.Text != "テキスト" {
+		t.Errorf("japanese round trip: got %+v", ja)
 	}
 }
 

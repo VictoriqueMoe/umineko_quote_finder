@@ -55,10 +55,6 @@ export function QuoteCard({
                             onLangChange={handleLangChange}
                             onContextRefresh={handleContextRefresh}
                             langOverride={langOverride}
-                            textJp={quote.textJp}
-                            textJpHtml={quote.textJpHtml}
-                            originalText={quote.text}
-                            originalTextHtml={quote.textHtml}
                         />
                     )}
                 </div>

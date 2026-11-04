@@ -102,10 +102,6 @@ definitions:
       textHtml:
         example: You&#39;re insane!! Stop it already, damn iiiiiiiiit!!
         type: string
-      textJp:
-        type: string
-      textJpHtml:
-        type: string
     type: object
   dto.CiconiaStatsResult:
     properties:
@@ -402,10 +398,6 @@ definitions:
         type: string
       textHtml:
         example: You&#39;re insane!! Stop it already, damn iiiiiiiiit!!
-        type: string
-      textJp:
-        type: string
-      textJpHtml:
         type: string
     type: object
   umineko_quote_internal_dto.UminekoQuote:

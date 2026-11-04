@@ -3,9 +3,7 @@ package controllers
 import (
 	"strings"
 
-	"umineko_quote/internal/controllers/utils"
 	"umineko_quote/internal/dto"
-	"umineko_quote/internal/quote/language"
 	"umineko_quote/internal/quote/params"
 
 	"github.com/gofiber/fiber/v3"
@@ -75,55 +73,7 @@ func (s *Service) setupCiconiaStatsRoute(routeGroup fiber.Router) {
 //	@Failure		400				{object}	dto.ErrorResponse
 //	@Router			/ciconia/search [get]
 func (s *Service) ciconiaSearch(ctx fiber.Ctx) error {
-	query := ctx.Query("q")
-	if query == "" {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "query parameter 'q' is required",
-		})
-	}
-
-	lang := language.English.Parse(ctx.Query("lang"))
-	limit := fiber.Query[int](ctx, "limit")
-	offset := fiber.Query[int](ctx, "offset")
-	characterParam := strings.TrimSpace(ctx.Query("character"))
-	interactionAParam := ctx.Query("interactionA")
-	interactionBParam := ctx.Query("interactionB")
-	exact := fiber.Query[bool](ctx, "exact")
-
-	if errMsg, invalid := validateInteractionQueryParams(characterParam, interactionAParam, interactionBParam); invalid {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": errMsg,
-		})
-	}
-
-	searchParams := params.NewSearchParams(
-		query,
-		lang,
-		limit,
-		offset,
-		characterParam,
-		0,
-		strings.TrimSpace(interactionAParam),
-		strings.TrimSpace(interactionBParam),
-		exact,
-	)
-
-	response, err := s.CiconiaService.Search(searchParams, params.QuoteScope{Segment: ctx.Query("chapter")})
-	if err != nil {
-		return utils.InternalError(ctx, "failed to search quotes", err)
-	}
-
-	result := fiber.Map{
-		"query":   query,
-		"results": response.Results,
-		"total":   response.Total,
-		"limit":   response.Limit,
-		"offset":  response.Offset,
-	}
-	if response.Lang != "" {
-		result["lang"] = response.Lang
-	}
-	return ctx.JSON(result)
+	return handleSearch[dto.CiconiaQuote](ctx, s.CiconiaService, strings.TrimSpace, 0, params.QuoteScope{Segment: ctx.Query("chapter")})
 }
 
 // ciconiaRandom godoc
@@ -139,20 +89,7 @@ func (s *Service) ciconiaSearch(ctx fiber.Ctx) error {
 //	@Failure		404			{object}	dto.ErrorResponse
 //	@Router			/ciconia/random [get]
 func (s *Service) ciconiaRandom(ctx fiber.Ctx) error {
-	lang := language.English.Parse(ctx.Query("lang"))
-	characterID := strings.TrimSpace(ctx.Query("character"))
-	chapter := ctx.Query("chapter")
-
-	q, err := s.CiconiaService.Random(lang, characterID, 0, params.QuoteScope{Segment: chapter})
-	if err != nil {
-		return utils.InternalError(ctx, "failed to load random quote", err)
-	}
-	if q == nil {
-		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"error": "no quotes available",
-		})
-	}
-	return ctx.JSON(q)
+	return handleRandom[dto.CiconiaQuote](ctx, s.CiconiaService, strings.TrimSpace, 0, params.QuoteScope{Segment: ctx.Query("chapter")})
 }
 
 // ciconiaBrowse godoc
@@ -171,34 +108,7 @@ func (s *Service) ciconiaRandom(ctx fiber.Ctx) error {
 //	@Success		200				{object}	dto.CharacterResponse
 //	@Router			/ciconia/browse [get]
 func (s *Service) ciconiaBrowse(ctx fiber.Ctx) error {
-	lang := language.English.Parse(ctx.Query("lang"))
-	limit := fiber.Query[int](ctx, "limit")
-	offset := fiber.Query[int](ctx, "offset")
-	characterParam := strings.TrimSpace(ctx.Query("character"))
-	interactionAParam := ctx.Query("interactionA")
-	interactionBParam := ctx.Query("interactionB")
-
-	if errMsg, invalid := validateInteractionQueryParams(characterParam, interactionAParam, interactionBParam); invalid {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": errMsg,
-		})
-	}
-
-	browseParams := params.NewBrowseParams(
-		lang,
-		limit,
-		offset,
-		characterParam,
-		0,
-		strings.TrimSpace(interactionAParam),
-		strings.TrimSpace(interactionBParam),
-	)
-
-	response, err := s.CiconiaService.Browse(browseParams, params.QuoteScope{Segment: ctx.Query("chapter")})
-	if err != nil {
-		return utils.InternalError(ctx, "failed to browse quotes", err)
-	}
-	return ctx.JSON(response)
+	return handleBrowse[dto.CiconiaQuote](ctx, s.CiconiaService, strings.TrimSpace, 0, params.QuoteScope{Segment: ctx.Query("chapter")})
 }
 
 // ciconiaByAudioID godoc

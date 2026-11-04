@@ -70,12 +70,10 @@ func (Ciconia) Row(q *dto.CiconiaQuote) QuoteRow {
 
 func (Ciconia) Build(base scriptdto.BaseQuote, r QuoteRow) dto.CiconiaQuote {
 	return dto.CiconiaQuote{
-		CicroniaQuote: scriptdto.CicroniaQuote{
-			BaseQuote:  base,
-			TextJP:     r.TextJP,
-			TextJPHtml: r.TextJPHtml,
-			Chapter:    r.Segment,
-		},
-		Index: r.Index,
+		BaseQuote:  base,
+		TextJP:     r.TextJP,
+		TextJPHtml: r.TextJPHtml,
+		Chapter:    r.Segment,
+		Index:      r.Index,
 	}
 }

@@ -3,9 +3,7 @@ package controllers
 import (
 	"strings"
 
-	"umineko_quote/internal/controllers/utils"
 	"umineko_quote/internal/dto"
-	"umineko_quote/internal/quote/language"
 	"umineko_quote/internal/quote/params"
 
 	"github.com/gofiber/fiber/v3"
@@ -81,56 +79,7 @@ func (s *Service) setupHigurashiStatsRoute(routeGroup fiber.Router) {
 //	@Failure		400			{object}	dto.ErrorResponse
 //	@Router			/higurashi/search [get]
 func (s *Service) higurashiSearch(ctx fiber.Ctx) error {
-	query := ctx.Query("q")
-	if query == "" {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "query parameter 'q' is required",
-		})
-	}
-
-	lang := language.English.Parse(ctx.Query("lang"))
-	limit := fiber.Query[int](ctx, "limit")
-	offset := fiber.Query[int](ctx, "offset")
-	characterParam := strings.TrimSpace(ctx.Query("character"))
-	interactionAParam := ctx.Query("interactionA")
-	interactionBParam := ctx.Query("interactionB")
-	episode := fiber.Query[int](ctx, "episode")
-	exact := fiber.Query[bool](ctx, "exact")
-
-	if errMsg, invalid := validateInteractionQueryParams(characterParam, interactionAParam, interactionBParam); invalid {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": errMsg,
-		})
-	}
-
-	searchParams := params.NewSearchParams(
-		query,
-		lang,
-		limit,
-		offset,
-		characterParam,
-		episode,
-		strings.TrimSpace(interactionAParam),
-		strings.TrimSpace(interactionBParam),
-		exact,
-	)
-
-	response, err := s.HigurashiService.Search(searchParams, params.QuoteScope{Segment: ctx.Query("arc")})
-	if err != nil {
-		return utils.InternalError(ctx, "failed to search quotes", err)
-	}
-
-	result := fiber.Map{
-		"query":   query,
-		"results": response.Results,
-		"total":   response.Total,
-		"limit":   response.Limit,
-		"offset":  response.Offset,
-	}
-	if response.Lang != "" {
-		result["lang"] = response.Lang
-	}
-	return ctx.JSON(result)
+	return handleSearch[dto.HigurashiQuote](ctx, s.HigurashiService, strings.TrimSpace, fiber.Query[int](ctx, "episode"), params.QuoteScope{Segment: ctx.Query("arc")})
 }
 
 // higurashiRandom godoc
@@ -147,21 +96,7 @@ func (s *Service) higurashiSearch(ctx fiber.Ctx) error {
 //	@Failure		404			{object}	dto.ErrorResponse
 //	@Router			/higurashi/random [get]
 func (s *Service) higurashiRandom(ctx fiber.Ctx) error {
-	lang := language.English.Parse(ctx.Query("lang"))
-	characterID := strings.TrimSpace(ctx.Query("character"))
-	episode := fiber.Query[int](ctx, "episode")
-	arc := ctx.Query("arc")
-
-	q, err := s.HigurashiService.Random(lang, characterID, episode, params.QuoteScope{Segment: arc})
-	if err != nil {
-		return utils.InternalError(ctx, "failed to load random quote", err)
-	}
-	if q == nil {
-		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"error": "no quotes available",
-		})
-	}
-	return ctx.JSON(q)
+	return handleRandom[dto.HigurashiQuote](ctx, s.HigurashiService, strings.TrimSpace, fiber.Query[int](ctx, "episode"), params.QuoteScope{Segment: ctx.Query("arc")})
 }
 
 // higurashiBrowse godoc
@@ -181,35 +116,7 @@ func (s *Service) higurashiRandom(ctx fiber.Ctx) error {
 //	@Success		200			{object}	dto.CharacterResponse
 //	@Router			/higurashi/browse [get]
 func (s *Service) higurashiBrowse(ctx fiber.Ctx) error {
-	lang := language.English.Parse(ctx.Query("lang"))
-	limit := fiber.Query[int](ctx, "limit")
-	offset := fiber.Query[int](ctx, "offset")
-	episode := fiber.Query[int](ctx, "episode")
-	characterParam := strings.TrimSpace(ctx.Query("character"))
-	interactionAParam := ctx.Query("interactionA")
-	interactionBParam := ctx.Query("interactionB")
-
-	if errMsg, invalid := validateInteractionQueryParams(characterParam, interactionAParam, interactionBParam); invalid {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": errMsg,
-		})
-	}
-
-	browseParams := params.NewBrowseParams(
-		lang,
-		limit,
-		offset,
-		characterParam,
-		episode,
-		strings.TrimSpace(interactionAParam),
-		strings.TrimSpace(interactionBParam),
-	)
-
-	response, err := s.HigurashiService.Browse(browseParams, params.QuoteScope{Segment: ctx.Query("arc")})
-	if err != nil {
-		return utils.InternalError(ctx, "failed to browse quotes", err)
-	}
-	return ctx.JSON(response)
+	return handleBrowse[dto.HigurashiQuote](ctx, s.HigurashiService, strings.TrimSpace, fiber.Query[int](ctx, "episode"), params.QuoteScope{Segment: ctx.Query("arc")})
 }
 
 // higurashiByAudioID godoc

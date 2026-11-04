@@ -173,13 +173,11 @@ func (Umineko) Row(q *dto.UminekoQuote) QuoteRow {
 
 func (Umineko) Build(base scriptdto.BaseQuote, r QuoteRow) dto.UminekoQuote {
 	return dto.UminekoQuote{
-		UminekoQuote: scriptdto.UminekoQuote{
-			BaseQuote:      base,
-			HasRedTruth:    r.HasRedTruth,
-			HasBlueTruth:   r.HasBlueTruth,
-			HasGoldTruth:   r.HasGoldTruth,
-			HasPurpleTruth: r.HasPurpleTruth,
-		},
-		Index: r.Index,
+		BaseQuote:      base,
+		HasRedTruth:    r.HasRedTruth,
+		HasBlueTruth:   r.HasBlueTruth,
+		HasGoldTruth:   r.HasGoldTruth,
+		HasPurpleTruth: r.HasPurpleTruth,
+		Index:          r.Index,
 	}
 }

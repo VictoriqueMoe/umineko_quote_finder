@@ -37,7 +37,7 @@ func TestIndexer_LowerTexts(t *testing.T) {
 func TestIndexer_LowerTexts_UnknownLang(t *testing.T) {
 	idx := buildTestIndexer()
 
-	texts := idx.LowerTexts(language.Language("fr"))
+	texts := idx.LowerTexts("fr")
 	if texts != nil {
 		t.Errorf("LowerTexts for unknown lang: got %v, want nil", texts)
 	}
@@ -58,7 +58,7 @@ func TestIndexer_NonNarratorIndices(t *testing.T) {
 func TestIndexer_NonNarratorIndices_UnknownLang(t *testing.T) {
 	idx := buildTestIndexer()
 
-	result := idx.NonNarratorIndices(language.Language("fr"))
+	result := idx.NonNarratorIndices("fr")
 	if result != nil {
 		t.Errorf("NonNarratorIndices for unknown lang: got %v, want nil", result)
 	}
@@ -112,17 +112,17 @@ func TestIndexer_FilteredIndices_Neither(t *testing.T) {
 func TestIndexer_FilteredIndices_UnknownLang(t *testing.T) {
 	idx := buildTestIndexer()
 
-	result := idx.FilteredIndices(language.Language("fr"), "10", 0)
+	result := idx.FilteredIndices("fr", "10", 0)
 	if len(result) != 0 {
 		t.Errorf("FilteredIndices unknown lang (char): got %v, want empty", result)
 	}
 
-	result = idx.FilteredIndices(language.Language("fr"), "", 1)
+	result = idx.FilteredIndices("fr", "", 1)
 	if len(result) != 0 {
 		t.Errorf("FilteredIndices unknown lang (ep): got %v, want empty", result)
 	}
 
-	result = idx.FilteredIndices(language.Language("fr"), "10", 1)
+	result = idx.FilteredIndices("fr", "10", 1)
 	if len(result) != 0 {
 		t.Errorf("FilteredIndices unknown lang (both): got %v, want empty", result)
 	}
@@ -250,7 +250,7 @@ func TestIndexer_QuoteIndex_CompositeIDs(t *testing.T) {
 func TestIndexer_QuoteIndex_UnknownLang(t *testing.T) {
 	idx := buildTestIndexer()
 
-	_, ok := idx.QuoteIndex(language.Language("fr"), "10100001")
+	_, ok := idx.QuoteIndex("fr", "10100001")
 	if ok {
 		t.Error("QuoteIndex: expected not found for unknown lang")
 	}

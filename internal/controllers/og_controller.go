@@ -123,15 +123,7 @@ func (s *Service) uminekoOGImage(ctx fiber.Ctx) error {
 		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "quote not found"})
 	}
 
-	full := ctx.Query("full") == "true"
-	data, err := s.OGImageGenerator.Generate(audioId, lang, q.Text, q.TextHtml, q.Character, full, uminekoOGDefaults.brand, uminekoEpisodeLabel(q.Episode, q.ContentType))
-	if err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to generate image"})
-	}
-
-	ctx.Set("Content-Type", "image/png")
-	ctx.Set("Cache-Control", "public, max-age=86400")
-	return ctx.Send(data)
+	return s.sendOGImage(ctx, audioId, lang, q.Text, q.TextHtml, q.Character, uminekoOGDefaults.brand, uminekoEpisodeLabel(q.Episode, q.ContentType))
 }
 
 func (s *Service) higurashiOGImage(ctx fiber.Ctx) error {
@@ -150,15 +142,7 @@ func (s *Service) higurashiOGImage(ctx fiber.Ctx) error {
 		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "quote not found"})
 	}
 
-	full := ctx.Query("full") == "true"
-	data, err := s.OGImageGenerator.Generate(audioId, lang, q.Text, q.TextHtml, q.Character, full, higurashiOGDefaults.brand, higurashiArcLabel(q.Arc))
-	if err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to generate image"})
-	}
-
-	ctx.Set("Content-Type", "image/png")
-	ctx.Set("Cache-Control", "public, max-age=86400")
-	return ctx.Send(data)
+	return s.sendOGImage(ctx, audioId, lang, q.Text, q.TextHtml, q.Character, higurashiOGDefaults.brand, higurashiArcLabel(q.Arc))
 }
 
 // ciconiaOGImage godoc
@@ -190,8 +174,11 @@ func (s *Service) ciconiaOGImage(ctx fiber.Ctx) error {
 		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "quote not found"})
 	}
 
-	full := ctx.Query("full") == "true"
-	data, err := s.OGImageGenerator.Generate(audioId, lang, q.Text, q.TextHtml, q.Character, full, ciconiaOGDefaults.brand, ciconiaChapterLabel(q.Chapter))
+	return s.sendOGImage(ctx, audioId, lang, q.Text, q.TextHtml, q.Character, ciconiaOGDefaults.brand, ciconiaChapterLabel(q.Chapter))
+}
+
+func (s *Service) sendOGImage(ctx fiber.Ctx, audioId string, lang language.Language, text string, textHtml string, characterName string, brand string, label string) error {
+	data, err := s.OGImageGenerator.Generate(audioId, lang, text, textHtml, characterName, ctx.Query("full") == "true", brand, label)
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to generate image"})
 	}
@@ -247,9 +234,7 @@ func (s *Service) ogPage(ctx fiber.Ctx) error {
 	}
 
 	if audioId == "" && builderParam == "" {
-		html := s.replaceOGPlaceholders(defaults, defaults.title, defaults.description, defaults.twitterDesc, defaults.image)
-		ctx.Set("Content-Type", "text/html; charset=utf-8")
-		return ctx.SendString(html)
+		return s.sendOGPage(ctx, defaults, defaults.title, defaults.description, defaults.twitterDesc, defaults.image)
 	}
 
 	lang := language.English.Parse(ctx.Query("lang"))
@@ -261,9 +246,7 @@ func (s *Service) ogPage(ctx fiber.Ctx) error {
 			return utils.InternalError(ctx, "failed to load builder segments", err)
 		}
 		if len(segments) == 0 {
-			html := s.replaceOGPlaceholders(defaults, defaults.title, defaults.description, defaults.twitterDesc, defaults.image)
-			ctx.Set("Content-Type", "text/html; charset=utf-8")
-			return ctx.SendString(html)
+			return s.sendOGPage(ctx, defaults, defaults.title, defaults.description, defaults.twitterDesc, defaults.image)
 		}
 
 		seen := map[string]bool{}
@@ -294,9 +277,7 @@ func (s *Service) ogPage(ctx fiber.Ctx) error {
 		}
 
 		imageURL := fmt.Sprintf("%s/api/v1/umineko/og/builder.png?segments=%s&lang=%s", base, builderParam, lang)
-		html := s.replaceOGPlaceholders(defaults, title, description, description, imageURL)
-		ctx.Set("Content-Type", "text/html; charset=utf-8")
-		return ctx.SendString(html)
+		return s.sendOGPage(ctx, defaults, title, description, description, imageURL)
 	}
 
 	if game == "higurashi" {
@@ -305,20 +286,9 @@ func (s *Service) ogPage(ctx fiber.Ctx) error {
 			return utils.InternalError(ctx, "failed to load quote", err)
 		}
 		if q == nil {
-			html := s.replaceOGPlaceholders(defaults, defaults.title, defaults.description, defaults.twitterDesc, defaults.image)
-			ctx.Set("Content-Type", "text/html; charset=utf-8")
-			return ctx.SendString(html)
+			return s.sendOGPage(ctx, defaults, defaults.title, defaults.description, defaults.twitterDesc, defaults.image)
 		}
-
-		title := fmt.Sprintf("%s \u2014 %s", q.Character, defaults.quoteSuffix)
-		description := q.Text
-		if len(description) > 200 {
-			description = description[:197] + "..."
-		}
-		imageURL := fmt.Sprintf("%s/api/v1/higurashi/og/quote.png?audioId=%s&lang=%s", base, audioId, lang)
-		html := s.replaceOGPlaceholders(defaults, title, description, description, imageURL)
-		ctx.Set("Content-Type", "text/html; charset=utf-8")
-		return ctx.SendString(html)
+		return s.sendQuoteOGPage(ctx, defaults, q.Character, q.Text, fmt.Sprintf("%s/api/v1/higurashi/og/quote.png?audioId=%s&lang=%s", base, audioId, lang))
 	}
 
 	if game == "ciconia" {
@@ -327,20 +297,9 @@ func (s *Service) ogPage(ctx fiber.Ctx) error {
 			return utils.InternalError(ctx, "failed to load quote", err)
 		}
 		if q == nil {
-			html := s.replaceOGPlaceholders(defaults, defaults.title, defaults.description, defaults.twitterDesc, defaults.image)
-			ctx.Set("Content-Type", "text/html; charset=utf-8")
-			return ctx.SendString(html)
+			return s.sendOGPage(ctx, defaults, defaults.title, defaults.description, defaults.twitterDesc, defaults.image)
 		}
-
-		title := fmt.Sprintf("%s \u2014 %s", q.Character, defaults.quoteSuffix)
-		description := q.Text
-		if len(description) > 200 {
-			description = description[:197] + "..."
-		}
-		imageURL := fmt.Sprintf("%s/api/v1/ciconia/og/quote.png?audioId=%s&lang=%s", base, audioId, lang)
-		html := s.replaceOGPlaceholders(defaults, title, description, description, imageURL)
-		ctx.Set("Content-Type", "text/html; charset=utf-8")
-		return ctx.SendString(html)
+		return s.sendQuoteOGPage(ctx, defaults, q.Character, q.Text, fmt.Sprintf("%s/api/v1/ciconia/og/quote.png?audioId=%s&lang=%s", base, audioId, lang))
 	}
 
 	q, err := s.UminekoService.GetByAudioID(lang, audioId)
@@ -348,18 +307,22 @@ func (s *Service) ogPage(ctx fiber.Ctx) error {
 		return utils.InternalError(ctx, "failed to load quote", err)
 	}
 	if q == nil {
-		html := s.replaceOGPlaceholders(defaults, defaults.title, defaults.description, defaults.twitterDesc, defaults.image)
-		ctx.Set("Content-Type", "text/html; charset=utf-8")
-		return ctx.SendString(html)
+		return s.sendOGPage(ctx, defaults, defaults.title, defaults.description, defaults.twitterDesc, defaults.image)
 	}
+	return s.sendQuoteOGPage(ctx, defaults, q.Character, q.Text, fmt.Sprintf("%s/api/v1/umineko/og/%s.png?lang=%s", base, audioId, lang))
+}
 
-	title := fmt.Sprintf("%s \u2014 %s", q.Character, defaults.quoteSuffix)
-	description := q.Text
+func (s *Service) sendQuoteOGPage(ctx fiber.Ctx, defaults ogDefaults, characterName string, text string, imageURL string) error {
+	description := text
 	if len(description) > 200 {
 		description = description[:197] + "..."
 	}
-	imageURL := fmt.Sprintf("%s/api/v1/umineko/og/%s.png?lang=%s", base, audioId, lang)
-	html := s.replaceOGPlaceholders(defaults, title, description, description, imageURL)
+
+	return s.sendOGPage(ctx, defaults, fmt.Sprintf("%s \u2014 %s", characterName, defaults.quoteSuffix), description, description, imageURL)
+}
+
+func (s *Service) sendOGPage(ctx fiber.Ctx, defaults ogDefaults, title string, description string, twitterDesc string, image string) error {
+	html := s.replaceOGPlaceholders(defaults, title, description, twitterDesc, image)
 	ctx.Set("Content-Type", "text/html; charset=utf-8")
 	return ctx.SendString(html)
 }
@@ -482,8 +445,7 @@ func ciconiaChapterLabel(chapter string) string {
 	if chapter == "25b" {
 		return "Chapter 25b"
 	}
-	if strings.HasPrefix(chapter, "df") {
-		n := strings.TrimPrefix(chapter, "df")
+	if n, ok := strings.CutPrefix(chapter, "df"); ok {
 		return "Data Fragment " + n
 	}
 	return "Chapter " + chapter

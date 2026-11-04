@@ -39,10 +39,7 @@ func ServeAudio(ctx fiber.Ctx, data []byte) error {
 			ctx.Set("Content-Range", fmt.Sprintf("bytes */%d", total))
 			return ctx.SendStatus(fiber.StatusRequestedRangeNotSatisfiable)
 		}
-		start = total - suffixLen
-		if start < 0 {
-			start = 0
-		}
+		start = max(total-suffixLen, 0)
 		end = total - 1
 	} else {
 		start, err = strconv.Atoi(rangeParts[0])

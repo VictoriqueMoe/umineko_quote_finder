@@ -13,8 +13,6 @@ import (
 	"umineko_quote/internal/quote/game"
 	"umineko_quote/internal/quote/language"
 	"umineko_quote/internal/quote/params"
-
-	scriptdto "github.com/VictoriqueMoe/umineko_script_parser/dto"
 )
 
 type engines[Q any] struct {
@@ -27,15 +25,11 @@ const testDataHash = "test-hash-v1"
 func testQuotes() map[language.Language][]dto.UminekoQuote {
 	mk := func(idx int, text string, charID string, audioID string, episode int) dto.UminekoQuote {
 		return dto.UminekoQuote{
-			UminekoQuote: scriptdto.UminekoQuote{
-				BaseQuote: scriptdto.BaseQuote{
-					Text:        text,
-					CharacterID: charID,
-					AudioID:     audioID,
-					Episode:     episode,
-				},
-			},
-			Index: idx,
+			Text:        text,
+			CharacterID: charID,
+			AudioID:     audioID,
+			Episode:     episode,
+			Index:       idx,
 		}
 	}
 
@@ -64,17 +58,13 @@ func testQuotes() map[language.Language][]dto.UminekoQuote {
 func ciconiaTestQuotes() map[language.Language][]dto.CiconiaQuote {
 	mk := func(idx int, charID string, charName string, chapter string) dto.CiconiaQuote {
 		return dto.CiconiaQuote{
-			CicroniaQuote: scriptdto.CicroniaQuote{
-				BaseQuote: scriptdto.BaseQuote{
-					Text:        "text",
-					CharacterID: charID,
-					Character:   charName,
-					Episode:     1,
-				},
-				TextJP:  "テキスト",
-				Chapter: chapter,
-			},
-			Index: idx,
+			Text:        "text",
+			CharacterID: charID,
+			Character:   charName,
+			Episode:     1,
+			TextJP:      "テキスト",
+			Chapter:     chapter,
+			Index:       idx,
 		}
 	}
 
@@ -105,7 +95,9 @@ func openTestDB(t *testing.T, path string) *sql.DB {
 	}
 
 	t.Cleanup(func() {
-		conn.Close()
+		if err := conn.Close(); err != nil {
+			t.Errorf("close database: %v", err)
+		}
 	})
 
 	return conn
@@ -184,8 +176,8 @@ func TestFindQuotesParity(t *testing.T) {
 		{"episode", params.QuoteFilter{Lang: en, Text: "you", Episode: 2}, 50, 0},
 		{"interaction", params.QuoteFilter{Lang: en, InteractionA: "10", InteractionB: "27"}, 50, 0},
 		{"interaction same character", params.QuoteFilter{Lang: en, InteractionA: "10", InteractionB: "10"}, 50, 0},
-		{"truth", params.QuoteFilter{Lang: en, QuoteScope: params.QuoteScope{RedTruth: true}}, 50, 0},
-		{"segment", params.QuoteFilter{Lang: en, QuoteScope: params.QuoteScope{Segment: "2"}}, 50, 0},
+		{"truth", params.QuoteFilter{Lang: en, RedTruth: true}, 50, 0},
+		{"segment", params.QuoteFilter{Lang: en, Segment: "2"}, 50, 0},
 		{"exclude narrator", params.QuoteFilter{Lang: en, ExcludeNarrator: true}, 50, 0},
 		{"unknown language", params.QuoteFilter{Lang: language.Russian}, 50, 0},
 		{"first page", params.QuoteFilter{Lang: en}, 2, 0},
@@ -264,7 +256,7 @@ func TestRandomQuote(t *testing.T) {
 			t.Errorf("%s: random excluding narrator: got %+v", name, q)
 		}
 
-		q, err = d.RandomQuote(params.QuoteFilter{Lang: language.English, QuoteScope: params.QuoteScope{BlueTruth: true}})
+		q, err = d.RandomQuote(params.QuoteFilter{Lang: language.English, BlueTruth: true})
 		if err != nil {
 			t.Fatalf("%s: RandomQuote: %v", name, err)
 		}
@@ -474,7 +466,9 @@ func TestSkipsSeedWhenPopulated(t *testing.T) {
 	if err := s.Seed(testQuotes(), testDataHash); err != nil {
 		t.Fatalf("Seed: %v", err)
 	}
-	conn.Close()
+	if err := conn.Close(); err != nil {
+		t.Fatalf("close database: %v", err)
+	}
 
 	conn = openTestDB(t, path)
 	s = &quoteDAO[dto.UminekoQuote]{db: conn, game: game.Umineko{}}

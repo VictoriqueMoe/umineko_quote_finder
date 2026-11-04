@@ -4,18 +4,19 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"slices"
 )
 
 type (
 	FilePathResolver func(charId, audioId string) string
 
-	AudioSegment struct {
+	Segment struct {
 		CharID  string
 		AudioID string
 	}
 
 	Combiner interface {
-		CombineOgg(segments []AudioSegment, resolve FilePathResolver, delay bool) ([]byte, error)
+		CombineOgg(segments []Segment, resolve FilePathResolver, delay bool) ([]byte, error)
 	}
 
 	combiner struct{}
@@ -25,25 +26,25 @@ func NewCombiner() (Combiner, error) {
 	return &combiner{}, nil
 }
 
-func (c *combiner) CombineOgg(segments []AudioSegment, resolve FilePathResolver, delay bool) ([]byte, error) {
+func (c *combiner) CombineOgg(segments []Segment, resolve FilePathResolver, delay bool) ([]byte, error) {
 	var allFilePages [][]oggPage
 
-	for i := 0; i < len(segments); i++ {
-		if segments[i].IsDelay() {
+	for _, segment := range segments {
+		if segment.IsDelay() {
 			allFilePages = append(allFilePages, []oggPage{newBlankPage(0)})
 			continue
 		}
-		filePath := resolve(segments[i].CharID, segments[i].AudioID)
+		filePath := resolve(segment.CharID, segment.AudioID)
 		if filePath == "" {
-			return nil, fmt.Errorf("audio file not found: %s/%s", segments[i].CharID, segments[i].AudioID)
+			return nil, fmt.Errorf("audio file not found: %s/%s", segment.CharID, segment.AudioID)
 		}
 		data, err := os.ReadFile(filePath)
 		if err != nil {
-			return nil, fmt.Errorf("failed to read audio file: %s", segments[i].AudioID)
+			return nil, fmt.Errorf("failed to read audio file: %s", segment.AudioID)
 		}
 		pages, err := parseOggPages(data)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse OGG file %s: %v", segments[i].AudioID, err)
+			return nil, fmt.Errorf("failed to parse OGG file %s: %v", segment.AudioID, err)
 		}
 		allFilePages = append(allFilePages, pages)
 	}
@@ -77,9 +78,9 @@ func (c *combiner) CombineOgg(segments []AudioSegment, resolve FilePathResolver,
 		}
 
 		var fileLastGranule int64
-		for i := len(pages) - 1; i >= 0; i-- {
-			if pages[i].granulePos > 0 {
-				fileLastGranule = pages[i].granulePos
+		for _, page := range slices.Backward(pages) {
+			if page.granulePos > 0 {
+				fileLastGranule = page.granulePos
 				break
 			}
 		}
@@ -132,7 +133,7 @@ func (c *combiner) CombineOgg(segments []AudioSegment, resolve FilePathResolver,
 	return result, nil
 }
 
-func (s AudioSegment) IsDelay() bool {
+func (s Segment) IsDelay() bool {
 	return s.CharID == "_delay" && s.AudioID == "_delay"
 }
 

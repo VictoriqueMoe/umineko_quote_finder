@@ -22,7 +22,7 @@ func New() (dao.DAOs, error) {
 	}
 
 	return dao.DAOs{
-		Umineko:   &uminekoDAO{quoteDAO: NewQuotes(game.Umineko{}, umineko)},
+		Umineko:   &uminekoDAO{QuoteDAO: NewQuotes(game.Umineko{}, umineko)},
 		Higurashi: NewQuotes(game.Higurashi{}, higurashi),
 		Ciconia:   NewQuotes(game.Ciconia{}, ciconia),
 	}, nil

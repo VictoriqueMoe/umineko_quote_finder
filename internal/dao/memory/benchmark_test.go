@@ -7,8 +7,6 @@ import (
 	"umineko_quote/internal/quote/game"
 	"umineko_quote/internal/quote/language"
 	"umineko_quote/internal/quote/params"
-
-	scriptdto "github.com/VictoriqueMoe/umineko_script_parser/dto"
 )
 
 func BenchmarkIndexer_FilteredIndices_CharOnly(b *testing.B) {
@@ -74,8 +72,9 @@ func BenchmarkFindQuotes_Text(b *testing.B) {
 	en := make([]dto.UminekoQuote, n)
 	for i := range n {
 		en[i] = dto.UminekoQuote{
-			UminekoQuote: scriptdto.UminekoQuote{BaseQuote: scriptdto.BaseQuote{Text: "some text about witches and magic", CharacterID: "10"}},
-			Index:        i,
+			Text:        "some text about witches and magic",
+			CharacterID: "10",
+			Index:       i,
 		}
 	}
 	en[n/2].Text = "Beatrice is the golden witch"

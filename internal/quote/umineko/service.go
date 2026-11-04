@@ -24,12 +24,12 @@ type (
 
 	uminekoService struct {
 		quotes.Service[dto.UminekoQuote]
-		audio.AudioResolver
+		audio.Resolver
 		stats quotes.Stats
 	}
 )
 
-func NewService(repo repository.UminekoRepository, resolver audio.AudioResolver) (Service, error) {
+func NewService(repo repository.UminekoRepository, resolver audio.Resolver) (Service, error) {
 	tallies, err := repo.SpeakerTallies(language.English)
 	if err != nil {
 		return nil, fmt.Errorf("umineko speaker tallies: %w", err)
@@ -52,9 +52,9 @@ func NewService(repo repository.UminekoRepository, resolver audio.AudioResolver)
 	}
 
 	return &uminekoService{
-		Service:       quotes.NewService(repo, resolveName),
-		AudioResolver: resolver,
-		stats:         stats,
+		Service:  quotes.NewService(repo, resolveName),
+		Resolver: resolver,
+		stats:    stats,
 	}, nil
 }
 

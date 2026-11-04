@@ -193,7 +193,7 @@ func (s *quoteDAO[Q]) Seed(quotes map[language.Language][]Q, dataHash string) er
 			}
 
 			if bq.AudioID != "" {
-				for _, id := range strings.Split(bq.AudioID, ", ") {
+				for id := range strings.SplitSeq(bq.AudioID, ", ") {
 					if _, err := audioStmt.Exec(name, string(lang), id, row.Index); err != nil {
 						return err
 					}
@@ -322,7 +322,7 @@ func (s *quoteDAO[Q]) QuotesBetween(lang language.Language, from int, to int) ([
 }
 
 func (s *quoteDAO[Q]) NearestVoiced(lang language.Language, index int, previous bool) (string, error) {
-	query := `SELECT audio_id FROM quotes WHERE game = ? AND lang = ? AND idx > ? AND audio_id != '' ORDER BY idx ASC LIMIT 1`
+	query := `SELECT audio_id FROM quotes WHERE game = ? AND lang = ? AND idx > ? AND audio_id != '' ORDER BY idx LIMIT 1`
 	if previous {
 		query = `SELECT audio_id FROM quotes WHERE game = ? AND lang = ? AND idx < ? AND audio_id != '' ORDER BY idx DESC LIMIT 1`
 	}

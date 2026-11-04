@@ -70,12 +70,10 @@ func (Higurashi) Row(q *dto.HigurashiQuote) QuoteRow {
 
 func (Higurashi) Build(base scriptdto.BaseQuote, r QuoteRow) dto.HigurashiQuote {
 	return dto.HigurashiQuote{
-		HigurashiQuote: scriptdto.HigurashiQuote{
-			BaseQuote:  base,
-			TextJP:     r.TextJP,
-			TextJPHtml: r.TextJPHtml,
-			Arc:        r.Segment,
-		},
-		Index: r.Index,
+		BaseQuote:  base,
+		TextJP:     r.TextJP,
+		TextJPHtml: r.TextJPHtml,
+		Arc:        r.Segment,
+		Index:      r.Index,
 	}
 }

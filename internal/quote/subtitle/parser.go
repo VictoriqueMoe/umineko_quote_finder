@@ -10,7 +10,7 @@ type Entry struct {
 	Text  string
 }
 
-var assOverrideBlock = regexp.MustCompile(`\{[^}]*\}`)
+var assOverrideBlock = regexp.MustCompile(`\{[^}]*}`)
 
 func ParseASS(data []byte) []Entry {
 	lines := strings.Split(string(data), "\n")

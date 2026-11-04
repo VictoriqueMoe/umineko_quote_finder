@@ -4,10 +4,7 @@ import (
 	"regexp"
 	"strings"
 
-	"umineko_quote/internal/controllers/utils"
 	"umineko_quote/internal/dto"
-	"umineko_quote/internal/quote/language"
-	"umineko_quote/internal/quote/params"
 	"umineko_quote/internal/quote/umineko"
 
 	"github.com/VictoriqueMoe/umineko_script_parser/umineko/character"
@@ -86,60 +83,7 @@ func (s *Service) setupUminekoStatsRoute(routeGroup fiber.Router) {
 //	@Failure		400			{object}	dto.ErrorResponse
 //	@Router			/umineko/search [get]
 func (s *Service) uminekoSearch(ctx fiber.Ctx) error {
-	query := ctx.Query("q")
-	if query == "" {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "query parameter 'q' is required",
-		})
-	}
-
-	lang := language.English.Parse(ctx.Query("lang"))
-	limit := fiber.Query[int](ctx, "limit")
-	offset := fiber.Query[int](ctx, "offset")
-	characterParam := ctx.Query("character")
-	interactionAParam := ctx.Query("interactionA")
-	interactionBParam := ctx.Query("interactionB")
-	episode := fiber.Query[int](ctx, "episode")
-	exact := fiber.Query[bool](ctx, "exact")
-
-	if errMsg, invalid := validateInteractionQueryParams(characterParam, interactionAParam, interactionBParam); invalid {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": errMsg,
-		})
-	}
-
-	charID := character.Character(strings.TrimSpace(characterParam)).ID()
-	intA := character.Character(strings.TrimSpace(interactionAParam)).ID()
-	intB := character.Character(strings.TrimSpace(interactionBParam)).ID()
-
-	searchParams := params.NewSearchParams(
-		query,
-		lang,
-		limit,
-		offset,
-		charID,
-		episode,
-		intA,
-		intB,
-		exact,
-	)
-
-	response, err := s.UminekoService.Search(searchParams, umineko.TruthAll.Parse(ctx.Query("truth")).Scope())
-	if err != nil {
-		return utils.InternalError(ctx, "failed to search quotes", err)
-	}
-
-	result := fiber.Map{
-		"query":   query,
-		"results": response.Results,
-		"total":   response.Total,
-		"limit":   response.Limit,
-		"offset":  response.Offset,
-	}
-	if response.Lang != "" {
-		result["lang"] = response.Lang
-	}
-	return ctx.JSON(result)
+	return handleSearch[dto.UminekoQuote](ctx, s.UminekoService, uminekoCharacterID, fiber.Query[int](ctx, "episode"), umineko.TruthAll.Parse(ctx.Query("truth")).Scope())
 }
 
 // uminekoRandom godoc
@@ -156,21 +100,7 @@ func (s *Service) uminekoSearch(ctx fiber.Ctx) error {
 //	@Failure		404			{object}	dto.ErrorResponse
 //	@Router			/umineko/random [get]
 func (s *Service) uminekoRandom(ctx fiber.Ctx) error {
-	lang := language.English.Parse(ctx.Query("lang"))
-	characterID := character.Character(ctx.Query("character")).ID()
-	episode := fiber.Query[int](ctx, "episode")
-	truth := umineko.TruthAll.Parse(ctx.Query("truth"))
-
-	q, err := s.UminekoService.Random(lang, characterID, episode, truth.Scope())
-	if err != nil {
-		return utils.InternalError(ctx, "failed to load random quote", err)
-	}
-	if q == nil {
-		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"error": "no quotes available",
-		})
-	}
-	return ctx.JSON(q)
+	return handleRandom[dto.UminekoQuote](ctx, s.UminekoService, uminekoCharacterID, fiber.Query[int](ctx, "episode"), umineko.TruthAll.Parse(ctx.Query("truth")).Scope())
 }
 
 // uminekoBrowse godoc
@@ -190,39 +120,7 @@ func (s *Service) uminekoRandom(ctx fiber.Ctx) error {
 //	@Success		200			{object}	dto.CharacterResponse
 //	@Router			/umineko/browse [get]
 func (s *Service) uminekoBrowse(ctx fiber.Ctx) error {
-	lang := language.English.Parse(ctx.Query("lang"))
-	limit := fiber.Query[int](ctx, "limit")
-	offset := fiber.Query[int](ctx, "offset")
-	episode := fiber.Query[int](ctx, "episode")
-	characterParam := ctx.Query("character")
-	interactionAParam := ctx.Query("interactionA")
-	interactionBParam := ctx.Query("interactionB")
-
-	if errMsg, invalid := validateInteractionQueryParams(characterParam, interactionAParam, interactionBParam); invalid {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": errMsg,
-		})
-	}
-
-	charID := character.Character(strings.TrimSpace(characterParam)).ID()
-	intA := character.Character(strings.TrimSpace(interactionAParam)).ID()
-	intB := character.Character(strings.TrimSpace(interactionBParam)).ID()
-
-	browseParams := params.NewBrowseParams(
-		lang,
-		limit,
-		offset,
-		charID,
-		episode,
-		intA,
-		intB,
-	)
-
-	response, err := s.UminekoService.Browse(browseParams, umineko.TruthAll.Parse(ctx.Query("truth")).Scope())
-	if err != nil {
-		return utils.InternalError(ctx, "failed to browse quotes", err)
-	}
-	return ctx.JSON(response)
+	return handleBrowse[dto.UminekoQuote](ctx, s.UminekoService, uminekoCharacterID, fiber.Query[int](ctx, "episode"), umineko.TruthAll.Parse(ctx.Query("truth")).Scope())
 }
 
 // uminekoByAudioID godoc
@@ -336,6 +234,10 @@ func (s *Service) uminekoCharacters(ctx fiber.Ctx) error {
 func (s *Service) uminekoStats(ctx fiber.Ctx) error {
 	episode := fiber.Query[int](ctx, "episode")
 	return ctx.JSON(s.UminekoService.GetStats().Compute(episode))
+}
+
+func uminekoCharacterID(param string) string {
+	return character.Character(strings.TrimSpace(param)).ID()
 }
 
 func validateInteractionQueryParams(characterParam string, interactionAParam string, interactionBParam string) (string, bool) {

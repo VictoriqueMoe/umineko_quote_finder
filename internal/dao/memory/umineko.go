@@ -7,7 +7,7 @@ import (
 )
 
 type uminekoDAO struct {
-	*quoteDAO[dto.UminekoQuote]
+	*QuoteDAO[dto.UminekoQuote]
 }
 
 func (d *uminekoDAO) TruthPerEpisode(lang language.Language) (map[int]params.TruthCounts, error) {

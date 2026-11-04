@@ -57,8 +57,8 @@ func parseHTMLSegments(htmlStr string, defaultColor color.RGBA) []textSegment {
 					currentColor = goldTruthColor
 				} else if strings.Contains(tag, `class="purple-truth"`) {
 					currentColor = purpleTruthColor
-				} else if idx := strings.Index(tag, "color:"); idx != -1 {
-					if c, ok := parseHexColor(tag[idx+6:]); ok {
+				} else if _, colour, found := strings.Cut(tag, "color:"); found {
+					if c, ok := parseHexColor(colour); ok {
 						currentColor = c
 					}
 				}
@@ -130,10 +130,7 @@ func truncateSegments(segments []textSegment, maxRunes int) []textSegment {
 	}
 
 	var result []textSegment
-	remaining := maxRunes - 3
-	if remaining < 0 {
-		remaining = 0
-	}
+	remaining := max(maxRunes-3, 0)
 
 	for _, seg := range segments {
 		runes := []rune(seg.Text)

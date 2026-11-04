@@ -6,17 +6,17 @@ import (
 	"testing"
 )
 
-func newTestResolver(t *testing.T, dir string) AudioResolver {
+func newTestResolver(t *testing.T, dir string) Resolver {
 	t.Helper()
 
-	r, err := NewAudioResolver(dir)
+	r, err := NewResolver(dir)
 	if err != nil {
-		t.Fatalf("NewAudioResolver: %v", err)
+		t.Fatalf("NewResolver: %v", err)
 	}
 	return r
 }
 
-func TestAudioResolver_AudioFilePath_EmptyDir(t *testing.T) {
+func TestResolver_AudioFilePath_EmptyDir(t *testing.T) {
 	r := newTestResolver(t, "")
 
 	if path := r.AudioFilePath("10", "10100001"); path != "" {
@@ -24,7 +24,7 @@ func TestAudioResolver_AudioFilePath_EmptyDir(t *testing.T) {
 	}
 }
 
-func TestAudioResolver_AudioFilePath_NonexistentFile(t *testing.T) {
+func TestResolver_AudioFilePath_NonexistentFile(t *testing.T) {
 	r := newTestResolver(t, "/nonexistent/audio/dir")
 
 	if path := r.AudioFilePath("10", "10100001"); path != "" {
@@ -32,7 +32,7 @@ func TestAudioResolver_AudioFilePath_NonexistentFile(t *testing.T) {
 	}
 }
 
-func TestAudioResolver_AudioFilePath_SubtitleSuffixStrip(t *testing.T) {
+func TestResolver_AudioFilePath_SubtitleSuffixStrip(t *testing.T) {
 	dir := t.TempDir()
 	subDir := filepath.Join(dir, "00")
 	if err := os.MkdirAll(subDir, 0755); err != nil {
@@ -53,7 +53,7 @@ func TestAudioResolver_AudioFilePath_SubtitleSuffixStrip(t *testing.T) {
 	}
 }
 
-func TestAudioResolver_AudioFilePath_SubtitleSuffixNoBase(t *testing.T) {
+func TestResolver_AudioFilePath_SubtitleSuffixNoBase(t *testing.T) {
 	dir := t.TempDir()
 	if err := os.MkdirAll(filepath.Join(dir, "00"), 0755); err != nil {
 		t.Fatal(err)
@@ -66,7 +66,7 @@ func TestAudioResolver_AudioFilePath_SubtitleSuffixNoBase(t *testing.T) {
 	}
 }
 
-func TestAudioResolver_AudioFilePath_ExactMatchPreferred(t *testing.T) {
+func TestResolver_AudioFilePath_ExactMatchPreferred(t *testing.T) {
 	dir := t.TempDir()
 	subDir := filepath.Join(dir, "00")
 	if err := os.MkdirAll(subDir, 0755); err != nil {
@@ -87,25 +87,25 @@ func TestAudioResolver_AudioFilePath_ExactMatchPreferred(t *testing.T) {
 	}
 }
 
-func TestAudioResolver_HasAudio_EmptyDir(t *testing.T) {
+func TestResolver_HasAudio_EmptyDir(t *testing.T) {
 	if newTestResolver(t, "").HasAudio() {
 		t.Error("HasAudio with empty dir string: expected false")
 	}
 }
 
-func TestAudioResolver_HasAudio_NonexistentDir(t *testing.T) {
+func TestResolver_HasAudio_NonexistentDir(t *testing.T) {
 	if newTestResolver(t, "/nonexistent/audio/dir").HasAudio() {
 		t.Error("HasAudio with nonexistent dir: expected false")
 	}
 }
 
-func TestAudioResolver_HasAudio_EmptyExistingDir(t *testing.T) {
+func TestResolver_HasAudio_EmptyExistingDir(t *testing.T) {
 	if newTestResolver(t, t.TempDir()).HasAudio() {
 		t.Error("HasAudio with empty existing dir: expected false")
 	}
 }
 
-func TestAudioResolver_HasAudio_WithFiles(t *testing.T) {
+func TestResolver_HasAudio_WithFiles(t *testing.T) {
 	dir := t.TempDir()
 	subDir := filepath.Join(dir, "10")
 	if err := os.MkdirAll(subDir, 0755); err != nil {

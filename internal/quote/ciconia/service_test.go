@@ -147,8 +147,8 @@ func TestService_Search_WithCharacterFilter(t *testing.T) {
 
 	resp := searchWithParams(t, svc, "the", language.English, 10, 0, cicharacter.Miyao.ID(), "", "", "")
 
-	for i := 0; i < len(resp.Results); i++ {
-		q := resp.Results[i].Quote.(dto.CiconiaQuote)
+	for i, result := range resp.Results {
+		q := result.Quote.(dto.CiconiaQuote)
 		if q.CharacterID != cicharacter.Miyao.ID() {
 			t.Errorf("result %d CharacterID: got %q, want %q", i, q.CharacterID, cicharacter.Miyao.ID())
 		}
@@ -163,8 +163,8 @@ func TestService_Search_WithChapterFilter(t *testing.T) {
 	if resp.Total == 0 {
 		t.Fatal("expected results for chapter 01")
 	}
-	for i := 0; i < len(resp.Results); i++ {
-		q := resp.Results[i].Quote.(dto.CiconiaQuote)
+	for i, result := range resp.Results {
+		q := result.Quote.(dto.CiconiaQuote)
 		if q.Chapter != "01" {
 			t.Errorf("result %d Chapter: got %q, want 01", i, q.Chapter)
 		}
@@ -192,9 +192,9 @@ func TestService_Browse(t *testing.T) {
 	if resp.CharacterID != cicharacter.Miyao.ID() {
 		t.Errorf("CharacterID: got %q, want %q", resp.CharacterID, cicharacter.Miyao.ID())
 	}
-	quotes := resp.Quotes.([]dto.CiconiaQuote)
-	if len(quotes) > 10 {
-		t.Errorf("Quotes length exceeds limit: got %d", len(quotes))
+	browsed := resp.Quotes.([]dto.CiconiaQuote)
+	if len(browsed) > 10 {
+		t.Errorf("Quotes length exceeds limit: got %d", len(browsed))
 	}
 }
 
@@ -206,10 +206,9 @@ func TestService_Browse_WithChapterFilter(t *testing.T) {
 	if resp.Total == 0 {
 		t.Fatal("expected browse results for df01")
 	}
-	quotes := resp.Quotes.([]dto.CiconiaQuote)
-	for i := 0; i < len(quotes); i++ {
-		if quotes[i].Chapter != "df01" {
-			t.Errorf("quote %d Chapter: got %q, want df01", i, quotes[i].Chapter)
+	for i, q := range resp.Quotes.([]dto.CiconiaQuote) {
+		if q.Chapter != "df01" {
+			t.Errorf("quote %d Chapter: got %q, want df01", i, q.Chapter)
 		}
 	}
 }
@@ -226,7 +225,7 @@ func TestService_Random(t *testing.T) {
 }
 
 func TestService_Random_WithCharacter(t *testing.T) {
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		q := randomQuote(t, cicharacter.Jayden.ID(), quoteparams.QuoteScope{})
 		if q == nil {
 			t.Fatal("expected a random Jayden quote")
@@ -238,7 +237,7 @@ func TestService_Random_WithCharacter(t *testing.T) {
 }
 
 func TestService_Random_WithChapter(t *testing.T) {
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		q := randomQuote(t, "", quoteparams.QuoteScope{Segment: "05"})
 		if q == nil {
 			t.Fatal("expected a random chapter 05 quote")
@@ -385,8 +384,8 @@ func TestStats_TopSpeakersHaveMiyao(t *testing.T) {
 	result := svc.GetStats().Compute(quotes.AllEpisodes).(*dto.CiconiaStatsResult)
 
 	found := false
-	for i := 0; i < len(result.TopSpeakers); i++ {
-		if strings.Contains(result.TopSpeakers[i].Name, "Miyao") {
+	for _, speaker := range result.TopSpeakers {
+		if strings.Contains(speaker.Name, "Miyao") {
 			found = true
 			break
 		}

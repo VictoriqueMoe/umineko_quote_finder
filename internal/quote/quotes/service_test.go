@@ -9,8 +9,6 @@ import (
 	"umineko_quote/internal/quote/game"
 	"umineko_quote/internal/quote/language"
 	"umineko_quote/internal/quote/params"
-
-	scriptdto "github.com/VictoriqueMoe/umineko_script_parser/dto"
 )
 
 var testNames = map[string]string{"10": "Ushiromiya Battler", "27": "Beatrice"}
@@ -21,15 +19,11 @@ func resolveTestName(id string) string {
 
 func testQuote(idx int, text string, characterID string, audioID string) dto.HigurashiQuote {
 	return dto.HigurashiQuote{
-		HigurashiQuote: scriptdto.HigurashiQuote{
-			BaseQuote: scriptdto.BaseQuote{
-				Text:        text,
-				CharacterID: characterID,
-				AudioID:     audioID,
-				Episode:     1,
-			},
-		},
-		Index: idx,
+		Text:        text,
+		CharacterID: characterID,
+		AudioID:     audioID,
+		Episode:     1,
+		Index:       idx,
 	}
 }
 

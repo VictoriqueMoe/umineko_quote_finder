@@ -9,7 +9,6 @@ import (
 
 	"umineko_quote/internal/dto"
 
-	scriptdto "github.com/VictoriqueMoe/umineko_script_parser/dto"
 	"github.com/VictoriqueMoe/umineko_script_parser/umineko/character"
 	umilexer "github.com/VictoriqueMoe/umineko_script_parser/umineko/lexer"
 )
@@ -37,17 +36,13 @@ func ResolveRefs(efs fs.ReadFileFS, refs []umilexer.SubtitleRef) []dto.UminekoQu
 			}
 
 			quotes = append(quotes, dto.UminekoQuote{
-				UminekoQuote: scriptdto.UminekoQuote{
-					BaseQuote: scriptdto.BaseQuote{
-						Text:        entry.Text,
-						TextHtml:    entry.Text,
-						CharacterID: charID,
-						Character:   character.CharacterNames.GetCharacterName(character.CharacterFromID(charID)),
-						AudioID:     fmt.Sprintf("%s_s%d", ref.AudioID, i),
-						Episode:     ref.Episode,
-						ContentType: ref.ContentType,
-					},
-				},
+				Text:        entry.Text,
+				TextHtml:    entry.Text,
+				CharacterID: charID,
+				Character:   character.CharacterNames.GetCharacterName(character.CharacterFromID(charID)),
+				AudioID:     fmt.Sprintf("%s_s%d", ref.AudioID, i),
+				Episode:     ref.Episode,
+				ContentType: ref.ContentType,
 			})
 		}
 	}

@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql"
 	"embed"
+	"errors"
 	"fmt"
 
 	"github.com/pressly/goose/v3"
@@ -23,8 +24,7 @@ func Open(path string) (*sql.DB, error) {
 	}
 
 	if err := db.Ping(); err != nil {
-		db.Close()
-		return nil, fmt.Errorf("ping sqlite: %w", err)
+		return nil, errors.Join(fmt.Errorf("ping sqlite: %w", err), db.Close())
 	}
 
 	return db, nil

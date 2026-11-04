@@ -9,7 +9,7 @@ import (
 	"umineko_quote/internal/quote/params"
 )
 
-type quoteDAO[Q any] struct {
+type QuoteDAO[Q any] struct {
 	quotes  map[language.Language][]Q
 	indexer *indexer
 	game    game.Game[Q]
@@ -17,7 +17,7 @@ type quoteDAO[Q any] struct {
 
 const concurrentMatchThreshold = 5000
 
-func NewQuotes[Q any](g game.Game[Q], quotes map[language.Language][]Q) *quoteDAO[Q] {
+func NewQuotes[Q any](g game.Game[Q], quotes map[language.Language][]Q) *QuoteDAO[Q] {
 	fields := make(map[language.Language]quoteFields, len(quotes))
 	for lang, qs := range quotes {
 		n := len(qs)
@@ -37,14 +37,14 @@ func NewQuotes[Q any](g game.Game[Q], quotes map[language.Language][]Q) *quoteDA
 		fields[lang] = f
 	}
 
-	return &quoteDAO[Q]{
+	return &QuoteDAO[Q]{
 		quotes:  quotes,
 		indexer: newIndexer(fields),
 		game:    g,
 	}
 }
 
-func (d *quoteDAO[Q]) FindQuotes(f params.QuoteFilter, limit int, offset int) ([]Q, int, error) {
+func (d *QuoteDAO[Q]) FindQuotes(f params.QuoteFilter, limit int, offset int) ([]Q, int, error) {
 	quotes := d.quotes[f.Lang]
 	matches := d.matchingIndices(f)
 	total := len(matches)
@@ -60,7 +60,7 @@ func (d *quoteDAO[Q]) FindQuotes(f params.QuoteFilter, limit int, offset int) ([
 	return page, total, nil
 }
 
-func (d *quoteDAO[Q]) RandomQuote(f params.QuoteFilter) (*Q, error) {
+func (d *QuoteDAO[Q]) RandomQuote(f params.QuoteFilter) (*Q, error) {
 	matches := d.matchingIndices(f)
 	if len(matches) == 0 {
 		return nil, nil
@@ -69,12 +69,12 @@ func (d *quoteDAO[Q]) RandomQuote(f params.QuoteFilter) (*Q, error) {
 	return &d.quotes[f.Lang][matches[rand.IntN(len(matches))]], nil
 }
 
-func (d *quoteDAO[Q]) QuoteIndexByAudioID(lang language.Language, audioID string) (int, bool, error) {
+func (d *QuoteDAO[Q]) QuoteIndexByAudioID(lang language.Language, audioID string) (int, bool, error) {
 	idx, ok := d.indexer.QuoteIndex(lang, audioID)
 	return idx, ok, nil
 }
 
-func (d *quoteDAO[Q]) QuoteByIndex(lang language.Language, index int) (*Q, error) {
+func (d *QuoteDAO[Q]) QuoteByIndex(lang language.Language, index int) (*Q, error) {
 	quotes := d.quotes[lang]
 	if index < 0 || index >= len(quotes) {
 		return nil, nil
@@ -83,7 +83,7 @@ func (d *quoteDAO[Q]) QuoteByIndex(lang language.Language, index int) (*Q, error
 	return &quotes[index], nil
 }
 
-func (d *quoteDAO[Q]) QuotesBetween(lang language.Language, from int, to int) ([]Q, error) {
+func (d *QuoteDAO[Q]) QuotesBetween(lang language.Language, from int, to int) ([]Q, error) {
 	quotes := d.quotes[lang]
 
 	from = max(from, 0)
@@ -98,7 +98,7 @@ func (d *quoteDAO[Q]) QuotesBetween(lang language.Language, from int, to int) ([
 	return between, nil
 }
 
-func (d *quoteDAO[Q]) NearestVoiced(lang language.Language, index int, previous bool) (string, error) {
+func (d *QuoteDAO[Q]) NearestVoiced(lang language.Language, index int, previous bool) (string, error) {
 	quotes := d.quotes[lang]
 
 	step := 1
@@ -115,7 +115,7 @@ func (d *quoteDAO[Q]) NearestVoiced(lang language.Language, index int, previous 
 	return "", nil
 }
 
-func (d *quoteDAO[Q]) LanguageCounts() (map[language.Language]int, error) {
+func (d *QuoteDAO[Q]) LanguageCounts() (map[language.Language]int, error) {
 	counts := make(map[language.Language]int, len(d.quotes))
 	for lang, quotes := range d.quotes {
 		counts[lang] = len(quotes)
@@ -123,7 +123,7 @@ func (d *quoteDAO[Q]) LanguageCounts() (map[language.Language]int, error) {
 	return counts, nil
 }
 
-func (d *quoteDAO[Q]) Speakers(lang language.Language) (map[string]string, error) {
+func (d *QuoteDAO[Q]) Speakers(lang language.Language) (map[string]string, error) {
 	speakers := map[string]string{}
 
 	for _, q := range d.quotes[lang] {
@@ -136,7 +136,7 @@ func (d *quoteDAO[Q]) Speakers(lang language.Language) (map[string]string, error
 	return speakers, nil
 }
 
-func (d *quoteDAO[Q]) SpeakerTallies(lang language.Language) (params.SpeakerTallies, error) {
+func (d *QuoteDAO[Q]) SpeakerTallies(lang language.Language) (params.SpeakerTallies, error) {
 	tallies := params.NewSpeakerTallies()
 
 	var prevCharID string
@@ -164,7 +164,7 @@ func (d *quoteDAO[Q]) SpeakerTallies(lang language.Language) (params.SpeakerTall
 	return tallies, nil
 }
 
-func (d *quoteDAO[Q]) matchingIndices(f params.QuoteFilter) []int {
+func (d *QuoteDAO[Q]) matchingIndices(f params.QuoteFilter) []int {
 	quotes := d.quotes[f.Lang]
 	if len(quotes) == 0 {
 		return nil
@@ -230,7 +230,7 @@ func (d *quoteDAO[Q]) matchingIndices(f params.QuoteFilter) []int {
 	return matches
 }
 
-func (d *quoteDAO[Q]) interacts(quotes []Q, idx int, charA string, charB string) bool {
+func (d *QuoteDAO[Q]) interacts(quotes []Q, idx int, charA string, charB string) bool {
 	speaker := d.game.Base(&quotes[idx])
 	if !isPairSpeaker(speaker.CharacterID, charA, charB) {
 		return false

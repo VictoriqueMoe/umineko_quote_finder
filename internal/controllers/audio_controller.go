@@ -93,7 +93,7 @@ func (s *Service) combinedAudioSegments(ctx fiber.Ctx) error {
 		})
 	}
 
-	segments := make([]audio.AudioSegment, 0, len(parts))
+	segments := make([]audio.Segment, 0, len(parts))
 	for _, part := range parts {
 		part = strings.TrimSpace(part)
 		colonIdx := strings.IndexByte(part, ':')
@@ -109,7 +109,7 @@ func (s *Service) combinedAudioSegments(ctx fiber.Ctx) error {
 				"error": "invalid segment: " + part,
 			})
 		}
-		segments = append(segments, audio.AudioSegment{CharID: charId, AudioID: audioId})
+		segments = append(segments, audio.Segment{CharID: charId, AudioID: audioId})
 	}
 
 	delay := ctx.Query("delay") == "true"

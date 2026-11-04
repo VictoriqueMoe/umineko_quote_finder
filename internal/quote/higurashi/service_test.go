@@ -151,8 +151,8 @@ func TestService_Search_WithCharacterFilter(t *testing.T) {
 
 	resp := searchWithParams(t, svc, "school", language.English, 10, 0, hicharacter.Keiichi.ID(), 0, "", "", "")
 
-	for i := 0; i < len(resp.Results); i++ {
-		q := resp.Results[i].Quote.(dto.HigurashiQuote)
+	for i, result := range resp.Results {
+		q := result.Quote.(dto.HigurashiQuote)
 		if q.CharacterID != hicharacter.Keiichi.ID() {
 			t.Errorf("result %d CharacterID: got %q, want %q", i, q.CharacterID, hicharacter.Keiichi.ID())
 		}
@@ -167,8 +167,8 @@ func TestService_Search_WithArcFilter(t *testing.T) {
 	if resp.Total == 0 {
 		t.Fatal("expected results for onikakushi arc")
 	}
-	for i := 0; i < len(resp.Results); i++ {
-		q := resp.Results[i].Quote.(dto.HigurashiQuote)
+	for i, result := range resp.Results {
+		q := result.Quote.(dto.HigurashiQuote)
 		if q.Arc != "onikakushi" {
 			t.Errorf("result %d Arc: got %q, want onikakushi", i, q.Arc)
 		}
@@ -180,8 +180,8 @@ func TestService_Search_WithEpisodeFilter(t *testing.T) {
 
 	resp := searchWithParams(t, svc, "the", language.English, 10, 0, "", 1, "", "", "")
 
-	for i := 0; i < len(resp.Results); i++ {
-		q := resp.Results[i].Quote.(dto.HigurashiQuote)
+	for i, result := range resp.Results {
+		q := result.Quote.(dto.HigurashiQuote)
 		if q.Episode != 1 {
 			t.Errorf("result %d Episode: got %d, want 1", i, q.Episode)
 		}
@@ -209,9 +209,9 @@ func TestService_Browse(t *testing.T) {
 	if resp.CharacterID != hicharacter.Keiichi.ID() {
 		t.Errorf("CharacterID: got %q, want %q", resp.CharacterID, hicharacter.Keiichi.ID())
 	}
-	quotes := resp.Quotes.([]dto.HigurashiQuote)
-	if len(quotes) > 10 {
-		t.Errorf("Quotes length exceeds limit: got %d", len(quotes))
+	browsed := resp.Quotes.([]dto.HigurashiQuote)
+	if len(browsed) > 10 {
+		t.Errorf("Quotes length exceeds limit: got %d", len(browsed))
 	}
 }
 
@@ -223,10 +223,9 @@ func TestService_Browse_WithArcFilter(t *testing.T) {
 	if resp.Total == 0 {
 		t.Fatal("expected browse results for watanagashi")
 	}
-	quotes := resp.Quotes.([]dto.HigurashiQuote)
-	for i := 0; i < len(quotes); i++ {
-		if quotes[i].Arc != "watanagashi" {
-			t.Errorf("quote %d Arc: got %q, want watanagashi", i, quotes[i].Arc)
+	for i, q := range resp.Quotes.([]dto.HigurashiQuote) {
+		if q.Arc != "watanagashi" {
+			t.Errorf("quote %d Arc: got %q, want watanagashi", i, q.Arc)
 		}
 	}
 }
@@ -243,7 +242,7 @@ func TestService_Random(t *testing.T) {
 }
 
 func TestService_Random_WithCharacter(t *testing.T) {
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		q := randomQuote(t, hicharacter.Rena.ID(), quoteparams.QuoteScope{})
 		if q == nil {
 			t.Fatal("expected a random Rena quote")
@@ -255,7 +254,7 @@ func TestService_Random_WithCharacter(t *testing.T) {
 }
 
 func TestService_Random_WithArc(t *testing.T) {
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		q := randomQuote(t, "", quoteparams.QuoteScope{Segment: "onikakushi"})
 		if q == nil {
 			t.Fatal("expected a random onikakushi quote")
@@ -381,9 +380,8 @@ func TestService_Browse_WithInteractionPair(t *testing.T) {
 	if resp.Total == 0 {
 		t.Fatal("expected browse results for Keiichi/Rena interaction pair")
 	}
-	quotes := resp.Quotes.([]dto.HigurashiQuote)
-	for i := 0; i < len(quotes); i++ {
-		charID := quotes[i].CharacterID
+	for i, q := range resp.Quotes.([]dto.HigurashiQuote) {
+		charID := q.CharacterID
 		if charID != hicharacter.Keiichi.ID() && charID != hicharacter.Rena.ID() {
 			t.Errorf("quote %d CharacterID: got %q, want Keiichi or Rena", i, charID)
 		}
@@ -419,8 +417,8 @@ func TestStats_TopSpeakersHaveKeiichi(t *testing.T) {
 	result := svc.GetStats().Compute(quotes.AllEpisodes).(*dto.HigurashiStatsResult)
 
 	found := false
-	for i := 0; i < len(result.TopSpeakers); i++ {
-		if strings.Contains(result.TopSpeakers[i].Name, "Keiichi") {
+	for _, speaker := range result.TopSpeakers {
+		if strings.Contains(speaker.Name, "Keiichi") {
 			found = true
 			break
 		}

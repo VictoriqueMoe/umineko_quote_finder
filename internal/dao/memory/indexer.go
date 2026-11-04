@@ -59,7 +59,7 @@ func newIndexer(fields map[language.Language]quoteFields) *indexer {
 					nonNarratorIdx = append(nonNarratorIdx, i)
 				}
 				if f.AudioIDs[i] != "" {
-					for _, id := range strings.Split(f.AudioIDs[i], ", ") {
+					for id := range strings.SplitSeq(f.AudioIDs[i], ", ") {
 						audioIdx[id] = i
 					}
 				}
@@ -132,7 +132,7 @@ func (idx *indexer) FilteredIndices(lang language.Language, characterID string, 
 		return idx.characterIndex[lang][characterID]
 	}
 
-	if !hasChar && hasEp {
+	if !hasChar {
 		return idx.episodeIndex[lang][episode]
 	}
 

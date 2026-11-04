@@ -8,24 +8,24 @@ import (
 	"regexp"
 )
 
-type AudioResolver struct {
+type Resolver struct {
 	dir      string
 	hasAudio bool
 }
 
 var subtitleAudioIDSuffix = regexp.MustCompile(`_s\d+$`)
 
-func NewAudioResolver(audioDir string) (AudioResolver, error) {
+func NewResolver(audioDir string) (Resolver, error) {
 	if audioDir == "" {
-		return AudioResolver{}, nil
+		return Resolver{}, nil
 	}
 
 	entries, err := os.ReadDir(audioDir)
 	if errors.Is(err, fs.ErrNotExist) {
-		return AudioResolver{dir: audioDir}, nil
+		return Resolver{dir: audioDir}, nil
 	}
 	if err != nil {
-		return AudioResolver{}, err
+		return Resolver{}, err
 	}
 
 	for _, entry := range entries {
@@ -35,17 +35,17 @@ func NewAudioResolver(audioDir string) (AudioResolver, error) {
 
 		files, err := os.ReadDir(filepath.Join(audioDir, entry.Name()))
 		if err != nil {
-			return AudioResolver{}, err
+			return Resolver{}, err
 		}
 		if len(files) > 0 {
-			return AudioResolver{dir: audioDir, hasAudio: true}, nil
+			return Resolver{dir: audioDir, hasAudio: true}, nil
 		}
 	}
 
-	return AudioResolver{dir: audioDir}, nil
+	return Resolver{dir: audioDir}, nil
 }
 
-func (r AudioResolver) AudioFilePath(characterId string, audioId string) string {
+func (r Resolver) AudioFilePath(characterId string, audioId string) string {
 	if r.dir == "" {
 		return ""
 	}
@@ -64,6 +64,6 @@ func (r AudioResolver) AudioFilePath(characterId string, audioId string) string 
 	return path
 }
 
-func (r AudioResolver) HasAudio() bool {
+func (r Resolver) HasAudio() bool {
 	return r.hasAudio
 }

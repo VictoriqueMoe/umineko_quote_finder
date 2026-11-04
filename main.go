@@ -61,7 +61,7 @@ func main() {
 		}
 	}()
 
-	audioResolver, err := audio.NewAudioResolver(game.UminekoAudioDir)
+	audioResolver, err := audio.NewResolver(game.UminekoAudioDir)
 	if err != nil {
 		log.Fatalf("failed to scan umineko audio directory: %v", err)
 	}

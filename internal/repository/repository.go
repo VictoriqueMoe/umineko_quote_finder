@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"time"
@@ -60,14 +61,12 @@ func New() (*Repositories, error) {
 	}
 
 	if err := db.Migrate(conn); err != nil {
-		conn.Close()
-		return nil, fmt.Errorf("migrate sqlite database: %w", err)
+		return nil, errors.Join(fmt.Errorf("migrate sqlite database: %w", err), conn.Close())
 	}
 
 	daos, err := sqlite.New(conn)
 	if err != nil {
-		conn.Close()
-		return nil, fmt.Errorf("initialise sqlite daos: %w", err)
+		return nil, errors.Join(fmt.Errorf("initialise sqlite daos: %w", err), conn.Close())
 	}
 
 	log.Printf("[repository] opened sqlite database %s in %v", cfg.SQLitePath, time.Since(start).Round(time.Millisecond))

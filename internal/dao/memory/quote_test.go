@@ -8,39 +8,29 @@ import (
 	"umineko_quote/internal/quote/game"
 	"umineko_quote/internal/quote/language"
 	"umineko_quote/internal/quote/params"
-
-	scriptdto "github.com/VictoriqueMoe/umineko_script_parser/dto"
 )
 
 func ciconiaQuote(charID string, chapter string) dto.CiconiaQuote {
 	return dto.CiconiaQuote{
-		CicroniaQuote: scriptdto.CicroniaQuote{
-			BaseQuote: scriptdto.BaseQuote{
-				CharacterID: charID,
-				Character:   charID,
-				Episode:     1,
-			},
-			Chapter: chapter,
-		},
+		CharacterID: charID,
+		Character:   charID,
+		Episode:     1,
+		Chapter:     chapter,
 	}
 }
 
 func uminekoQuote(charID string, episode int) dto.UminekoQuote {
 	return dto.UminekoQuote{
-		UminekoQuote: scriptdto.UminekoQuote{
-			BaseQuote: scriptdto.BaseQuote{
-				CharacterID: charID,
-				Episode:     episode,
-			},
-		},
+		CharacterID: charID,
+		Episode:     episode,
 	}
 }
 
-func englishCiconia(quotes ...dto.CiconiaQuote) *quoteDAO[dto.CiconiaQuote] {
+func englishCiconia(quotes ...dto.CiconiaQuote) *QuoteDAO[dto.CiconiaQuote] {
 	return NewQuotes(game.Ciconia{}, map[language.Language][]dto.CiconiaQuote{language.English: quotes})
 }
 
-func tallies(t *testing.T, d *quoteDAO[dto.CiconiaQuote]) params.SpeakerTallies {
+func tallies(t *testing.T, d *QuoteDAO[dto.CiconiaQuote]) params.SpeakerTallies {
 	t.Helper()
 
 	got, err := d.SpeakerTallies(language.English)
@@ -152,7 +142,7 @@ func TestTruthPerEpisode(t *testing.T) {
 	purple := uminekoQuote("27", 2)
 	purple.HasPurpleTruth = true
 
-	d := &uminekoDAO{quoteDAO: NewQuotes(game.Umineko{}, map[language.Language][]dto.UminekoQuote{
+	d := &uminekoDAO{QuoteDAO: NewQuotes(game.Umineko{}, map[language.Language][]dto.UminekoQuote{
 		language.English: {red, blue, gold, purple, uminekoQuote("10", 3)},
 	})}
 

@@ -3,14 +3,11 @@ package controllers
 import (
 	"regexp"
 	"strings"
-	"umineko_quote/internal/quote/language"
-	"umineko_quote/internal/quote/params"
+
+	"umineko_quote/internal/dto"
 	"umineko_quote/internal/quote/umineko"
 
 	"github.com/VictoriqueMoe/umineko_script_parser/umineko/character"
-
-	"umineko_quote/internal/dto"
-
 	"github.com/gofiber/fiber/v3"
 )
 
@@ -86,56 +83,7 @@ func (s *Service) setupUminekoStatsRoute(routeGroup fiber.Router) {
 //	@Failure		400			{object}	dto.ErrorResponse
 //	@Router			/umineko/search [get]
 func (s *Service) uminekoSearch(ctx fiber.Ctx) error {
-	query := ctx.Query("q")
-	if query == "" {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "query parameter 'q' is required",
-		})
-	}
-
-	lang := language.English.Parse(ctx.Query("lang"))
-	limit := fiber.Query[int](ctx, "limit", 30)
-	offset := fiber.Query[int](ctx, "offset", 0)
-	characterParam := ctx.Query("character")
-	interactionAParam := ctx.Query("interactionA")
-	interactionBParam := ctx.Query("interactionB")
-	episode := fiber.Query[int](ctx, "episode", 0)
-	exact := fiber.Query[bool](ctx, "exact", false)
-
-	if errMsg, invalid := validateInteractionQueryParams(characterParam, interactionAParam, interactionBParam); invalid {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": errMsg,
-		})
-	}
-
-	charID := character.Character(strings.TrimSpace(characterParam)).ID()
-	intA := character.Character(strings.TrimSpace(interactionAParam)).ID()
-	intB := character.Character(strings.TrimSpace(interactionBParam)).ID()
-
-	searchParams := params.NewSearchParams(
-		query,
-		lang,
-		limit,
-		offset,
-		charID,
-		episode,
-		intA,
-		intB,
-		exact,
-	)
-
-	response := s.UminekoService.Search(searchParams, ctx.Query("truth"))
-	result := fiber.Map{
-		"query":   query,
-		"results": response.Results,
-		"total":   response.Total,
-		"limit":   response.Limit,
-		"offset":  response.Offset,
-	}
-	if response.Lang != "" {
-		result["lang"] = response.Lang
-	}
-	return ctx.JSON(result)
+	return handleSearch[dto.UminekoQuote](ctx, s.UminekoService, uminekoCharacterID, fiber.Query[int](ctx, "episode"), umineko.TruthAll.Parse(ctx.Query("truth")).Scope())
 }
 
 // uminekoRandom godoc
@@ -152,17 +100,7 @@ func (s *Service) uminekoSearch(ctx fiber.Ctx) error {
 //	@Failure		404			{object}	dto.ErrorResponse
 //	@Router			/umineko/random [get]
 func (s *Service) uminekoRandom(ctx fiber.Ctx) error {
-	lang := language.English.Parse(ctx.Query("lang"))
-	characterID := character.Character(ctx.Query("character")).ID()
-	episode := fiber.Query[int](ctx, "episode", 0)
-	truth := umineko.TruthAll.Parse(ctx.Query("truth"))
-	q := s.UminekoService.Random(lang, characterID, episode, truth)
-	if q == nil {
-		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"error": "no quotes available",
-		})
-	}
-	return ctx.JSON(q)
+	return handleRandom[dto.UminekoQuote](ctx, s.UminekoService, uminekoCharacterID, fiber.Query[int](ctx, "episode"), umineko.TruthAll.Parse(ctx.Query("truth")).Scope())
 }
 
 // uminekoBrowse godoc
@@ -182,36 +120,7 @@ func (s *Service) uminekoRandom(ctx fiber.Ctx) error {
 //	@Success		200			{object}	dto.CharacterResponse
 //	@Router			/umineko/browse [get]
 func (s *Service) uminekoBrowse(ctx fiber.Ctx) error {
-	lang := language.English.Parse(ctx.Query("lang"))
-	limit := fiber.Query[int](ctx, "limit", 50)
-	offset := fiber.Query[int](ctx, "offset", 0)
-	episode := fiber.Query[int](ctx, "episode", 0)
-	characterParam := ctx.Query("character")
-	interactionAParam := ctx.Query("interactionA")
-	interactionBParam := ctx.Query("interactionB")
-
-	if errMsg, invalid := validateInteractionQueryParams(characterParam, interactionAParam, interactionBParam); invalid {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": errMsg,
-		})
-	}
-
-	charID := character.Character(strings.TrimSpace(characterParam)).ID()
-	intA := character.Character(strings.TrimSpace(interactionAParam)).ID()
-	intB := character.Character(strings.TrimSpace(interactionBParam)).ID()
-
-	browseParams := params.NewBrowseParams(
-		lang,
-		limit,
-		offset,
-		charID,
-		episode,
-		intA,
-		intB,
-	)
-
-	response := s.UminekoService.Browse(browseParams, ctx.Query("truth"))
-	return ctx.JSON(response)
+	return handleBrowse[dto.UminekoQuote](ctx, s.UminekoService, uminekoCharacterID, fiber.Query[int](ctx, "episode"), umineko.TruthAll.Parse(ctx.Query("truth")).Scope())
 }
 
 // uminekoByAudioID godoc
@@ -226,16 +135,7 @@ func (s *Service) uminekoBrowse(ctx fiber.Ctx) error {
 //	@Failure		404			{object}	dto.ErrorResponse
 //	@Router			/umineko/quote/{audioId} [get]
 func (s *Service) uminekoByAudioID(ctx fiber.Ctx) error {
-	lang := language.English.Parse(ctx.Query("lang"))
-	audioID := ctx.Params("audioId")
-
-	q := s.UminekoService.GetByAudioID(lang, audioID)
-	if q == nil {
-		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"error": "quote not found",
-		})
-	}
-	return ctx.JSON(q)
+	return handleByAudioID[dto.UminekoQuote](ctx, s.UminekoService, ctx.Params("audioId"))
 }
 
 // uminekoByIndex godoc
@@ -250,16 +150,7 @@ func (s *Service) uminekoByAudioID(ctx fiber.Ctx) error {
 //	@Failure		404			{object}	dto.ErrorResponse
 //	@Router			/umineko/quote/index/{index} [get]
 func (s *Service) uminekoByIndex(ctx fiber.Ctx) error {
-	lang := language.English.Parse(ctx.Query("lang"))
-	index := fiber.Params[int](ctx, "index")
-
-	q := s.UminekoService.GetByIndex(lang, index)
-	if q == nil {
-		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"error": "quote not found",
-		})
-	}
-	return ctx.JSON(q)
+	return handleByIndex[dto.UminekoQuote](ctx, s.UminekoService)
 }
 
 // uminekoContext godoc
@@ -276,7 +167,14 @@ func (s *Service) uminekoByIndex(ctx fiber.Ctx) error {
 //	@Failure		404			{object}	dto.ErrorResponse
 //	@Router			/umineko/context/{audioId} [get]
 func (s *Service) uminekoContext(ctx fiber.Ctx) error {
-	return handleContext(ctx, s.UminekoService)
+	audioID := ctx.Params("audioId")
+	if !audioIdPattern.MatchString(audioID) {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid audio ID",
+		})
+	}
+
+	return handleContext[dto.UminekoQuote](ctx, s.UminekoService, audioID)
 }
 
 // uminekoNearestVoiced godoc
@@ -293,7 +191,14 @@ func (s *Service) uminekoContext(ctx fiber.Ctx) error {
 //	@Failure		404			{object}	dto.ErrorResponse
 //	@Router			/umineko/nearest-voiced/{audioId} [get]
 func (s *Service) uminekoNearestVoiced(ctx fiber.Ctx) error {
-	return handleNearestVoiced(ctx, s.UminekoService)
+	audioID := ctx.Params("audioId")
+	if !audioIdPattern.MatchString(audioID) {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid audio ID",
+		})
+	}
+
+	return handleNearestVoiced[dto.UminekoQuote](ctx, s.UminekoService, audioID)
 }
 
 // uminekoCharacters godoc
@@ -327,8 +232,12 @@ func (s *Service) uminekoCharacters(ctx fiber.Ctx) error {
 //	@Success		200			{object}	dto.StatsResult
 //	@Router			/umineko/stats [get]
 func (s *Service) uminekoStats(ctx fiber.Ctx) error {
-	episode := fiber.Query[int](ctx, "episode", 0)
+	episode := fiber.Query[int](ctx, "episode")
 	return ctx.JSON(s.UminekoService.GetStats().Compute(episode))
+}
+
+func uminekoCharacterID(param string) string {
+	return character.Character(strings.TrimSpace(param)).ID()
 }
 
 func validateInteractionQueryParams(characterParam string, interactionAParam string, interactionBParam string) (string, bool) {

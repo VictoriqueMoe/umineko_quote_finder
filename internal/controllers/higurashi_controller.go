@@ -2,10 +2,9 @@ package controllers
 
 import (
 	"strings"
-	"umineko_quote/internal/quote/language"
-	"umineko_quote/internal/quote/params"
 
-	_ "umineko_quote/internal/dto"
+	"umineko_quote/internal/dto"
+	"umineko_quote/internal/quote/params"
 
 	"github.com/gofiber/fiber/v3"
 )
@@ -80,52 +79,7 @@ func (s *Service) setupHigurashiStatsRoute(routeGroup fiber.Router) {
 //	@Failure		400			{object}	dto.ErrorResponse
 //	@Router			/higurashi/search [get]
 func (s *Service) higurashiSearch(ctx fiber.Ctx) error {
-	query := ctx.Query("q")
-	if query == "" {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "query parameter 'q' is required",
-		})
-	}
-
-	lang := language.English.Parse(ctx.Query("lang"))
-	limit := fiber.Query[int](ctx, "limit", 30)
-	offset := fiber.Query[int](ctx, "offset", 0)
-	characterParam := strings.TrimSpace(ctx.Query("character"))
-	interactionAParam := ctx.Query("interactionA")
-	interactionBParam := ctx.Query("interactionB")
-	episode := fiber.Query[int](ctx, "episode", 0)
-	exact := fiber.Query[bool](ctx, "exact", false)
-
-	if errMsg, invalid := validateInteractionQueryParams(characterParam, interactionAParam, interactionBParam); invalid {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": errMsg,
-		})
-	}
-
-	searchParams := params.NewSearchParams(
-		query,
-		lang,
-		limit,
-		offset,
-		characterParam,
-		episode,
-		strings.TrimSpace(interactionAParam),
-		strings.TrimSpace(interactionBParam),
-		exact,
-	)
-
-	response := s.HigurashiService.Search(searchParams, ctx.Query("arc"))
-	result := fiber.Map{
-		"query":   query,
-		"results": response.Results,
-		"total":   response.Total,
-		"limit":   response.Limit,
-		"offset":  response.Offset,
-	}
-	if response.Lang != "" {
-		result["lang"] = response.Lang
-	}
-	return ctx.JSON(result)
+	return handleSearch[dto.HigurashiQuote](ctx, s.HigurashiService, strings.TrimSpace, fiber.Query[int](ctx, "episode"), params.QuoteScope{Segment: ctx.Query("arc")})
 }
 
 // higurashiRandom godoc
@@ -142,17 +96,7 @@ func (s *Service) higurashiSearch(ctx fiber.Ctx) error {
 //	@Failure		404			{object}	dto.ErrorResponse
 //	@Router			/higurashi/random [get]
 func (s *Service) higurashiRandom(ctx fiber.Ctx) error {
-	lang := language.English.Parse(ctx.Query("lang"))
-	characterID := strings.TrimSpace(ctx.Query("character"))
-	episode := fiber.Query[int](ctx, "episode", 0)
-	arc := ctx.Query("arc")
-	q := s.HigurashiService.Random(lang, characterID, episode, arc)
-	if q == nil {
-		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"error": "no quotes available",
-		})
-	}
-	return ctx.JSON(q)
+	return handleRandom[dto.HigurashiQuote](ctx, s.HigurashiService, strings.TrimSpace, fiber.Query[int](ctx, "episode"), params.QuoteScope{Segment: ctx.Query("arc")})
 }
 
 // higurashiBrowse godoc
@@ -172,32 +116,7 @@ func (s *Service) higurashiRandom(ctx fiber.Ctx) error {
 //	@Success		200			{object}	dto.CharacterResponse
 //	@Router			/higurashi/browse [get]
 func (s *Service) higurashiBrowse(ctx fiber.Ctx) error {
-	lang := language.English.Parse(ctx.Query("lang"))
-	limit := fiber.Query[int](ctx, "limit", 50)
-	offset := fiber.Query[int](ctx, "offset", 0)
-	episode := fiber.Query[int](ctx, "episode", 0)
-	characterParam := strings.TrimSpace(ctx.Query("character"))
-	interactionAParam := ctx.Query("interactionA")
-	interactionBParam := ctx.Query("interactionB")
-
-	if errMsg, invalid := validateInteractionQueryParams(characterParam, interactionAParam, interactionBParam); invalid {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": errMsg,
-		})
-	}
-
-	browseParams := params.NewBrowseParams(
-		lang,
-		limit,
-		offset,
-		characterParam,
-		episode,
-		strings.TrimSpace(interactionAParam),
-		strings.TrimSpace(interactionBParam),
-	)
-
-	response := s.HigurashiService.Browse(browseParams, ctx.Query("arc"))
-	return ctx.JSON(response)
+	return handleBrowse[dto.HigurashiQuote](ctx, s.HigurashiService, strings.TrimSpace, fiber.Query[int](ctx, "episode"), params.QuoteScope{Segment: ctx.Query("arc")})
 }
 
 // higurashiByAudioID godoc
@@ -212,16 +131,7 @@ func (s *Service) higurashiBrowse(ctx fiber.Ctx) error {
 //	@Failure		404			{object}	dto.ErrorResponse
 //	@Router			/higurashi/quote/{audioId} [get]
 func (s *Service) higurashiByAudioID(ctx fiber.Ctx) error {
-	lang := language.English.Parse(ctx.Query("lang"))
-	audioID := ctx.Params("+")
-
-	q := s.HigurashiService.GetByAudioID(lang, audioID)
-	if q == nil {
-		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"error": "quote not found",
-		})
-	}
-	return ctx.JSON(q)
+	return handleByAudioID[dto.HigurashiQuote](ctx, s.HigurashiService, ctx.Params("+"))
 }
 
 // higurashiByIndex godoc
@@ -236,16 +146,7 @@ func (s *Service) higurashiByAudioID(ctx fiber.Ctx) error {
 //	@Failure		404			{object}	dto.ErrorResponse
 //	@Router			/higurashi/quote/index/{index} [get]
 func (s *Service) higurashiByIndex(ctx fiber.Ctx) error {
-	lang := language.English.Parse(ctx.Query("lang"))
-	index := fiber.Params[int](ctx, "index")
-
-	q := s.HigurashiService.GetByIndex(lang, index)
-	if q == nil {
-		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"error": "quote not found",
-		})
-	}
-	return ctx.JSON(q)
+	return handleByIndex[dto.HigurashiQuote](ctx, s.HigurashiService)
 }
 
 // higurashiContext godoc
@@ -262,17 +163,7 @@ func (s *Service) higurashiByIndex(ctx fiber.Ctx) error {
 //	@Failure		404			{object}	dto.ErrorResponse
 //	@Router			/higurashi/context/{audioId} [get]
 func (s *Service) higurashiContext(ctx fiber.Ctx) error {
-	lang := language.English.Parse(ctx.Query("lang"))
-	audioID := ctx.Params("+")
-
-	lines := fiber.Query[int](ctx, "lines", 5)
-	result := s.HigurashiService.GetContext(lang, audioID, lines)
-	if result == nil {
-		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"error": "quote not found",
-		})
-	}
-	return ctx.JSON(result)
+	return handleContext[dto.HigurashiQuote](ctx, s.HigurashiService, ctx.Params("+"))
 }
 
 // higurashiNearestVoiced godoc
@@ -289,23 +180,7 @@ func (s *Service) higurashiContext(ctx fiber.Ctx) error {
 //	@Failure		404			{object}	dto.ErrorResponse
 //	@Router			/higurashi/nearest-voiced/{audioId} [get]
 func (s *Service) higurashiNearestVoiced(ctx fiber.Ctx) error {
-	lang := language.English.Parse(ctx.Query("lang"))
-	audioID := ctx.Params("+")
-
-	direction := ctx.Query("direction", "next")
-	if direction != "next" && direction != "prev" {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "direction must be 'next' or 'prev'",
-		})
-	}
-
-	result := s.HigurashiService.NearestVoicedAudioID(lang, audioID, direction)
-	if result == "" {
-		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"error": "no voiced quote found",
-		})
-	}
-	return ctx.JSON(fiber.Map{"audioId": result})
+	return handleNearestVoiced[dto.HigurashiQuote](ctx, s.HigurashiService, ctx.Params("+"))
 }
 
 // higurashiCharacters godoc
@@ -331,6 +206,6 @@ func (s *Service) higurashiCharacters(ctx fiber.Ctx) error {
 //	@Success		200			{object}	dto.HigurashiStatsResult
 //	@Router			/higurashi/stats [get]
 func (s *Service) higurashiStats(ctx fiber.Ctx) error {
-	episode := fiber.Query[int](ctx, "episode", 0)
+	episode := fiber.Query[int](ctx, "episode")
 	return ctx.JSON(s.HigurashiService.GetStats().Compute(episode))
 }

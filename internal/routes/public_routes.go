@@ -10,30 +10,25 @@ func PublicRoutes(service controllers.Service, app *fiber.App) {
 	api := app.Group("/api/v1")
 
 	umiGroup := api.Group("/umineko")
-	umiRoutes := service.GetUminekoRoutes()
-	for i := 0; i < len(umiRoutes); i++ {
-		umiRoutes[i](umiGroup)
+	for _, route := range service.GetUminekoRoutes() {
+		route(umiGroup)
 	}
 
 	higuGroup := api.Group("/higurashi")
-	higuRoutes := service.GetHigurashiRoutes()
-	for i := 0; i < len(higuRoutes); i++ {
-		higuRoutes[i](higuGroup)
+	for _, route := range service.GetHigurashiRoutes() {
+		route(higuGroup)
 	}
 
 	ciconiaGroup := api.Group("/ciconia")
-	ciconiaRoutes := service.GetCiconiaRoutes()
-	for i := 0; i < len(ciconiaRoutes); i++ {
-		ciconiaRoutes[i](ciconiaGroup)
+	for _, route := range service.GetCiconiaRoutes() {
+		route(ciconiaGroup)
 	}
 
-	systemRoutes := service.GetSystemRoutes()
-	for i := 0; i < len(systemRoutes); i++ {
-		systemRoutes[i](api)
+	for _, route := range service.GetSystemRoutes() {
+		route(api)
 	}
 
-	pageRoutes := service.GetPageRoutes()
-	for i := 0; i < len(pageRoutes); i++ {
-		pageRoutes[i](app)
+	for _, route := range service.GetPageRoutes() {
+		route(app)
 	}
 }

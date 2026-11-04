@@ -1,23 +1,28 @@
 package umineko
 
 import (
-	"umineko_quote/internal/quote/store"
-
-	"github.com/VictoriqueMoe/umineko_script_parser/umineko/character"
+	"fmt"
+	"maps"
+	"strconv"
 
 	"umineko_quote/internal/dto"
+	"umineko_quote/internal/quote/params"
+	"umineko_quote/internal/quote/quotes"
+
+	"github.com/VictoriqueMoe/umineko_script_parser/umineko/character"
 )
 
 type (
 	uminekoStatsComputer struct {
-		quotes []dto.UminekoQuote
-		cached *dto.StatsResult
+		cached    *dto.StatsResult
+		byEpisode map[int]*dto.StatsResult
+		fallback  *dto.StatsResult
 	}
 
 	uminekoTallies struct {
 		charCounts   map[string]int
 		charEpCounts map[string]map[int]int
-		epTruth      map[int][4]int
+		epTruth      map[int]params.TruthCounts
 		interactions map[string]int
 	}
 )
@@ -33,36 +38,93 @@ var uminekoEpisodeNames = map[int]string{
 	8: "Twilight",
 }
 
-func NewUminekoStats(quotes []dto.UminekoQuote) store.Stats {
-	s := &uminekoStatsComputer{quotes: quotes}
-	s.cached = s.compute(store.AllEpisodes)
-	return s
+func NewUminekoStats(t params.SpeakerTallies, truth map[int]params.TruthCounts) (quotes.Stats, error) {
+	all, err := allEpisodeTallies(t, truth)
+	if err != nil {
+		return nil, err
+	}
+
+	s := &uminekoStatsComputer{
+		cached:    buildStats(all, quotes.AllEpisodes),
+		byEpisode: make(map[int]*dto.StatsResult, len(uminekoEpisodeNames)),
+		fallback:  buildStats(episodeTallies(t, -1), -1),
+	}
+
+	for ep := 1; ep <= len(uminekoEpisodeNames); ep++ {
+		s.byEpisode[ep] = buildStats(episodeTallies(t, ep), ep)
+	}
+
+	return s, nil
+}
+
+func allEpisodeTallies(t params.SpeakerTallies, truth map[int]params.TruthCounts) (uminekoTallies, error) {
+	charEpCounts := make(map[string]map[int]int, len(t.CharacterSegments))
+	for id, segments := range t.CharacterSegments {
+		charEpCounts[id] = make(map[int]int, len(segments))
+		for segment, count := range segments {
+			ep, err := strconv.Atoi(segment)
+			if err != nil {
+				return uminekoTallies{}, fmt.Errorf("umineko segment %q is not an episode: %w", segment, err)
+			}
+			charEpCounts[id][ep] = count
+		}
+	}
+
+	return uminekoTallies{
+		charCounts:   t.CharacterTotals(),
+		charEpCounts: charEpCounts,
+		epTruth:      truth,
+		interactions: t.InteractionTotals(),
+	}, nil
+}
+
+func episodeTallies(t params.SpeakerTallies, episode int) uminekoTallies {
+	segment := strconv.Itoa(episode)
+
+	charCounts := make(map[string]int)
+	for id, segments := range t.CharacterSegments {
+		if count, ok := segments[segment]; ok {
+			charCounts[id] = count
+		}
+	}
+
+	interactions := make(map[string]int, len(t.SegmentInteractions[segment]))
+	maps.Copy(interactions, t.SegmentInteractions[segment])
+
+	return uminekoTallies{
+		charCounts:   charCounts,
+		charEpCounts: make(map[string]map[int]int),
+		epTruth:      make(map[int]params.TruthCounts),
+		interactions: interactions,
+	}
 }
 
 func (s *uminekoStatsComputer) Compute(episode int) any {
-	if episode != store.AllEpisodes {
-		return s.compute(episode)
+	if episode == quotes.AllEpisodes {
+		return s.cached
 	}
-	return s.cached
+	if result, ok := s.byEpisode[episode]; ok {
+		return result
+	}
+	return s.fallback
 }
 
 func resolveName(id string) string {
 	return character.CharacterNames.GetCharacterName(character.CharacterFromID(id))
 }
 
-func (s *uminekoStatsComputer) compute(episode int) *dto.StatsResult {
-	t := s.tally(episode)
-	ranked := store.RankCharacters(t.charCounts)
+func buildStats(t uminekoTallies, episode int) *dto.StatsResult {
+	ranked := quotes.RankCharacters(t.charCounts)
 
 	result := &dto.StatsResult{
-		TopSpeakers:       store.TopSpeakers(ranked, 20, resolveName),
-		Interactions:      store.TopInteractions(t.interactions, 25, resolveName),
+		TopSpeakers:       quotes.TopSpeakers(ranked, 20, resolveName),
+		Interactions:      quotes.TopInteractions(t.interactions, 25, resolveName),
 		InteractionCounts: t.interactions,
-		CharacterNames:    store.BuildNameMap(t.charCounts, resolveName),
+		CharacterNames:    quotes.BuildNameMap(t.charCounts, resolveName),
 		EpisodeNames:      uminekoEpisodeNames,
 	}
 
-	if episode == store.AllEpisodes {
+	if episode == quotes.AllEpisodes {
 		result.LinesPerEpisode = uminekoLinesPerEpisode(t.charEpCounts, ranked, 10)
 		result.TruthPerEpisode = uminekoTruthPerEpisode(t.epTruth)
 		result.CharacterPresence = uminekoBuildCharacterPresence(ranked, t.charEpCounts, 12)
@@ -71,70 +133,7 @@ func (s *uminekoStatsComputer) compute(episode int) *dto.StatsResult {
 	return result
 }
 
-func (s *uminekoStatsComputer) tally(episode int) uminekoTallies {
-	t := uminekoTallies{
-		charCounts:   make(map[string]int),
-		charEpCounts: make(map[string]map[int]int),
-		epTruth:      make(map[int][4]int),
-		interactions: make(map[string]int),
-	}
-
-	var prevCharID string
-	var prevEpisode int
-
-	for _, q := range s.quotes {
-		if episode != store.AllEpisodes && q.Episode != episode {
-			prevCharID = ""
-			continue
-		}
-
-		if q.HasRedTruth {
-			counts := t.epTruth[q.Episode]
-			counts[0]++
-			t.epTruth[q.Episode] = counts
-		}
-		if q.HasBlueTruth {
-			counts := t.epTruth[q.Episode]
-			counts[1]++
-			t.epTruth[q.Episode] = counts
-		}
-		if q.HasGoldTruth {
-			counts := t.epTruth[q.Episode]
-			counts[2]++
-			t.epTruth[q.Episode] = counts
-		}
-		if q.HasPurpleTruth {
-			counts := t.epTruth[q.Episode]
-			counts[3]++
-			t.epTruth[q.Episode] = counts
-		}
-
-		if q.CharacterID == "narrator" {
-			prevCharID = ""
-			continue
-		}
-
-		t.charCounts[q.CharacterID]++
-
-		if t.charEpCounts[q.CharacterID] == nil {
-			t.charEpCounts[q.CharacterID] = make(map[int]int)
-		}
-		t.charEpCounts[q.CharacterID][q.Episode]++
-
-		if prevCharID != "" && prevCharID != q.CharacterID && prevEpisode == q.Episode {
-			if key, ok := store.InteractionPairKey(prevCharID, q.CharacterID); ok {
-				t.interactions[key]++
-			}
-		}
-
-		prevCharID = q.CharacterID
-		prevEpisode = q.Episode
-	}
-
-	return t
-}
-
-func uminekoLinesPerEpisode(charEpCounts map[string]map[int]int, ranked []store.RankedChar, topN int) []dto.EpisodeCharacterLines {
+func uminekoLinesPerEpisode(charEpCounts map[string]map[int]int, ranked []quotes.RankedChar, topN int) []dto.EpisodeCharacterLines {
 	if len(ranked) < topN {
 		topN = len(ranked)
 	}
@@ -164,22 +163,22 @@ func uminekoLinesPerEpisode(charEpCounts map[string]map[int]int, ranked []store.
 	return result
 }
 
-func uminekoTruthPerEpisode(epTruth map[int][4]int) []dto.EpisodeTruth {
+func uminekoTruthPerEpisode(epTruth map[int]params.TruthCounts) []dto.EpisodeTruth {
 	result := make([]dto.EpisodeTruth, 8)
 	for ep := 1; ep <= 8; ep++ {
 		counts := epTruth[ep]
 		result[ep-1] = dto.EpisodeTruth{
 			Episode: ep,
-			Red:     counts[0],
-			Blue:    counts[1],
-			Gold:    counts[2],
-			Purple:  counts[3],
+			Red:     counts.Red,
+			Blue:    counts.Blue,
+			Gold:    counts.Gold,
+			Purple:  counts.Purple,
 		}
 	}
 	return result
 }
 
-func uminekoBuildCharacterPresence(ranked []store.RankedChar, charEpCounts map[string]map[int]int, n int) []dto.CharacterPresence {
+func uminekoBuildCharacterPresence(ranked []quotes.RankedChar, charEpCounts map[string]map[int]int, n int) []dto.CharacterPresence {
 	if len(ranked) < n {
 		n = len(ranked)
 	}

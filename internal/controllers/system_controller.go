@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"umineko_quote/internal/controllers/utils"
 	"umineko_quote/internal/quote/language"
 
 	"github.com/gofiber/fiber/v3"
@@ -31,7 +32,10 @@ func (s *Service) setupConfigRoute(routeGroup fiber.Router) {
 }
 
 func (s *Service) healthCheck(ctx fiber.Ctx) error {
-	loaded := s.UminekoService.LoadedLanguages()
+	loaded, err := s.UminekoService.LoadedLanguages()
+	if err != nil {
+		return utils.InternalError(ctx, "failed to count umineko quotes", err)
+	}
 
 	languages := make(fiber.Map, len(expectedLanguages))
 	healthy := true
@@ -50,7 +54,10 @@ func (s *Service) healthCheck(ctx fiber.Ctx) error {
 		httpStatus = fiber.StatusServiceUnavailable
 	}
 
-	higurashiLoaded := s.HigurashiService.LoadedLanguages()
+	higurashiLoaded, err := s.HigurashiService.LoadedLanguages()
+	if err != nil {
+		return utils.InternalError(ctx, "failed to count higurashi quotes", err)
+	}
 
 	return ctx.Status(httpStatus).JSON(fiber.Map{
 		"status":    status,

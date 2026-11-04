@@ -17,10 +17,10 @@ func TestTruthParse(t *testing.T) {
 		{"Blue", TruthAll},
 	}
 
-	for i := 0; i < len(tests); i++ {
-		got := tr.Parse(tests[i].input)
-		if got != tests[i].want {
-			t.Errorf("Parse(%q): got %q, want %q", tests[i].input, got, tests[i].want)
+	for _, tc := range tests {
+		got := tr.Parse(tc.input)
+		if got != tc.want {
+			t.Errorf("Parse(%q): got %q, want %q", tc.input, got, tc.want)
 		}
 	}
 }

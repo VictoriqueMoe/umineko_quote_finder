@@ -1,10 +1,9 @@
 module umineko_quote
 
-go 1.26.0
-
-require github.com/VictoriqueMoe/umineko_script_parser v1.7.0
+go 1.27
 
 require (
+	github.com/VictoriqueMoe/umineko_script_parser v1.7.0
 	github.com/fogleman/gg v1.3.0
 	github.com/gofiber/contrib/v3/swaggo v1.0.15
 	github.com/gofiber/fiber/v3 v3.6.1

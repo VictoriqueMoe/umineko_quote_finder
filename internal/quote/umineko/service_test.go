@@ -1,19 +1,42 @@
 package umineko
 
 import (
+	"log"
+	"os"
 	"strings"
 	"testing"
+
+	"umineko_quote/internal/audio"
+	"umineko_quote/internal/dao/memory"
 	"umineko_quote/internal/dto"
+	"umineko_quote/internal/quote/game"
 	"umineko_quote/internal/quote/language"
 	quoteparams "umineko_quote/internal/quote/params"
-	"umineko_quote/internal/quote/store"
+	"umineko_quote/internal/quote/quotes"
+	"umineko_quote/internal/repository"
 
 	"github.com/VictoriqueMoe/umineko_script_parser/umineko/character"
 )
 
-var testService = NewService()
+var testService Service
+
+func TestMain(m *testing.M) {
+	daos, err := memory.New()
+	if err != nil {
+		log.Fatalf("memory.New: %v", err)
+	}
+
+	svc, err := NewService(repository.NewFromDAOs(daos, nil).Umineko, audio.AudioResolver{})
+	if err != nil {
+		log.Fatalf("NewService: %v", err)
+	}
+	testService = svc
+
+	os.Exit(m.Run())
+}
 
 func searchWithParams(
+	t testing.TB,
 	svc Service,
 	query string,
 	lang language.Language,
@@ -25,7 +48,9 @@ func searchWithParams(
 	interactionA string,
 	interactionB string,
 ) dto.SearchResponse {
-	return svc.Search(quoteparams.SearchParams{
+	t.Helper()
+
+	resp, err := svc.Search(quoteparams.SearchParams{
 		Query:        query,
 		Lang:         lang,
 		Limit:        limit,
@@ -34,10 +59,15 @@ func searchWithParams(
 		Episode:      episode,
 		InteractionA: interactionA,
 		InteractionB: interactionB,
-	}, string(truth))
+	}, truth.Scope())
+	if err != nil {
+		t.Fatalf("Search: %v", err)
+	}
+	return resp
 }
 
 func browseWithParams(
+	t testing.TB,
 	svc Service,
 	lang language.Language,
 	characterFilter character.Character,
@@ -48,7 +78,9 @@ func browseWithParams(
 	interactionA string,
 	interactionB string,
 ) dto.CharacterResponse {
-	return svc.Browse(quoteparams.BrowseParams{
+	t.Helper()
+
+	resp, err := svc.Browse(quoteparams.BrowseParams{
 		Lang:         lang,
 		CharacterID:  characterFilter.ID(),
 		Limit:        limit,
@@ -56,13 +88,57 @@ func browseWithParams(
 		Episode:      episode,
 		InteractionA: interactionA,
 		InteractionB: interactionB,
-	}, string(truth))
+	}, truth.Scope())
+	if err != nil {
+		t.Fatalf("Browse: %v", err)
+	}
+	return resp
+}
+
+func byAudioID(t testing.TB, lang language.Language, audioID string) *dto.UminekoQuote {
+	t.Helper()
+
+	q, err := testService.GetByAudioID(lang, audioID)
+	if err != nil {
+		t.Fatalf("GetByAudioID: %v", err)
+	}
+	return q
+}
+
+func randomQuote(t testing.TB, lang language.Language, characterID string, episode int, scope quoteparams.QuoteScope) *dto.UminekoQuote {
+	t.Helper()
+
+	q, err := testService.Random(lang, characterID, episode, scope)
+	if err != nil {
+		t.Fatalf("Random: %v", err)
+	}
+	return q
+}
+
+func context(t testing.TB, lang language.Language, audioID string, lines int) *dto.ContextResponse {
+	t.Helper()
+
+	result, err := testService.GetContext(lang, audioID, lines)
+	if err != nil {
+		t.Fatalf("GetContext: %v", err)
+	}
+	return result
+}
+
+func nearestVoiced(t *testing.T, lang language.Language, audioID string, direction string) string {
+	t.Helper()
+
+	result, err := testService.NearestVoicedAudioID(lang, audioID, direction)
+	if err != nil {
+		t.Fatalf("NearestVoicedAudioID: %v", err)
+	}
+	return result
 }
 
 func TestService_Search_ExactMatch(t *testing.T) {
 	svc := testService
 
-	resp := searchWithParams(svc, "Beatrice", language.English, 10, 0, "", 0, TruthAll, "", "")
+	resp := searchWithParams(t, svc, "Beatrice", language.English, 10, 0, "", 0, TruthAll, "", "")
 
 	if resp.Total == 0 {
 		t.Fatal("expected search results for 'Beatrice'")
@@ -78,7 +154,7 @@ func TestService_Search_ExactMatch(t *testing.T) {
 func TestService_Search_DefaultValues(t *testing.T) {
 	svc := testService
 
-	resp := searchWithParams(svc, "witch", language.English, 0, -1, "", 0, TruthAll, "", "")
+	resp := searchWithParams(t, svc, "witch", language.English, 0, -1, "", 0, TruthAll, "", "")
 
 	if resp.Limit != 30 {
 		t.Errorf("default limit: got %d, want 30", resp.Limit)
@@ -91,7 +167,7 @@ func TestService_Search_DefaultValues(t *testing.T) {
 func TestService_Search_WithCharacterFilter(t *testing.T) {
 	svc := testService
 
-	resp := searchWithParams(svc, "witch", language.English, 10, 0, character.Battler, 0, TruthAll, "", "")
+	resp := searchWithParams(t, svc, "witch", language.English, 10, 0, character.Battler, 0, TruthAll, "", "")
 
 	for i := 0; i < len(resp.Results); i++ {
 		q := resp.Results[i].Quote.(dto.UminekoQuote)
@@ -104,7 +180,7 @@ func TestService_Search_WithCharacterFilter(t *testing.T) {
 func TestService_Search_WithEpisodeFilter(t *testing.T) {
 	svc := testService
 
-	resp := searchWithParams(svc, "witch", language.English, 10, 0, "", 1, TruthAll, "", "")
+	resp := searchWithParams(t, svc, "witch", language.English, 10, 0, "", 1, TruthAll, "", "")
 
 	for i := 0; i < len(resp.Results); i++ {
 		q := resp.Results[i].Quote.(dto.UminekoQuote)
@@ -117,7 +193,7 @@ func TestService_Search_WithEpisodeFilter(t *testing.T) {
 func TestService_Search_RedTruthFilter(t *testing.T) {
 	svc := testService
 
-	resp := searchWithParams(svc, "truth", language.English, 10, 0, "", 0, TruthRed, "", "")
+	resp := searchWithParams(t, svc, "truth", language.English, 10, 0, "", 0, TruthRed, "", "")
 
 	for i := 0; i < len(resp.Results); i++ {
 		q := resp.Results[i].Quote.(dto.UminekoQuote)
@@ -130,7 +206,7 @@ func TestService_Search_RedTruthFilter(t *testing.T) {
 func TestService_Search_NoResults(t *testing.T) {
 	svc := testService
 
-	resp := searchWithParams(svc, "xyzzyxyzzyxyzzy", language.English, 10, 0, "", 0, TruthAll, "", "")
+	resp := searchWithParams(t, svc, "xyzzyxyzzyxyzzy", language.English, 10, 0, "", 0, TruthAll, "", "")
 
 	if resp.Total != 0 {
 		t.Errorf("Total: got %d, want 0", resp.Total)
@@ -143,7 +219,7 @@ func TestService_Search_NoResults(t *testing.T) {
 func TestService_Search_Japanese(t *testing.T) {
 	svc := testService
 
-	resp := searchWithParams(svc, "ベアトリーチェ", language.Japanese, 10, 0, "", 0, TruthAll, "", "")
+	resp := searchWithParams(t, svc, "ベアトリーチェ", language.Japanese, 10, 0, "", 0, TruthAll, "", "")
 
 	if resp.Total == 0 {
 		t.Fatal("expected Japanese search results")
@@ -153,7 +229,7 @@ func TestService_Search_Japanese(t *testing.T) {
 func TestService_Search_UnknownLang(t *testing.T) {
 	svc := testService
 
-	resp := searchWithParams(svc, "test", language.Language("fr"), 10, 0, "", 0, TruthAll, "", "")
+	resp := searchWithParams(t, svc, "test", language.Language("fr"), 10, 0, "", 0, TruthAll, "", "")
 
 	if resp.Total != 0 {
 		t.Errorf("Total for unknown lang: got %d, want 0", resp.Total)
@@ -163,7 +239,7 @@ func TestService_Search_UnknownLang(t *testing.T) {
 func TestService_Search_WithInteractionPair(t *testing.T) {
 	svc := testService
 
-	resp := searchWithParams(svc, "the", language.English, 100, 0, "", 0, TruthAll, "46", "47")
+	resp := searchWithParams(t, svc, "the", language.English, 100, 0, "", 0, TruthAll, "46", "47")
 	if resp.Total == 0 {
 		t.Fatal("expected interaction-filtered search results for Erika/Dlanor")
 	}
@@ -180,7 +256,7 @@ func TestService_Search_WithInteractionPair(t *testing.T) {
 func TestService_Search_WithInteractionPair_SameCharacter(t *testing.T) {
 	svc := testService
 
-	resp := searchWithParams(svc, "the", language.English, 100, 0, "", 0, TruthAll, "46", "46")
+	resp := searchWithParams(t, svc, "the", language.English, 100, 0, "", 0, TruthAll, "46", "46")
 	if resp.Total != 0 {
 		t.Errorf("same-character interaction filter should yield no results, got %d", resp.Total)
 	}
@@ -189,7 +265,7 @@ func TestService_Search_WithInteractionPair_SameCharacter(t *testing.T) {
 func TestService_Browse(t *testing.T) {
 	svc := testService
 
-	resp := browseWithParams(svc, language.English, character.Battler, 10, 0, 0, TruthAll, "", "")
+	resp := browseWithParams(t, svc, language.English, character.Battler, 10, 0, 0, TruthAll, "", "")
 
 	if resp.Total == 0 {
 		t.Fatal("expected browse results for Battler")
@@ -209,7 +285,7 @@ func TestService_Browse(t *testing.T) {
 func TestService_Browse_WithEpisode(t *testing.T) {
 	svc := testService
 
-	resp := browseWithParams(svc, language.English, character.Battler, 10, 0, 1, TruthAll, "", "")
+	resp := browseWithParams(t, svc, language.English, character.Battler, 10, 0, 1, TruthAll, "", "")
 
 	quotes := resp.Quotes.([]dto.UminekoQuote)
 	for i := 0; i < len(quotes); i++ {
@@ -222,7 +298,7 @@ func TestService_Browse_WithEpisode(t *testing.T) {
 func TestService_Browse_DefaultValues(t *testing.T) {
 	svc := testService
 
-	resp := browseWithParams(svc, language.English, "", 0, -1, 0, TruthAll, "", "")
+	resp := browseWithParams(t, svc, language.English, "", 0, -1, 0, TruthAll, "", "")
 
 	if resp.Limit != 50 {
 		t.Errorf("default limit: got %d, want 50", resp.Limit)
@@ -235,7 +311,7 @@ func TestService_Browse_DefaultValues(t *testing.T) {
 func TestService_Browse_UnknownLang(t *testing.T) {
 	svc := testService
 
-	resp := browseWithParams(svc, language.Language("fr"), character.Battler, 10, 0, 0, TruthAll, "", "")
+	resp := browseWithParams(t, svc, language.Language("fr"), character.Battler, 10, 0, 0, TruthAll, "", "")
 
 	if resp.Total != 0 {
 		t.Errorf("Total for unknown lang: got %d, want 0", resp.Total)
@@ -245,7 +321,7 @@ func TestService_Browse_UnknownLang(t *testing.T) {
 func TestService_Browse_WithInteractionPair(t *testing.T) {
 	svc := testService
 
-	resp := browseWithParams(svc, language.English, "", 100, 0, 0, TruthAll, "46", "47")
+	resp := browseWithParams(t, svc, language.English, "", 100, 0, 0, TruthAll, "46", "47")
 	if resp.Total == 0 {
 		t.Fatal("expected browse results for Erika/Dlanor interaction pair")
 	}
@@ -261,7 +337,7 @@ func TestService_Browse_WithInteractionPair(t *testing.T) {
 func TestService_Browse_WithInteractionPairAndCharacter(t *testing.T) {
 	svc := testService
 
-	resp := browseWithParams(svc, language.English, character.Erika, 100, 0, 0, TruthAll, "46", "47")
+	resp := browseWithParams(t, svc, language.English, character.Erika, 100, 0, 0, TruthAll, "46", "47")
 	if resp.Total == 0 {
 		t.Fatal("expected browse results for Erika within Erika/Dlanor interactions")
 	}
@@ -274,9 +350,7 @@ func TestService_Browse_WithInteractionPairAndCharacter(t *testing.T) {
 }
 
 func TestService_GetByAudioID(t *testing.T) {
-	svc := testService
-
-	q := svc.GetByAudioID(language.English, "11900001")
+	q := byAudioID(t, language.English, "11900001")
 
 	if q == nil {
 		t.Fatal("expected to find quote by audio ID")
@@ -287,9 +361,7 @@ func TestService_GetByAudioID(t *testing.T) {
 }
 
 func TestService_GetByAudioID_NotFound(t *testing.T) {
-	svc := testService
-
-	q := svc.GetByAudioID(language.English, "99999999")
+	q := byAudioID(t, language.English, "99999999")
 
 	if q != nil {
 		t.Errorf("expected nil for unknown audio ID, got %+v", q)
@@ -297,9 +369,7 @@ func TestService_GetByAudioID_NotFound(t *testing.T) {
 }
 
 func TestService_GetByAudioID_EmptyLang(t *testing.T) {
-	svc := testService
-
-	q := svc.GetByAudioID(language.Language(""), "11900001")
+	q := byAudioID(t, language.Language(""), "11900001")
 
 	if q != nil {
 		t.Errorf("expected nil for empty lang (defaulting happens in controller), got %+v", q)
@@ -307,9 +377,7 @@ func TestService_GetByAudioID_EmptyLang(t *testing.T) {
 }
 
 func TestService_GetByAudioID_UnknownLang(t *testing.T) {
-	svc := testService
-
-	q := svc.GetByAudioID(language.Language("fr"), "11900001")
+	q := byAudioID(t, language.Language("fr"), "11900001")
 
 	if q != nil {
 		t.Errorf("expected nil for unknown lang, got %+v", q)
@@ -317,23 +385,19 @@ func TestService_GetByAudioID_UnknownLang(t *testing.T) {
 }
 
 func TestService_Random(t *testing.T) {
-	svc := testService
-
-	q := svc.Random(language.English, "", 0, TruthAll)
+	q := randomQuote(t, language.English, "", 0, quoteparams.QuoteScope{})
 
 	if q == nil {
 		t.Fatal("expected a random quote")
 	}
-	if q.CharacterID == "narrator" {
+	if q.CharacterID == game.NarratorID {
 		t.Error("Random with no filters should exclude narrator")
 	}
 }
 
 func TestService_Random_WithCharacter(t *testing.T) {
-	svc := testService
-
 	for i := 0; i < 10; i++ {
-		q := svc.Random(language.English, character.Beatrice.ID(), 0, TruthAll)
+		q := randomQuote(t, language.English, character.Beatrice.ID(), 0, quoteparams.QuoteScope{})
 		if q == nil {
 			t.Fatal("expected a random Beatrice quote")
 		}
@@ -344,10 +408,8 @@ func TestService_Random_WithCharacter(t *testing.T) {
 }
 
 func TestService_Random_WithEpisode(t *testing.T) {
-	svc := testService
-
 	for i := 0; i < 10; i++ {
-		q := svc.Random(language.English, "", 1, TruthAll)
+		q := randomQuote(t, language.English, "", 1, quoteparams.QuoteScope{})
 		if q == nil {
 			t.Fatal("expected a random episode 1 quote")
 		}
@@ -358,10 +420,8 @@ func TestService_Random_WithEpisode(t *testing.T) {
 }
 
 func TestService_Random_WithCharacterAndEpisode(t *testing.T) {
-	svc := testService
-
 	for i := 0; i < 10; i++ {
-		q := svc.Random(language.English, character.Battler.ID(), 1, TruthAll)
+		q := randomQuote(t, language.English, character.Battler.ID(), 1, quoteparams.QuoteScope{})
 		if q == nil {
 			t.Fatal("expected a random Battler ep1 quote")
 		}
@@ -374,11 +434,17 @@ func TestService_Random_WithCharacterAndEpisode(t *testing.T) {
 	}
 }
 
-func TestService_Random_RedTruth(t *testing.T) {
-	svc := testService
+func TestService_Random_UnknownCharacter(t *testing.T) {
+	q := randomQuote(t, language.English, "nonexistent", 0, quoteparams.QuoteScope{})
 
+	if q != nil {
+		t.Errorf("expected nil for unknown character, got %+v", q)
+	}
+}
+
+func TestService_Random_RedTruth(t *testing.T) {
 	for i := 0; i < 10; i++ {
-		q := svc.Random(language.English, "", 0, TruthRed)
+		q := randomQuote(t, language.English, "", 0, TruthRed.Scope())
 		if q == nil {
 			t.Fatal("expected a random red truth quote")
 		}
@@ -389,9 +455,7 @@ func TestService_Random_RedTruth(t *testing.T) {
 }
 
 func TestService_Random_EmptyLang(t *testing.T) {
-	svc := testService
-
-	q := svc.Random(language.Language(""), "", 0, TruthAll)
+	q := randomQuote(t, language.Language(""), "", 0, quoteparams.QuoteScope{})
 
 	if q != nil {
 		t.Errorf("expected nil for empty lang (defaulting happens in controller), got %+v", q)
@@ -399,9 +463,7 @@ func TestService_Random_EmptyLang(t *testing.T) {
 }
 
 func TestService_Random_UnknownLang(t *testing.T) {
-	svc := testService
-
-	q := svc.Random(language.Language("fr"), "", 0, TruthAll)
+	q := randomQuote(t, language.Language("fr"), "", 0, quoteparams.QuoteScope{})
 
 	if q != nil {
 		t.Errorf("expected nil for unknown lang, got %+v", q)
@@ -411,7 +473,7 @@ func TestService_Random_UnknownLang(t *testing.T) {
 func TestService_GetContext(t *testing.T) {
 	svc := testService
 
-	resp := searchWithParams(svc, "Beatrice", language.English, 10, 0, "", 0, TruthAll, "", "")
+	resp := searchWithParams(t, svc, "Beatrice", language.English, 10, 0, "", 0, TruthAll, "", "")
 	if resp.Total == 0 {
 		t.Fatal("need search results to find a mid-slice audio ID")
 	}
@@ -429,7 +491,7 @@ func TestService_GetContext(t *testing.T) {
 	parts := strings.SplitN(midAudioId, ", ", 2)
 	midAudioId = parts[0]
 
-	result := svc.GetContext(language.English, midAudioId, 5)
+	result := context(t, language.English, midAudioId, 5)
 
 	if result == nil {
 		t.Fatal("expected context result")
@@ -453,9 +515,7 @@ func TestService_GetContext(t *testing.T) {
 }
 
 func TestService_GetContext_NotFound(t *testing.T) {
-	svc := testService
-
-	result := svc.GetContext(language.English, "99999999", 5)
+	result := context(t, language.English, "99999999", 5)
 
 	if result != nil {
 		t.Errorf("expected nil for unknown audio ID, got %+v", result)
@@ -463,9 +523,7 @@ func TestService_GetContext_NotFound(t *testing.T) {
 }
 
 func TestService_GetContext_EdgeOfSlice(t *testing.T) {
-	svc := testService
-
-	result := svc.GetContext(language.English, "11900001", 5)
+	result := context(t, language.English, "11900001", 5)
 
 	if result == nil {
 		t.Fatal("expected context result for edge-of-slice quote")
@@ -481,9 +539,7 @@ func TestService_GetContext_EdgeOfSlice(t *testing.T) {
 }
 
 func TestService_GetContext_DefaultLines(t *testing.T) {
-	svc := testService
-
-	result := svc.GetContext(language.English, "11900001", 0)
+	result := context(t, language.English, "11900001", 0)
 
 	if result == nil {
 		t.Fatal("expected context result with default lines")
@@ -499,9 +555,7 @@ func TestService_GetContext_DefaultLines(t *testing.T) {
 }
 
 func TestService_GetContext_CapsAtMax(t *testing.T) {
-	svc := testService
-
-	result := svc.GetContext(language.English, "11900001", 100)
+	result := context(t, language.English, "11900001", 100)
 
 	if result == nil {
 		t.Fatal("expected context result")
@@ -517,9 +571,7 @@ func TestService_GetContext_CapsAtMax(t *testing.T) {
 }
 
 func TestService_GetContext_UnknownLang(t *testing.T) {
-	svc := testService
-
-	result := svc.GetContext(language.Language("fr"), "11900001", 5)
+	result := context(t, language.Language("fr"), "11900001", 5)
 
 	if result != nil {
 		t.Errorf("expected nil for unknown lang, got %+v", result)
@@ -527,9 +579,7 @@ func TestService_GetContext_UnknownLang(t *testing.T) {
 }
 
 func TestService_GetContext_EmptyLang(t *testing.T) {
-	svc := testService
-
-	result := svc.GetContext(language.Language(""), "11900001", 5)
+	result := context(t, language.Language(""), "11900001", 5)
 
 	if result != nil {
 		t.Errorf("expected nil for empty lang (defaulting happens in controller), got %+v", result)
@@ -537,41 +587,25 @@ func TestService_GetContext_EmptyLang(t *testing.T) {
 }
 
 func TestService_NearestVoicedAudioID_Next(t *testing.T) {
-	svc := testService
-
-	result := svc.NearestVoicedAudioID(language.English, "10100001", "next")
-
-	if result == "" {
+	if nearestVoiced(t, language.English, "10100001", "next") == "" {
 		t.Fatal("expected to find next voiced audio ID")
 	}
 }
 
 func TestService_NearestVoicedAudioID_Prev(t *testing.T) {
-	svc := testService
-
-	result := svc.NearestVoicedAudioID(language.English, "10100041", "prev")
-
-	if result == "" {
+	if nearestVoiced(t, language.English, "10100041", "prev") == "" {
 		t.Fatal("expected to find prev voiced audio ID")
 	}
 }
 
 func TestService_NearestVoicedAudioID_UnknownLang(t *testing.T) {
-	svc := testService
-
-	result := svc.NearestVoicedAudioID(language.Language("fr"), "10100001", "next")
-
-	if result != "" {
+	if result := nearestVoiced(t, language.Language("fr"), "10100001", "next"); result != "" {
 		t.Errorf("expected empty result for unknown lang, got %q", result)
 	}
 }
 
 func TestService_NearestVoicedAudioID_UnknownAudioID(t *testing.T) {
-	svc := testService
-
-	result := svc.NearestVoicedAudioID(language.English, "99999999", "next")
-
-	if result != "" {
+	if result := nearestVoiced(t, language.English, "99999999", "next"); result != "" {
 		t.Errorf("expected empty result for unknown audio ID, got %q", result)
 	}
 }
@@ -601,7 +635,7 @@ func TestService_GetStats(t *testing.T) {
 		t.Fatal("expected stats to be non-nil")
 	}
 
-	result := stats.Compute(store.AllEpisodes)
+	result := stats.Compute(quotes.AllEpisodes)
 	if result == nil {
 		t.Fatal("expected Compute(AllEpisodes) to return non-nil")
 	}
@@ -610,7 +644,7 @@ func TestService_GetStats(t *testing.T) {
 func TestService_Browse_RedTruthFilter(t *testing.T) {
 	svc := testService
 
-	resp := browseWithParams(svc, language.English, "", 10, 0, 0, TruthRed, "", "")
+	resp := browseWithParams(t, svc, language.English, "", 10, 0, 0, TruthRed, "", "")
 
 	quotes := resp.Quotes.([]dto.UminekoQuote)
 	for i := 0; i < len(quotes); i++ {
@@ -623,7 +657,7 @@ func TestService_Browse_RedTruthFilter(t *testing.T) {
 func TestService_Browse_BlueTruthFilter(t *testing.T) {
 	svc := testService
 
-	resp := browseWithParams(svc, language.English, character.Battler, 100, 0, 0, TruthBlue, "", "")
+	resp := browseWithParams(t, svc, language.English, character.Battler, 100, 0, 0, TruthBlue, "", "")
 
 	quotes := resp.Quotes.([]dto.UminekoQuote)
 	for i := 0; i < len(quotes); i++ {
@@ -636,7 +670,7 @@ func TestService_Browse_BlueTruthFilter(t *testing.T) {
 func TestService_SearchAuto_FindsEnglish(t *testing.T) {
 	svc := testService
 
-	resp := searchWithParams(svc, "Beatrice", language.Auto, 10, 0, "", 0, TruthAll, "", "")
+	resp := searchWithParams(t, svc, "Beatrice", language.Auto, 10, 0, "", 0, TruthAll, "", "")
 
 	if resp.Total == 0 {
 		t.Fatal("expected auto-detect to find results")
@@ -649,7 +683,7 @@ func TestService_SearchAuto_FindsEnglish(t *testing.T) {
 func TestService_SearchAuto_FindsJapanese(t *testing.T) {
 	svc := testService
 
-	resp := searchWithParams(svc, "ベアトリーチェ", language.Auto, 10, 0, "", 0, TruthAll, "", "")
+	resp := searchWithParams(t, svc, "ベアトリーチェ", language.Auto, 10, 0, "", 0, TruthAll, "", "")
 
 	if resp.Total == 0 {
 		t.Fatal("expected auto-detect to find Japanese results")
@@ -662,7 +696,7 @@ func TestService_SearchAuto_FindsJapanese(t *testing.T) {
 func TestService_SearchAuto_NoResults(t *testing.T) {
 	svc := testService
 
-	resp := searchWithParams(svc, "xyzzyxyzzyxyzzy", language.Auto, 10, 0, "", 0, TruthAll, "", "")
+	resp := searchWithParams(t, svc, "xyzzyxyzzyxyzzy", language.Auto, 10, 0, "", 0, TruthAll, "", "")
 
 	if resp.Total != 0 {
 		t.Errorf("Total: got %d, want 0", resp.Total)
@@ -672,7 +706,7 @@ func TestService_SearchAuto_NoResults(t *testing.T) {
 func TestService_SearchAuto_ReturnsLangField(t *testing.T) {
 	svc := testService
 
-	resp := searchWithParams(svc, "witch", language.Auto, 10, 0, "", 0, TruthAll, "", "")
+	resp := searchWithParams(t, svc, "witch", language.Auto, 10, 0, "", 0, TruthAll, "", "")
 
 	if resp.Total == 0 {
 		t.Fatal("expected results")
@@ -692,7 +726,7 @@ func TestService_SearchAuto_ReturnsLangField(t *testing.T) {
 func TestService_SearchAuto_PrefersFirstLanguageInOrder(t *testing.T) {
 	svc := testService
 
-	resp := searchWithParams(svc, "Beatrice", language.Auto, 10, 0, "", 0, TruthAll, "", "")
+	resp := searchWithParams(t, svc, "Beatrice", language.Auto, 10, 0, "", 0, TruthAll, "", "")
 
 	if resp.Total == 0 {
 		t.Fatal("expected results")
@@ -705,7 +739,7 @@ func TestService_SearchAuto_PrefersFirstLanguageInOrder(t *testing.T) {
 func TestService_SearchAuto_WithFilters(t *testing.T) {
 	svc := testService
 
-	resp := searchWithParams(svc, "witch", language.Auto, 10, 0, character.Battler, 0, TruthAll, "", "")
+	resp := searchWithParams(t, svc, "witch", language.Auto, 10, 0, character.Battler, 0, TruthAll, "", "")
 
 	if resp.Total == 0 {
 		t.Fatal("expected auto-detect results with character filter")
@@ -721,7 +755,7 @@ func TestService_SearchAuto_WithFilters(t *testing.T) {
 func TestService_SearchAuto_NonAutoDoesNotSetLang(t *testing.T) {
 	svc := testService
 
-	resp := searchWithParams(svc, "Beatrice", language.English, 10, 0, "", 0, TruthAll, "", "")
+	resp := searchWithParams(t, svc, "Beatrice", language.English, 10, 0, "", 0, TruthAll, "", "")
 
 	if resp.Lang != "" {
 		t.Errorf("Lang should be empty for non-auto search, got %q", resp.Lang)
@@ -729,14 +763,12 @@ func TestService_SearchAuto_NonAutoDoesNotSetLang(t *testing.T) {
 }
 
 func TestService_GetByAudioID_CompositeAudioID(t *testing.T) {
-	svc := testService
-
-	q1 := svc.GetByAudioID(language.English, "11900001")
+	q1 := byAudioID(t, language.English, "11900001")
 	if q1 == nil {
 		t.Fatal("expected to find quote by first audio ID in composite")
 	}
 
-	q2 := svc.GetByAudioID(language.English, "11900002")
+	q2 := byAudioID(t, language.English, "11900002")
 	if q2 == nil {
 		t.Fatal("expected to find quote by second audio ID in composite")
 	}

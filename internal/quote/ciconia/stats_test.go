@@ -2,38 +2,19 @@ package ciconia
 
 import (
 	"testing"
-	"umineko_quote/internal/dto"
-	"umineko_quote/internal/quote/store"
 
-	scriptdto "github.com/VictoriqueMoe/umineko_script_parser/dto"
+	"umineko_quote/internal/dto"
+	"umineko_quote/internal/quote/params"
+	"umineko_quote/internal/quote/quotes"
 )
 
-func makeQuote(charID string, chapter string) dto.CiconiaQuote {
-	return dto.CiconiaQuote{
-		CicroniaQuote: scriptdto.CicroniaQuote{
-			BaseQuote: scriptdto.BaseQuote{
-				CharacterID: charID,
-				Character:   charID,
-				Episode:     1,
-				ContentType: "chapter",
-			},
-			Chapter: chapter,
-		},
-	}
-}
-
 func TestCiconiaStats_TopSpeakers(t *testing.T) {
-	quotes := []dto.CiconiaQuote{
-		makeQuote("miyao", "01"),
-		makeQuote("miyao", "01"),
-		makeQuote("miyao", "01"),
-		makeQuote("jayden", "01"),
-		makeQuote("jayden", "01"),
-		makeQuote("gunhild", "01"),
-	}
+	tallies := params.NewSpeakerTallies()
+	tallies.AddLines("miyao", "01", 3)
+	tallies.AddLines("jayden", "01", 2)
+	tallies.AddLines("gunhild", "01", 1)
 
-	stats := NewCiconiaStats(quotes)
-	result := stats.Compute(store.AllEpisodes).(*dto.CiconiaStatsResult)
+	result := NewCiconiaStats(tallies).Compute(quotes.AllEpisodes).(*dto.CiconiaStatsResult)
 
 	if len(result.TopSpeakers) != 3 {
 		t.Fatalf("expected 3 speakers, got %d", len(result.TopSpeakers))
@@ -49,68 +30,44 @@ func TestCiconiaStats_TopSpeakers(t *testing.T) {
 	}
 }
 
-func TestCiconiaStats_NarratorExcluded(t *testing.T) {
-	quotes := []dto.CiconiaQuote{
-		makeQuote("narrator", "01"),
-		makeQuote("narrator", "01"),
-		makeQuote("miyao", "01"),
-	}
+func TestCiconiaStats_TopSpeakersSumAcrossChapters(t *testing.T) {
+	tallies := params.NewSpeakerTallies()
+	tallies.AddLines("miyao", "01", 1)
+	tallies.AddLines("miyao", "02", 2)
+	tallies.AddLines("jayden", "01", 2)
 
-	stats := NewCiconiaStats(quotes)
-	result := stats.Compute(store.AllEpisodes).(*dto.CiconiaStatsResult)
+	result := NewCiconiaStats(tallies).Compute(quotes.AllEpisodes).(*dto.CiconiaStatsResult)
 
-	if len(result.TopSpeakers) != 1 {
-		t.Fatalf("expected 1 speaker (narrator excluded), got %d", len(result.TopSpeakers))
-	}
-	if result.TopSpeakers[0].CharacterID != "miyao" {
-		t.Errorf("expected miyao, got %q", result.TopSpeakers[0].CharacterID)
+	if result.TopSpeakers[0].CharacterID != "miyao" || result.TopSpeakers[0].Count != 3 {
+		t.Errorf("top speaker: got %+v, want miyao with 3", result.TopSpeakers[0])
 	}
 }
 
 func TestCiconiaStats_Interactions(t *testing.T) {
-	quotes := []dto.CiconiaQuote{
-		makeQuote("miyao", "01"),
-		makeQuote("jayden", "01"),
-		makeQuote("miyao", "01"),
-		makeQuote("jayden", "01"),
+	tallies := params.NewSpeakerTallies()
+	tallies.AddLines("miyao", "01", 2)
+	tallies.AddLines("jayden", "01", 2)
+	tallies.AddInteractions("01", "jayden", "miyao", 2)
+	tallies.AddInteractions("02", "miyao", "jayden", 1)
+
+	result := NewCiconiaStats(tallies).Compute(quotes.AllEpisodes).(*dto.CiconiaStatsResult)
+
+	if len(result.Interactions) != 1 {
+		t.Fatalf("expected 1 interaction pair, got %d", len(result.Interactions))
 	}
-
-	stats := NewCiconiaStats(quotes)
-	result := stats.Compute(store.AllEpisodes).(*dto.CiconiaStatsResult)
-
-	if len(result.Interactions) == 0 {
-		t.Fatal("expected interactions between miyao and jayden")
-	}
-	if result.Interactions[0].Count < 2 {
-		t.Errorf("expected at least 2 interactions, got %d", result.Interactions[0].Count)
-	}
-}
-
-func TestCiconiaStats_InteractionsBreakAcrossChapters(t *testing.T) {
-	quotes := []dto.CiconiaQuote{
-		makeQuote("miyao", "01"),
-		makeQuote("jayden", "02"),
-	}
-
-	stats := NewCiconiaStats(quotes)
-	result := stats.Compute(store.AllEpisodes).(*dto.CiconiaStatsResult)
-
-	if len(result.Interactions) != 0 {
-		t.Errorf("expected no interactions across different chapters, got %d", len(result.Interactions))
+	if result.Interactions[0].Count != 3 {
+		t.Errorf("expected interactions summed across chapters to be 3, got %d", result.Interactions[0].Count)
 	}
 }
 
 func TestCiconiaStats_LinesPerChapter(t *testing.T) {
-	quotes := []dto.CiconiaQuote{
-		makeQuote("miyao", "01"),
-		makeQuote("miyao", "01"),
-		makeQuote("jayden", "01"),
-		makeQuote("miyao", "02"),
-		makeQuote("gunhild", "02"),
-	}
+	tallies := params.NewSpeakerTallies()
+	tallies.AddLines("miyao", "01", 2)
+	tallies.AddLines("jayden", "01", 1)
+	tallies.AddLines("miyao", "02", 1)
+	tallies.AddLines("gunhild", "02", 1)
 
-	stats := NewCiconiaStats(quotes)
-	result := stats.Compute(store.AllEpisodes).(*dto.CiconiaStatsResult)
+	result := NewCiconiaStats(tallies).Compute(quotes.AllEpisodes).(*dto.CiconiaStatsResult)
 
 	if result.LinesPerChapter == nil {
 		t.Fatal("expected LinesPerChapter")
@@ -136,12 +93,10 @@ func TestCiconiaStats_LinesPerChapter(t *testing.T) {
 }
 
 func TestCiconiaStats_CharacterNames(t *testing.T) {
-	quotes := []dto.CiconiaQuote{
-		makeQuote("miyao", "01"),
-	}
+	tallies := params.NewSpeakerTallies()
+	tallies.AddLines("miyao", "01", 1)
 
-	stats := NewCiconiaStats(quotes)
-	result := stats.Compute(store.AllEpisodes).(*dto.CiconiaStatsResult)
+	result := NewCiconiaStats(tallies).Compute(quotes.AllEpisodes).(*dto.CiconiaStatsResult)
 
 	if result.CharacterNames == nil {
 		t.Fatal("expected CharacterNames")
@@ -151,12 +106,11 @@ func TestCiconiaStats_CharacterNames(t *testing.T) {
 	}
 }
 
-func TestCiconiaStats_EmptyQuotes(t *testing.T) {
-	stats := NewCiconiaStats(nil)
-	result := stats.Compute(store.AllEpisodes).(*dto.CiconiaStatsResult)
+func TestCiconiaStats_EmptyTallies(t *testing.T) {
+	result := NewCiconiaStats(params.NewSpeakerTallies()).Compute(quotes.AllEpisodes).(*dto.CiconiaStatsResult)
 
 	if result == nil {
-		t.Fatal("expected non-nil result for empty quotes")
+		t.Fatal("expected non-nil result for empty tallies")
 	}
 	if len(result.TopSpeakers) != 0 {
 		t.Errorf("expected 0 speakers, got %d", len(result.TopSpeakers))
@@ -164,16 +118,14 @@ func TestCiconiaStats_EmptyQuotes(t *testing.T) {
 }
 
 func TestCiconiaStats_InteractionCountsMap(t *testing.T) {
-	quotes := []dto.CiconiaQuote{
-		makeQuote("miyao", "01"),
-		makeQuote("jayden", "01"),
-		makeQuote("miyao", "01"),
-	}
+	tallies := params.NewSpeakerTallies()
+	tallies.AddLines("miyao", "01", 2)
+	tallies.AddLines("jayden", "01", 1)
+	tallies.AddInteractions("01", "miyao", "jayden", 2)
 
-	stats := NewCiconiaStats(quotes)
-	result := stats.Compute(store.AllEpisodes).(*dto.CiconiaStatsResult)
+	result := NewCiconiaStats(tallies).Compute(quotes.AllEpisodes).(*dto.CiconiaStatsResult)
 
-	if len(result.InteractionCounts) == 0 {
-		t.Fatal("expected InteractionCounts to be populated")
+	if result.InteractionCounts["jayden|miyao"] != 2 {
+		t.Errorf("expected InteractionCounts[jayden|miyao] = 2, got %d", result.InteractionCounts["jayden|miyao"])
 	}
 }

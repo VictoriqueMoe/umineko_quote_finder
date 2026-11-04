@@ -1,5 +1,7 @@
 package umineko
 
+import "umineko_quote/internal/quote/params"
+
 type Truth string
 
 const (
@@ -22,5 +24,14 @@ func (Truth) Parse(s string) Truth {
 		return TruthPurple
 	default:
 		return TruthAll
+	}
+}
+
+func (t Truth) Scope() params.QuoteScope {
+	return params.QuoteScope{
+		RedTruth:    t == TruthRed,
+		BlueTruth:   t == TruthBlue,
+		GoldTruth:   t == TruthGold,
+		PurpleTruth: t == TruthPurple,
 	}
 }

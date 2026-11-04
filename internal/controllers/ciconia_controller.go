@@ -2,10 +2,11 @@ package controllers
 
 import (
 	"strings"
+
+	"umineko_quote/internal/controllers/utils"
+	"umineko_quote/internal/dto"
 	"umineko_quote/internal/quote/language"
 	"umineko_quote/internal/quote/params"
-
-	_ "umineko_quote/internal/dto"
 
 	"github.com/gofiber/fiber/v3"
 )
@@ -82,12 +83,12 @@ func (s *Service) ciconiaSearch(ctx fiber.Ctx) error {
 	}
 
 	lang := language.English.Parse(ctx.Query("lang"))
-	limit := fiber.Query[int](ctx, "limit", 30)
-	offset := fiber.Query[int](ctx, "offset", 0)
+	limit := fiber.Query[int](ctx, "limit")
+	offset := fiber.Query[int](ctx, "offset")
 	characterParam := strings.TrimSpace(ctx.Query("character"))
 	interactionAParam := ctx.Query("interactionA")
 	interactionBParam := ctx.Query("interactionB")
-	exact := fiber.Query[bool](ctx, "exact", false)
+	exact := fiber.Query[bool](ctx, "exact")
 
 	if errMsg, invalid := validateInteractionQueryParams(characterParam, interactionAParam, interactionBParam); invalid {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -107,7 +108,11 @@ func (s *Service) ciconiaSearch(ctx fiber.Ctx) error {
 		exact,
 	)
 
-	response := s.CiconiaService.Search(searchParams, ctx.Query("chapter"))
+	response, err := s.CiconiaService.Search(searchParams, params.QuoteScope{Segment: ctx.Query("chapter")})
+	if err != nil {
+		return utils.InternalError(ctx, "failed to search quotes", err)
+	}
+
 	result := fiber.Map{
 		"query":   query,
 		"results": response.Results,
@@ -137,7 +142,11 @@ func (s *Service) ciconiaRandom(ctx fiber.Ctx) error {
 	lang := language.English.Parse(ctx.Query("lang"))
 	characterID := strings.TrimSpace(ctx.Query("character"))
 	chapter := ctx.Query("chapter")
-	q := s.CiconiaService.Random(lang, characterID, chapter)
+
+	q, err := s.CiconiaService.Random(lang, characterID, 0, params.QuoteScope{Segment: chapter})
+	if err != nil {
+		return utils.InternalError(ctx, "failed to load random quote", err)
+	}
 	if q == nil {
 		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"error": "no quotes available",
@@ -163,8 +172,8 @@ func (s *Service) ciconiaRandom(ctx fiber.Ctx) error {
 //	@Router			/ciconia/browse [get]
 func (s *Service) ciconiaBrowse(ctx fiber.Ctx) error {
 	lang := language.English.Parse(ctx.Query("lang"))
-	limit := fiber.Query[int](ctx, "limit", 50)
-	offset := fiber.Query[int](ctx, "offset", 0)
+	limit := fiber.Query[int](ctx, "limit")
+	offset := fiber.Query[int](ctx, "offset")
 	characterParam := strings.TrimSpace(ctx.Query("character"))
 	interactionAParam := ctx.Query("interactionA")
 	interactionBParam := ctx.Query("interactionB")
@@ -185,7 +194,10 @@ func (s *Service) ciconiaBrowse(ctx fiber.Ctx) error {
 		strings.TrimSpace(interactionBParam),
 	)
 
-	response := s.CiconiaService.Browse(browseParams, ctx.Query("chapter"))
+	response, err := s.CiconiaService.Browse(browseParams, params.QuoteScope{Segment: ctx.Query("chapter")})
+	if err != nil {
+		return utils.InternalError(ctx, "failed to browse quotes", err)
+	}
 	return ctx.JSON(response)
 }
 
@@ -201,16 +213,7 @@ func (s *Service) ciconiaBrowse(ctx fiber.Ctx) error {
 //	@Failure		404			{object}	dto.ErrorResponse
 //	@Router			/ciconia/quote/{audioId} [get]
 func (s *Service) ciconiaByAudioID(ctx fiber.Ctx) error {
-	lang := language.English.Parse(ctx.Query("lang"))
-	audioID := ctx.Params("+")
-
-	q := s.CiconiaService.GetByAudioID(lang, audioID)
-	if q == nil {
-		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"error": "quote not found",
-		})
-	}
-	return ctx.JSON(q)
+	return handleByAudioID[dto.CiconiaQuote](ctx, s.CiconiaService, ctx.Params("+"))
 }
 
 // ciconiaByIndex godoc
@@ -225,16 +228,7 @@ func (s *Service) ciconiaByAudioID(ctx fiber.Ctx) error {
 //	@Failure		404			{object}	dto.ErrorResponse
 //	@Router			/ciconia/quote/index/{index} [get]
 func (s *Service) ciconiaByIndex(ctx fiber.Ctx) error {
-	lang := language.English.Parse(ctx.Query("lang"))
-	index := fiber.Params[int](ctx, "index")
-
-	q := s.CiconiaService.GetByIndex(lang, index)
-	if q == nil {
-		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"error": "quote not found",
-		})
-	}
-	return ctx.JSON(q)
+	return handleByIndex[dto.CiconiaQuote](ctx, s.CiconiaService)
 }
 
 // ciconiaContext godoc
@@ -251,17 +245,7 @@ func (s *Service) ciconiaByIndex(ctx fiber.Ctx) error {
 //	@Failure		404			{object}	dto.ErrorResponse
 //	@Router			/ciconia/context/{audioId} [get]
 func (s *Service) ciconiaContext(ctx fiber.Ctx) error {
-	lang := language.English.Parse(ctx.Query("lang"))
-	audioID := ctx.Params("+")
-
-	lines := fiber.Query[int](ctx, "lines", 5)
-	result := s.CiconiaService.GetContext(lang, audioID, lines)
-	if result == nil {
-		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"error": "quote not found",
-		})
-	}
-	return ctx.JSON(result)
+	return handleContext[dto.CiconiaQuote](ctx, s.CiconiaService, ctx.Params("+"))
 }
 
 // ciconiaCharacters godoc

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"umineko_quote/internal/controllers/utils"
 	"umineko_quote/internal/og"
 	"umineko_quote/internal/quote/language"
 
@@ -113,7 +114,11 @@ func (s *Service) uminekoOGImage(ctx fiber.Ctx) error {
 	}
 
 	lang := language.English.Parse(ctx.Query("lang"))
-	q := s.UminekoService.GetByAudioID(lang, audioId)
+
+	q, err := s.UminekoService.GetByAudioID(lang, audioId)
+	if err != nil {
+		return utils.InternalError(ctx, "failed to load quote", err)
+	}
 	if q == nil {
 		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "quote not found"})
 	}
@@ -136,7 +141,11 @@ func (s *Service) higurashiOGImage(ctx fiber.Ctx) error {
 	}
 
 	lang := language.English.Parse(ctx.Query("lang"))
-	q := s.HigurashiService.GetByAudioID(lang, audioId)
+
+	q, err := s.HigurashiService.GetByAudioID(lang, audioId)
+	if err != nil {
+		return utils.InternalError(ctx, "failed to load quote", err)
+	}
 	if q == nil {
 		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "quote not found"})
 	}
@@ -172,7 +181,11 @@ func (s *Service) ciconiaOGImage(ctx fiber.Ctx) error {
 	}
 
 	lang := language.English.Parse(ctx.Query("lang"))
-	q := s.CiconiaService.GetByAudioID(lang, audioId)
+
+	q, err := s.CiconiaService.GetByAudioID(lang, audioId)
+	if err != nil {
+		return utils.InternalError(ctx, "failed to load quote", err)
+	}
 	if q == nil {
 		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "quote not found"})
 	}
@@ -195,7 +208,11 @@ func (s *Service) uminekoOGBuilderImage(ctx fiber.Ctx) error {
 	}
 
 	lang := language.English.Parse(ctx.Query("lang"))
-	segments := s.parseUminekoBuilderSegments(segmentsParam, lang)
+
+	segments, err := s.parseUminekoBuilderSegments(segmentsParam, lang)
+	if err != nil {
+		return utils.InternalError(ctx, "failed to load builder segments", err)
+	}
 	if len(segments) == 0 {
 		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "no valid segments found"})
 	}
@@ -239,7 +256,10 @@ func (s *Service) ogPage(ctx fiber.Ctx) error {
 	base := s.baseURL(ctx)
 
 	if builderParam != "" && game != "higurashi" && game != "ciconia" {
-		segments := s.parseUminekoBuilderSegments(builderParam, lang)
+		segments, err := s.parseUminekoBuilderSegments(builderParam, lang)
+		if err != nil {
+			return utils.InternalError(ctx, "failed to load builder segments", err)
+		}
 		if len(segments) == 0 {
 			html := s.replaceOGPlaceholders(defaults, defaults.title, defaults.description, defaults.twitterDesc, defaults.image)
 			ctx.Set("Content-Type", "text/html; charset=utf-8")
@@ -280,7 +300,10 @@ func (s *Service) ogPage(ctx fiber.Ctx) error {
 	}
 
 	if game == "higurashi" {
-		q := s.HigurashiService.GetByAudioID(lang, audioId)
+		q, err := s.HigurashiService.GetByAudioID(lang, audioId)
+		if err != nil {
+			return utils.InternalError(ctx, "failed to load quote", err)
+		}
 		if q == nil {
 			html := s.replaceOGPlaceholders(defaults, defaults.title, defaults.description, defaults.twitterDesc, defaults.image)
 			ctx.Set("Content-Type", "text/html; charset=utf-8")
@@ -299,7 +322,10 @@ func (s *Service) ogPage(ctx fiber.Ctx) error {
 	}
 
 	if game == "ciconia" {
-		q := s.CiconiaService.GetByAudioID(lang, audioId)
+		q, err := s.CiconiaService.GetByAudioID(lang, audioId)
+		if err != nil {
+			return utils.InternalError(ctx, "failed to load quote", err)
+		}
 		if q == nil {
 			html := s.replaceOGPlaceholders(defaults, defaults.title, defaults.description, defaults.twitterDesc, defaults.image)
 			ctx.Set("Content-Type", "text/html; charset=utf-8")
@@ -317,7 +343,10 @@ func (s *Service) ogPage(ctx fiber.Ctx) error {
 		return ctx.SendString(html)
 	}
 
-	q := s.UminekoService.GetByAudioID(lang, audioId)
+	q, err := s.UminekoService.GetByAudioID(lang, audioId)
+	if err != nil {
+		return utils.InternalError(ctx, "failed to load quote", err)
+	}
 	if q == nil {
 		html := s.replaceOGPlaceholders(defaults, defaults.title, defaults.description, defaults.twitterDesc, defaults.image)
 		ctx.Set("Content-Type", "text/html; charset=utf-8")
@@ -342,7 +371,7 @@ type builderSegmentMeta struct {
 	Text      string
 }
 
-func (s *Service) parseUminekoBuilderSegments(param string, lang language.Language) []builderSegmentMeta {
+func (s *Service) parseUminekoBuilderSegments(param string, lang language.Language) ([]builderSegmentMeta, error) {
 	parts := strings.Split(param, ",")
 	if len(parts) > 20 {
 		parts = parts[:20]
@@ -361,7 +390,10 @@ func (s *Service) parseUminekoBuilderSegments(param string, lang language.Langua
 			continue
 		}
 
-		q := s.UminekoService.GetByAudioID(lang, audioId)
+		q, err := s.UminekoService.GetByAudioID(lang, audioId)
+		if err != nil {
+			return nil, err
+		}
 		if q != nil {
 			clipText := q.Text
 			if q.AudioTextMap != nil {
@@ -382,7 +414,7 @@ func (s *Service) parseUminekoBuilderSegments(param string, lang language.Langua
 			})
 		}
 	}
-	return segments
+	return segments, nil
 }
 
 func (s *Service) replaceOGPlaceholders(defaults ogDefaults, title, description, twitterDesc, imageURL string) string {

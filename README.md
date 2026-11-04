@@ -28,11 +28,17 @@ graph TB
         UmiService["Umineko Service"]
         HiguService["Higurashi Service"]
         CiconiaService["Ciconia Service"]
-        GameStore["Generic GameStore&lt;Q&gt;<br/>Search / Browse / Random"]
-        Indexer["Indexer<br/>(parallel)"]
+        QuoteSvc["Generic quotes.Service&lt;Q&gt;<br/>Search / Browse / Random / Context"]
         UmiStats["Umineko Stats<br/>(Truth, Episodes)"]
         HiguStats["Higurashi Stats<br/>(Arcs)"]
         CiconiaStats["Ciconia Stats<br/>(Chapters)"]
+    end
+
+    subgraph Storage["Storage · STORE_MODE"]
+        Repo["Repository"]
+        MemDAO["Memory DAO<br/>(indexer, parallel match)"]
+        SqliteDAO["SQLite DAO<br/>(goose migrations, seeded once)"]
+        Games["Game Loaders<br/>Umineko / Higurashi / Ciconia"]
     end
 
     subgraph UmiParser["Umineko Lexical Analysis Pipeline"]
@@ -104,27 +110,31 @@ graph TB
     UmiCtrl -- delegates --> UmiService
     HiguCtrl -- delegates --> HiguService
     CiconiaCtrl -- delegates --> CiconiaService
-    UmiService --> GameStore
-    HiguService --> GameStore
-    CiconiaService --> GameStore
-    GameStore --> Indexer
+    UmiService --> QuoteSvc
+    HiguService --> QuoteSvc
+    CiconiaService --> QuoteSvc
+    QuoteSvc --> Repo
+    Repo -- "memory" --> MemDAO
+    Repo -- "sqlite" --> SqliteDAO
+    MemDAO -- "loads at startup" --> Games
+    SqliteDAO -- "seeds from" --> Games
     UmiService --> UmiStats
     HiguService --> HiguStats
     CiconiaService --> CiconiaStats
 
-    UmiService -- "parses via" --> Lexer
+    Games -- "parses via" --> Lexer
     Lexer -- tokens --> ASTParser
     ASTParser -- builds --> AST
     AST -- feeds --> Extractor
     Extractor --> HTMLTransform
     Extractor --> PlainTransform
 
-    HiguService -- "parses via" --> Scanner
+    Games -- "parses via" --> Scanner
     Scanner --> HiguAST
     HiguAST --> HiguHTMLTransform
     HiguAST --> HiguPlainTransform
 
-    CiconiaService -- "parses via" --> CiconiaScanner
+    Games -- "parses via" --> CiconiaScanner
     CiconiaScanner --> CiconiaAST
     CiconiaAST --> CiconiaHTMLTransform
     CiconiaAST --> CiconiaPlainTransform
@@ -136,7 +146,7 @@ graph TB
     ScriptLoader -- feeds --> Scanner
     ScriptLoader -- feeds --> CiconiaScanner
     SubParser -- "merges into" --> Mutations
-    Mutations -- "post-processes" --> UmiService
+    Mutations -- "post-processes" --> Games
 
     UmiCtrl -- "audio requests" --> Combiner
     Combiner --> OGGParser
@@ -226,6 +236,20 @@ npm run dev
 ```
 
 Open http://localhost:5173
+
+### Storage Mode (Optional)
+
+Quotes are held in memory by default. To serve them from a SQLite database instead, add to the `.env` file:
+
+```env
+# memory (default) or sqlite
+STORE_MODE=sqlite
+
+# Path to the SQLite database file (default: ./quotes.db)
+SQLITE_PATH=./quotes.db
+```
+
+On the first sqlite run, migrations are applied and the embedded scripts are parsed once to populate the database. Subsequent startups skip parsing and read straight from the database. Re-seeding happens automatically when the embedded data files or the `umineko_script_parser` version change; to force it manually, delete the database file along with its WAL sidecars (e.g. `quotes.db`, `quotes.db-wal`, `quotes.db-shm`). An unknown `STORE_MODE` value stops the server at startup.
 
 ### Voice Audio (Optional)
 
@@ -446,7 +470,7 @@ docker compose up -d --build
 
 ## Data
 
-Quote data is parsed from script files for all three games. The scripts are stored in ONS2-encoded `.file` format (compressed and obfuscated) and decoded at startup.
+Quote data is parsed from script files for all three games. The scripts are stored in ONS2-encoded `.file` format (compressed and obfuscated) and decoded at startup in memory mode, or once when seeding the SQLite database.
 
 ```
 internal/quote/data/
@@ -470,7 +494,7 @@ internal/quote/data/
     └── ...
 ```
 
-`.file` data is embedded at compile time and decoded in memory at startup via the script loader. Audio and SE files are read from disk at runtime.
+`.file` data is embedded at compile time and decoded by the game loaders in `internal/quote/game`, either at startup (memory mode) or when the SQLite seed is out of date. Audio and SE files are read from disk at runtime.
 
 ### Script Loader
 
@@ -661,7 +685,7 @@ cmd/encoder/                # CLI tool: plain script text → ONS2 .file
 
 No changes are needed to the extractor or parser.
 
-**Generic GameStore**, the consumer service uses `GameStore[Q any]` to share search, browse, random, context, and nearest-voiced logic between both games. Each game provides a `base func(*Q) *BaseQuote` accessor so the generic store can access common fields.
+**Generic quote service**, `quotes.Service[Q any]` holds the search, browse, random, context and nearest-voiced logic once for all three games. It reads through a repository backed by one DAO per storage engine (`internal/dao/memory`, `internal/dao/sqlite`), and each game's `game.Game[Q]` describes how its quotes map to and from the shared fields.
 
 **Preset context**, colour presets (`{p:1:text}`) are defined in script headers via `preset_define`. The `PresetContext` collects these definitions and provides semantic class lookups (preset 1 -> "red-truth", preset 2 -> "blue-truth") and dynamic colour lookups for other presets.
 

@@ -18,6 +18,13 @@ const PAGE_SIZE = 30;
 
 export { PAGE_SIZE };
 
+function datasetLanguage(game: Game, lang: Language): Language {
+    if (game === "umineko" || lang === "auto") {
+        return lang;
+    }
+    return "en";
+}
+
 export async function searchQuotes(
     game: Game,
     query: string,
@@ -36,7 +43,7 @@ export async function searchQuotes(
         q: query,
         limit: PAGE_SIZE,
         offset,
-        lang,
+        lang: datasetLanguage(game, lang),
         character: characterId || undefined,
         interactionA: interactionA || undefined,
         interactionB: interactionB || undefined,
@@ -59,7 +66,7 @@ export async function getRandomQuote(
     chapter?: string,
 ): Promise<Quote> {
     const qs = buildQueryString({
-        lang: resolveLanguage(lang),
+        lang: resolveLanguage(datasetLanguage(game, lang)),
         character: characterId || undefined,
         episode: episode && episode !== "0" ? episode : undefined,
         truth: truth || undefined,
@@ -70,7 +77,7 @@ export async function getRandomQuote(
 }
 
 export async function getQuoteByAudioId(game: Game, audioId: string, lang: Language): Promise<Quote> {
-    return gameApiFetch<Quote>(game, `/quote/${audioId}?lang=${resolveLanguage(lang)}`);
+    return gameApiFetch<Quote>(game, `/quote/${audioId}?lang=${resolveLanguage(datasetLanguage(game, lang))}`);
 }
 
 export async function browseDialogue(
@@ -88,7 +95,7 @@ export async function browseDialogue(
     const qs = buildQueryString({
         limit: PAGE_SIZE,
         offset,
-        lang: resolveLanguage(lang),
+        lang: resolveLanguage(datasetLanguage(game, lang)),
         character: characterId || undefined,
         interactionA: interactionA || undefined,
         interactionB: interactionB || undefined,
@@ -106,7 +113,10 @@ export async function getContext(
     lang: Language,
     lines: number = 5,
 ): Promise<ContextResponse> {
-    return gameApiFetch<ContextResponse>(game, `/context/${audioId}?lang=${resolveLanguage(lang)}&lines=${lines}`);
+    return gameApiFetch<ContextResponse>(
+        game,
+        `/context/${audioId}?lang=${resolveLanguage(datasetLanguage(game, lang))}&lines=${lines}`,
+    );
 }
 
 export async function getNearestVoiced(
@@ -117,7 +127,7 @@ export async function getNearestVoiced(
 ): Promise<NearestVoicedResponse> {
     return gameApiFetch<NearestVoicedResponse>(
         game,
-        `/nearest-voiced/${audioId}?lang=${resolveLanguage(lang)}&direction=${direction}`,
+        `/nearest-voiced/${audioId}?lang=${resolveLanguage(datasetLanguage(game, lang))}&direction=${direction}`,
     );
 }
 

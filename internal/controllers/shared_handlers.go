@@ -1,28 +1,52 @@
 package controllers
 
 import (
-	"umineko_quote/internal/dto"
+	"umineko_quote/internal/controllers/utils"
 	"umineko_quote/internal/quote/language"
+	"umineko_quote/internal/quote/quotes"
 
 	"github.com/gofiber/fiber/v3"
 )
 
-type QuoteLookup interface {
-	GetContext(lang language.Language, audioID string, lines int) *dto.ContextResponse
-	NearestVoicedAudioID(lang language.Language, audioID string, direction string) string
-}
-
-func handleContext(ctx fiber.Ctx, lookup QuoteLookup) error {
+func handleByAudioID[Q any](ctx fiber.Ctx, svc quotes.Service[Q], audioID string) error {
 	lang := language.English.Parse(ctx.Query("lang"))
-	audioID := ctx.Params("audioId")
-	if !audioIdPattern.MatchString(audioID) {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "invalid audio ID",
+
+	q, err := svc.GetByAudioID(lang, audioID)
+	if err != nil {
+		return utils.InternalError(ctx, "failed to load quote", err)
+	}
+	if q == nil {
+		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "quote not found",
 		})
 	}
+	return ctx.JSON(q)
+}
 
-	lines := fiber.Query[int](ctx, "lines", 5)
-	result := lookup.GetContext(lang, audioID, lines)
+func handleByIndex[Q any](ctx fiber.Ctx, svc quotes.Service[Q]) error {
+	lang := language.English.Parse(ctx.Query("lang"))
+	index := fiber.Params[int](ctx, "index")
+
+	q, err := svc.GetByIndex(lang, index)
+	if err != nil {
+		return utils.InternalError(ctx, "failed to load quote", err)
+	}
+	if q == nil {
+		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "quote not found",
+		})
+	}
+	return ctx.JSON(q)
+}
+
+func handleContext[Q any](ctx fiber.Ctx, svc quotes.Service[Q], audioID string) error {
+	lang := language.English.Parse(ctx.Query("lang"))
+	lines := fiber.Query[int](ctx, "lines")
+
+	result, err := svc.GetContext(lang, audioID, lines)
+	if err != nil {
+		return utils.InternalError(ctx, "failed to load quote context", err)
+	}
 	if result == nil {
 		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"error": "quote not found",
@@ -31,14 +55,8 @@ func handleContext(ctx fiber.Ctx, lookup QuoteLookup) error {
 	return ctx.JSON(result)
 }
 
-func handleNearestVoiced(ctx fiber.Ctx, lookup QuoteLookup) error {
+func handleNearestVoiced[Q any](ctx fiber.Ctx, svc quotes.Service[Q], audioID string) error {
 	lang := language.English.Parse(ctx.Query("lang"))
-	audioID := ctx.Params("audioId")
-	if !audioIdPattern.MatchString(audioID) {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "invalid audio ID",
-		})
-	}
 
 	direction := ctx.Query("direction", "next")
 	if direction != "next" && direction != "prev" {
@@ -47,7 +65,10 @@ func handleNearestVoiced(ctx fiber.Ctx, lookup QuoteLookup) error {
 		})
 	}
 
-	result := lookup.NearestVoicedAudioID(lang, audioID, direction)
+	result, err := svc.NearestVoicedAudioID(lang, audioID, direction)
+	if err != nil {
+		return utils.InternalError(ctx, "failed to find nearest voiced quote", err)
+	}
 	if result == "" {
 		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"error": "no voiced quote found",

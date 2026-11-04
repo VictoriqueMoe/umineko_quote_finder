@@ -103,7 +103,7 @@ graph TB
         direction TB
         GHActions["GitHub Actions"]
         subgraph CIJobs["CI Jobs"]
-            FECheck["Frontend<br/>(Prettier, ESLint, TS, Vite)"]
+            FECheck["Frontend<br/>(oxfmt, oxlint, TS, Vite)"]
             BECheck["Backend<br/>(go test, build, swag)"]
         end
         Docker["Docker Multi-Stage<br/>(Node build → Go build → Alpine)"]

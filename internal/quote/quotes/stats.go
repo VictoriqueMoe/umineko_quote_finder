@@ -1,4 +1,4 @@
-package store
+package quotes
 
 import (
 	"cmp"
@@ -8,16 +8,18 @@ import (
 	"umineko_quote/internal/dto"
 )
 
-type Stats interface {
-	Compute(episode int) any
-}
+type (
+	Stats interface {
+		Compute(episode int) any
+	}
+
+	RankedChar struct {
+		ID    string
+		Count int
+	}
+)
 
 const AllEpisodes = 0
-
-type RankedChar struct {
-	ID    string
-	Count int
-}
 
 func RankCharacters(charCounts map[string]int) []RankedChar {
 	ranked := make([]RankedChar, 0, len(charCounts))
@@ -25,7 +27,10 @@ func RankCharacters(charCounts map[string]int) []RankedChar {
 		ranked = append(ranked, RankedChar{id, count})
 	}
 	slices.SortFunc(ranked, func(a, b RankedChar) int {
-		return cmp.Compare(b.Count, a.Count)
+		if c := cmp.Compare(b.Count, a.Count); c != 0 {
+			return c
+		}
+		return cmp.Compare(a.ID, b.ID)
 	})
 	return ranked
 }
@@ -57,7 +62,10 @@ func TopInteractions(interactionCounts map[string]int, n int, resolveName func(s
 	}
 
 	slices.SortFunc(sorted, func(a, b pairCount) int {
-		return cmp.Compare(b.count, a.count)
+		if c := cmp.Compare(b.count, a.count); c != 0 {
+			return c
+		}
+		return cmp.Compare(a.key, b.key)
 	})
 
 	if len(sorted) < n {
@@ -84,4 +92,39 @@ func BuildNameMap(charCounts map[string]int, resolveName func(string) string) ma
 		nameMap[id] = resolveName(id)
 	}
 	return nameMap
+}
+
+func LinesPerSegment(charSegmentCounts map[string]map[string]int, ranked []RankedChar, topN int) map[string]map[string]int {
+	topN = min(topN, len(ranked))
+	topSet := make(map[string]bool, topN)
+	for _, rc := range ranked[:topN] {
+		topSet[rc.ID] = true
+	}
+
+	segments := make(map[string]map[string]int)
+	for id, segmentCounts := range charSegmentCounts {
+		label := id
+		if !topSet[id] {
+			label = "other"
+		}
+		for segment, count := range segmentCounts {
+			if segments[segment] == nil {
+				segments[segment] = make(map[string]int)
+			}
+			segments[segment][label] += count
+		}
+	}
+
+	return segments
+}
+
+func CuratedCharacters[C interface {
+	comparable
+	ID() string
+}](all map[C]string) map[string]string {
+	curated := make(map[string]string, len(all))
+	for ch, name := range all {
+		curated[ch.ID()] = name
+	}
+	return curated
 }

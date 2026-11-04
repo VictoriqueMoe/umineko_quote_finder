@@ -1,19 +1,44 @@
 package ciconia
 
 import (
+	"log"
+	"os"
 	"strings"
 	"testing"
+
+	"umineko_quote/internal/dao"
+	"umineko_quote/internal/dao/memory"
 	"umineko_quote/internal/dto"
+	"umineko_quote/internal/quote/game"
 	"umineko_quote/internal/quote/language"
 	quoteparams "umineko_quote/internal/quote/params"
-	"umineko_quote/internal/quote/store"
+	"umineko_quote/internal/quote/quotes"
+	"umineko_quote/internal/repository"
 
 	cicharacter "github.com/VictoriqueMoe/umineko_script_parser/ciconia/character"
 )
 
-var testService = NewService()
+var testService Service
+
+func TestMain(m *testing.M) {
+	loaded, err := game.Ciconia{}.Load()
+	if err != nil {
+		log.Fatalf("Load: %v", err)
+	}
+
+	repos := repository.NewFromDAOs(dao.DAOs{Ciconia: memory.NewQuotes(game.Ciconia{}, loaded)}, nil)
+
+	svc, err := NewService(repos.Ciconia)
+	if err != nil {
+		log.Fatalf("NewService: %v", err)
+	}
+	testService = svc
+
+	os.Exit(m.Run())
+}
 
 func searchWithParams(
+	t *testing.T,
 	svc Service,
 	query string,
 	lang language.Language,
@@ -24,7 +49,9 @@ func searchWithParams(
 	interactionA string,
 	interactionB string,
 ) dto.SearchResponse {
-	return svc.Search(quoteparams.SearchParams{
+	t.Helper()
+
+	resp, err := svc.Search(quoteparams.SearchParams{
 		Query:        query,
 		Lang:         lang,
 		Limit:        limit,
@@ -32,10 +59,15 @@ func searchWithParams(
 		CharacterID:  characterID,
 		InteractionA: interactionA,
 		InteractionB: interactionB,
-	}, chapter)
+	}, quoteparams.QuoteScope{Segment: chapter})
+	if err != nil {
+		t.Fatalf("Search: %v", err)
+	}
+	return resp
 }
 
 func browseWithParams(
+	t *testing.T,
 	svc Service,
 	lang language.Language,
 	characterID string,
@@ -45,20 +77,46 @@ func browseWithParams(
 	interactionA string,
 	interactionB string,
 ) dto.CharacterResponse {
-	return svc.Browse(quoteparams.BrowseParams{
+	t.Helper()
+
+	resp, err := svc.Browse(quoteparams.BrowseParams{
 		Lang:         lang,
 		CharacterID:  characterID,
 		Limit:        limit,
 		Offset:       offset,
 		InteractionA: interactionA,
 		InteractionB: interactionB,
-	}, chapter)
+	}, quoteparams.QuoteScope{Segment: chapter})
+	if err != nil {
+		t.Fatalf("Browse: %v", err)
+	}
+	return resp
+}
+
+func randomQuote(t *testing.T, characterID string, scope quoteparams.QuoteScope) *dto.CiconiaQuote {
+	t.Helper()
+
+	q, err := testService.Random(language.English, characterID, 0, scope)
+	if err != nil {
+		t.Fatalf("Random: %v", err)
+	}
+	return q
+}
+
+func loadedLanguages(t *testing.T) map[language.Language]int {
+	t.Helper()
+
+	langs, err := testService.LoadedLanguages()
+	if err != nil {
+		t.Fatalf("LoadedLanguages: %v", err)
+	}
+	return langs
 }
 
 func TestService_Search_ExactMatch(t *testing.T) {
 	svc := testService
 
-	resp := searchWithParams(svc, "Miyao", language.English, 10, 0, "", "", "", "")
+	resp := searchWithParams(t, svc, "Miyao", language.English, 10, 0, "", "", "", "")
 
 	if resp.Total == 0 {
 		t.Fatal("expected search results for 'Miyao'")
@@ -74,7 +132,7 @@ func TestService_Search_ExactMatch(t *testing.T) {
 func TestService_Search_DefaultValues(t *testing.T) {
 	svc := testService
 
-	resp := searchWithParams(svc, "the", language.English, 0, -1, "", "", "", "")
+	resp := searchWithParams(t, svc, "the", language.English, 0, -1, "", "", "", "")
 
 	if resp.Limit != 30 {
 		t.Errorf("default limit: got %d, want 30", resp.Limit)
@@ -87,7 +145,7 @@ func TestService_Search_DefaultValues(t *testing.T) {
 func TestService_Search_WithCharacterFilter(t *testing.T) {
 	svc := testService
 
-	resp := searchWithParams(svc, "the", language.English, 10, 0, cicharacter.Miyao.ID(), "", "", "")
+	resp := searchWithParams(t, svc, "the", language.English, 10, 0, cicharacter.Miyao.ID(), "", "", "")
 
 	for i := 0; i < len(resp.Results); i++ {
 		q := resp.Results[i].Quote.(dto.CiconiaQuote)
@@ -100,7 +158,7 @@ func TestService_Search_WithCharacterFilter(t *testing.T) {
 func TestService_Search_WithChapterFilter(t *testing.T) {
 	svc := testService
 
-	resp := searchWithParams(svc, "the", language.English, 10, 0, "", "01", "", "")
+	resp := searchWithParams(t, svc, "the", language.English, 10, 0, "", "01", "", "")
 
 	if resp.Total == 0 {
 		t.Fatal("expected results for chapter 01")
@@ -116,7 +174,7 @@ func TestService_Search_WithChapterFilter(t *testing.T) {
 func TestService_Search_NoResults(t *testing.T) {
 	svc := testService
 
-	resp := searchWithParams(svc, "xyzzyxyzzyxyzzy", language.English, 10, 0, "", "", "", "")
+	resp := searchWithParams(t, svc, "xyzzyxyzzyxyzzy", language.English, 10, 0, "", "", "", "")
 
 	if resp.Total != 0 {
 		t.Errorf("Total: got %d, want 0", resp.Total)
@@ -126,7 +184,7 @@ func TestService_Search_NoResults(t *testing.T) {
 func TestService_Browse(t *testing.T) {
 	svc := testService
 
-	resp := browseWithParams(svc, language.English, cicharacter.Miyao.ID(), 10, 0, "", "", "")
+	resp := browseWithParams(t, svc, language.English, cicharacter.Miyao.ID(), 10, 0, "", "", "")
 
 	if resp.Total == 0 {
 		t.Fatal("expected browse results for Miyao")
@@ -143,7 +201,7 @@ func TestService_Browse(t *testing.T) {
 func TestService_Browse_WithChapterFilter(t *testing.T) {
 	svc := testService
 
-	resp := browseWithParams(svc, language.English, "", 10, 0, "df01", "", "")
+	resp := browseWithParams(t, svc, language.English, "", 10, 0, "df01", "", "")
 
 	if resp.Total == 0 {
 		t.Fatal("expected browse results for df01")
@@ -157,23 +215,19 @@ func TestService_Browse_WithChapterFilter(t *testing.T) {
 }
 
 func TestService_Random(t *testing.T) {
-	svc := testService
-
-	q := svc.Random(language.English, "", "")
+	q := randomQuote(t, "", quoteparams.QuoteScope{})
 
 	if q == nil {
 		t.Fatal("expected a random quote")
 	}
-	if q.CharacterID == "narrator" {
+	if q.CharacterID == game.NarratorID {
 		t.Error("Random with no filters should exclude narrator")
 	}
 }
 
 func TestService_Random_WithCharacter(t *testing.T) {
-	svc := testService
-
 	for i := 0; i < 10; i++ {
-		q := svc.Random(language.English, cicharacter.Jayden.ID(), "")
+		q := randomQuote(t, cicharacter.Jayden.ID(), quoteparams.QuoteScope{})
 		if q == nil {
 			t.Fatal("expected a random Jayden quote")
 		}
@@ -184,10 +238,8 @@ func TestService_Random_WithCharacter(t *testing.T) {
 }
 
 func TestService_Random_WithChapter(t *testing.T) {
-	svc := testService
-
 	for i := 0; i < 10; i++ {
-		q := svc.Random(language.English, "", "05")
+		q := randomQuote(t, "", quoteparams.QuoteScope{Segment: "05"})
 		if q == nil {
 			t.Fatal("expected a random chapter 05 quote")
 		}
@@ -198,9 +250,10 @@ func TestService_Random_WithChapter(t *testing.T) {
 }
 
 func TestService_GetByIndex(t *testing.T) {
-	svc := testService
-
-	q := svc.GetByIndex(language.English, 0)
+	q, err := testService.GetByIndex(language.English, 0)
+	if err != nil {
+		t.Fatalf("GetByIndex: %v", err)
+	}
 
 	if q == nil {
 		t.Fatal("expected quote at index 0")
@@ -211,9 +264,10 @@ func TestService_GetByIndex(t *testing.T) {
 }
 
 func TestService_GetByIndex_NotFound(t *testing.T) {
-	svc := testService
-
-	q := svc.GetByIndex(language.English, 999999)
+	q, err := testService.GetByIndex(language.English, 999999)
+	if err != nil {
+		t.Fatalf("GetByIndex: %v", err)
+	}
 
 	if q != nil {
 		t.Errorf("expected nil for out-of-bounds index")
@@ -244,7 +298,7 @@ func TestService_GetStats(t *testing.T) {
 		t.Fatal("expected stats to be non-nil")
 	}
 
-	result := stats.Compute(store.AllEpisodes)
+	result := stats.Compute(quotes.AllEpisodes)
 	if result == nil {
 		t.Fatal("expected Compute to return non-nil")
 	}
@@ -264,7 +318,7 @@ func TestService_GetStats(t *testing.T) {
 func TestService_Search_HasJapaneseText(t *testing.T) {
 	svc := testService
 
-	resp := searchWithParams(svc, "Miyao", language.English, 5, 0, "", "", "", "")
+	resp := searchWithParams(t, svc, "Miyao", language.English, 5, 0, "", "", "", "")
 
 	if resp.Total == 0 {
 		t.Fatal("expected results")
@@ -279,7 +333,7 @@ func TestService_Search_HasJapaneseText(t *testing.T) {
 func TestService_Search_HasChapter(t *testing.T) {
 	svc := testService
 
-	resp := searchWithParams(svc, "the", language.English, 5, 0, "", "", "", "")
+	resp := searchWithParams(t, svc, "the", language.English, 5, 0, "", "", "", "")
 
 	if resp.Total == 0 {
 		t.Fatal("expected results")
@@ -292,9 +346,7 @@ func TestService_Search_HasChapter(t *testing.T) {
 }
 
 func TestService_LoadedLanguages(t *testing.T) {
-	svc := testService
-
-	langs := svc.LoadedLanguages()
+	langs := loadedLanguages(t)
 
 	if len(langs) == 0 {
 		t.Fatal("expected at least one loaded language")
@@ -305,10 +357,7 @@ func TestService_LoadedLanguages(t *testing.T) {
 }
 
 func TestService_QuoteCount(t *testing.T) {
-	svc := testService
-
-	langs := svc.LoadedLanguages()
-	count := langs[language.English]
+	count := loadedLanguages(t)[language.English]
 
 	t.Logf("Ciconia quotes loaded: %d", count)
 
@@ -323,7 +372,7 @@ func TestService_AllChaptersPresent(t *testing.T) {
 	expectedChapters := []string{"00", "01", "05", "10", "15", "20", "25", "25b", "df01", "df08", "df16"}
 
 	for _, ch := range expectedChapters {
-		resp := searchWithParams(svc, "the", language.English, 1, 0, "", ch, "", "")
+		resp := searchWithParams(t, svc, "the", language.English, 1, 0, "", ch, "", "")
 		if resp.Total == 0 {
 			t.Errorf("no quotes found for chapter %q", ch)
 		}
@@ -333,7 +382,7 @@ func TestService_AllChaptersPresent(t *testing.T) {
 func TestStats_TopSpeakersHaveMiyao(t *testing.T) {
 	svc := testService
 
-	result := svc.GetStats().Compute(store.AllEpisodes).(*dto.CiconiaStatsResult)
+	result := svc.GetStats().Compute(quotes.AllEpisodes).(*dto.CiconiaStatsResult)
 
 	found := false
 	for i := 0; i < len(result.TopSpeakers); i++ {
@@ -350,7 +399,7 @@ func TestStats_TopSpeakersHaveMiyao(t *testing.T) {
 func TestStats_InteractionsExist(t *testing.T) {
 	svc := testService
 
-	result := svc.GetStats().Compute(store.AllEpisodes).(*dto.CiconiaStatsResult)
+	result := svc.GetStats().Compute(quotes.AllEpisodes).(*dto.CiconiaStatsResult)
 
 	if len(result.Interactions) == 0 {
 		t.Fatal("expected interactions")
@@ -368,7 +417,7 @@ func TestStats_InteractionsExist(t *testing.T) {
 func TestStats_LinesPerChapterExists(t *testing.T) {
 	svc := testService
 
-	result := svc.GetStats().Compute(store.AllEpisodes).(*dto.CiconiaStatsResult)
+	result := svc.GetStats().Compute(quotes.AllEpisodes).(*dto.CiconiaStatsResult)
 
 	if len(result.LinesPerChapter) == 0 {
 		t.Fatal("expected LinesPerChapter to be populated")
@@ -380,9 +429,7 @@ func TestStats_LinesPerChapterExists(t *testing.T) {
 }
 
 func TestService_KeropoyoPresent(t *testing.T) {
-	svc := testService
-
-	q := svc.Random(language.English, cicharacter.Keropoyo.ID(), "")
+	q := randomQuote(t, cicharacter.Keropoyo.ID(), quoteparams.QuoteScope{})
 	if q == nil {
 		t.Fatal("expected a random Keropoyo quote")
 	}

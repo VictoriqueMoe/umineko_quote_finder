@@ -2,34 +2,53 @@ package umineko
 
 import (
 	"testing"
-	"umineko_quote/internal/quote/store"
-
-	scriptdto "github.com/VictoriqueMoe/umineko_script_parser/dto"
-	"github.com/VictoriqueMoe/umineko_script_parser/umineko/character"
 
 	"umineko_quote/internal/dto"
+	"umineko_quote/internal/quote/params"
+	"umineko_quote/internal/quote/quotes"
+
+	"github.com/VictoriqueMoe/umineko_script_parser/umineko/character"
 )
 
-func buildTestQuotes() []dto.UminekoQuote {
-	return []dto.UminekoQuote{
-		{UminekoQuote: scriptdto.UminekoQuote{BaseQuote: scriptdto.BaseQuote{Text: "Line 1", TextHtml: "Line 1", CharacterID: "10", Episode: 1}}},
-		{UminekoQuote: scriptdto.UminekoQuote{BaseQuote: scriptdto.BaseQuote{Text: "Line 2", TextHtml: "Line 2", CharacterID: "10", Episode: 1}}},
-		{UminekoQuote: scriptdto.UminekoQuote{BaseQuote: scriptdto.BaseQuote{Text: "Line 3", TextHtml: "Line 3", CharacterID: "27", Episode: 1}}},
-		{UminekoQuote: scriptdto.UminekoQuote{BaseQuote: scriptdto.BaseQuote{Text: "Narrator line", TextHtml: "Narrator line", CharacterID: "narrator", Episode: 1}}},
-		{UminekoQuote: scriptdto.UminekoQuote{BaseQuote: scriptdto.BaseQuote{Text: "Red truth", TextHtml: `<span class="red-truth">Red</span>`, CharacterID: "27", Episode: 2}, HasRedTruth: true}},
-		{UminekoQuote: scriptdto.UminekoQuote{BaseQuote: scriptdto.BaseQuote{Text: "Blue truth", TextHtml: `<span class="blue-truth">Blue</span>`, CharacterID: "10", Episode: 2}, HasBlueTruth: true}},
-		{UminekoQuote: scriptdto.UminekoQuote{BaseQuote: scriptdto.BaseQuote{Text: "Red truth ep3", TextHtml: `<span class="red-truth">Red</span>`, CharacterID: "10", Episode: 3}, HasRedTruth: true}},
-		{UminekoQuote: scriptdto.UminekoQuote{BaseQuote: scriptdto.BaseQuote{Text: "Blue truth ep3", TextHtml: `<span class="blue-truth">Blue</span>`, CharacterID: "27", Episode: 3}, HasBlueTruth: true}},
-		{UminekoQuote: scriptdto.UminekoQuote{BaseQuote: scriptdto.BaseQuote{Text: "Line ep3", TextHtml: "Line ep3", CharacterID: "27", Episode: 3}}},
-		{UminekoQuote: scriptdto.UminekoQuote{BaseQuote: scriptdto.BaseQuote{Text: "Line ep3 b", TextHtml: "Line ep3 b", CharacterID: "10", Episode: 3}}},
+func buildTestTallies() params.SpeakerTallies {
+	t := params.NewSpeakerTallies()
+
+	t.AddLines("10", "1", 2)
+	t.AddLines("10", "2", 1)
+	t.AddLines("10", "3", 2)
+	t.AddLines("27", "1", 1)
+	t.AddLines("27", "2", 1)
+	t.AddLines("27", "3", 2)
+
+	t.AddInteractions("1", "10", "27", 1)
+	t.AddInteractions("2", "27", "10", 1)
+	t.AddInteractions("3", "10", "27", 2)
+
+	return t
+}
+
+func buildTestTruth() map[int]params.TruthCounts {
+	return map[int]params.TruthCounts{
+		2: {Red: 1, Blue: 1},
+		3: {Red: 1, Blue: 1},
 	}
 }
 
-func TestNewStats_Compute_AllEpisodes(t *testing.T) {
-	quotes := buildTestQuotes()
-	s := NewUminekoStats(quotes)
+func newTestStats(t *testing.T, tallies params.SpeakerTallies, truth map[int]params.TruthCounts) quotes.Stats {
+	t.Helper()
 
-	result := s.Compute(store.AllEpisodes)
+	s, err := NewUminekoStats(tallies, truth)
+	if err != nil {
+		t.Fatalf("NewUminekoStats: %v", err)
+	}
+
+	return s
+}
+
+func TestNewStats_Compute_AllEpisodes(t *testing.T) {
+	s := newTestStats(t, buildTestTallies(), buildTestTruth())
+
+	result := s.Compute(quotes.AllEpisodes)
 	sr, ok := result.(*dto.StatsResult)
 	if !ok {
 		t.Fatalf("Compute(AllEpisodes) returned unexpected type %T", result)
@@ -51,9 +70,8 @@ func TestNewStats_Compute_AllEpisodes(t *testing.T) {
 }
 
 func TestStats_TopSpeakers_Ranking(t *testing.T) {
-	quotes := buildTestQuotes()
-	s := NewUminekoStats(quotes)
-	result := s.Compute(store.AllEpisodes).(*dto.StatsResult)
+	s := newTestStats(t, buildTestTallies(), buildTestTruth())
+	result := s.Compute(quotes.AllEpisodes).(*dto.StatsResult)
 
 	if len(result.TopSpeakers) < 2 {
 		t.Fatalf("expected at least 2 top speakers, got %d", len(result.TopSpeakers))
@@ -65,22 +83,9 @@ func TestStats_TopSpeakers_Ranking(t *testing.T) {
 	}
 }
 
-func TestStats_TopSpeakers_ExcludesNarrator(t *testing.T) {
-	quotes := buildTestQuotes()
-	s := NewUminekoStats(quotes)
-	result := s.Compute(store.AllEpisodes).(*dto.StatsResult)
-
-	for i := 0; i < len(result.TopSpeakers); i++ {
-		if result.TopSpeakers[i].CharacterID == "narrator" {
-			t.Error("TopSpeakers should not include narrator")
-		}
-	}
-}
-
 func TestStats_TruthPerEpisode(t *testing.T) {
-	quotes := buildTestQuotes()
-	s := NewUminekoStats(quotes)
-	result := s.Compute(store.AllEpisodes).(*dto.StatsResult)
+	s := newTestStats(t, buildTestTallies(), buildTestTruth())
+	result := s.Compute(quotes.AllEpisodes).(*dto.StatsResult)
 
 	if len(result.TruthPerEpisode) != 8 {
 		t.Fatalf("TruthPerEpisode length: got %d, want 8", len(result.TruthPerEpisode))
@@ -106,9 +111,8 @@ func TestStats_TruthPerEpisode(t *testing.T) {
 }
 
 func TestStats_LinesPerEpisode(t *testing.T) {
-	quotes := buildTestQuotes()
-	s := NewUminekoStats(quotes)
-	result := s.Compute(store.AllEpisodes).(*dto.StatsResult)
+	s := newTestStats(t, buildTestTallies(), buildTestTruth())
+	result := s.Compute(quotes.AllEpisodes).(*dto.StatsResult)
 
 	if len(result.LinesPerEpisode) != 8 {
 		t.Fatalf("LinesPerEpisode length: got %d, want 8", len(result.LinesPerEpisode))
@@ -130,21 +134,19 @@ func TestStats_LinesPerEpisode(t *testing.T) {
 }
 
 func TestStats_Interactions(t *testing.T) {
-	quotes := buildTestQuotes()
-	s := NewUminekoStats(quotes)
-	result := s.Compute(store.AllEpisodes).(*dto.StatsResult)
+	s := newTestStats(t, buildTestTallies(), buildTestTruth())
+	result := s.Compute(quotes.AllEpisodes).(*dto.StatsResult)
 
 	if len(result.Interactions) == 0 {
 		t.Fatal("Interactions should not be empty")
 	}
 
 	found := false
-	for i := 0; i < len(result.Interactions); i++ {
-		pair := result.Interactions[i]
+	for _, pair := range result.Interactions {
 		if (pair.CharA == "10" && pair.CharB == "27") || (pair.CharA == "27" && pair.CharB == "10") {
 			found = true
-			if pair.Count == 0 {
-				t.Error("Battler-Beatrice interaction count should be > 0")
+			if pair.Count != 4 {
+				t.Errorf("Battler-Beatrice interaction count: got %d, want 4", pair.Count)
 			}
 		}
 	}
@@ -154,9 +156,8 @@ func TestStats_Interactions(t *testing.T) {
 }
 
 func TestStats_InteractionCountsMap(t *testing.T) {
-	quotes := buildTestQuotes()
-	s := NewUminekoStats(quotes)
-	result := s.Compute(store.AllEpisodes).(*dto.StatsResult)
+	s := newTestStats(t, buildTestTallies(), buildTestTruth())
+	result := s.Compute(quotes.AllEpisodes).(*dto.StatsResult)
 
 	if len(result.InteractionCounts) == 0 {
 		t.Fatal("InteractionCounts should not be empty")
@@ -172,9 +173,8 @@ func TestStats_InteractionCountsMap(t *testing.T) {
 }
 
 func TestStats_CharacterPresence(t *testing.T) {
-	quotes := buildTestQuotes()
-	s := NewUminekoStats(quotes)
-	result := s.Compute(store.AllEpisodes).(*dto.StatsResult)
+	s := newTestStats(t, buildTestTallies(), buildTestTruth())
+	result := s.Compute(quotes.AllEpisodes).(*dto.StatsResult)
 
 	if len(result.CharacterPresence) == 0 {
 		t.Fatal("CharacterPresence should not be empty")
@@ -186,9 +186,8 @@ func TestStats_CharacterPresence(t *testing.T) {
 }
 
 func TestStats_CharacterNames(t *testing.T) {
-	quotes := buildTestQuotes()
-	s := NewUminekoStats(quotes)
-	result := s.Compute(store.AllEpisodes).(*dto.StatsResult)
+	s := newTestStats(t, buildTestTallies(), buildTestTruth())
+	result := s.Compute(quotes.AllEpisodes).(*dto.StatsResult)
 
 	if result.CharacterNames["10"] != character.CharacterNames[character.Battler] {
 		t.Errorf("CharacterNames[10]: got %q, want %q", result.CharacterNames["10"], character.CharacterNames[character.Battler])
@@ -199,9 +198,8 @@ func TestStats_CharacterNames(t *testing.T) {
 }
 
 func TestStats_EpisodeNames(t *testing.T) {
-	quotes := buildTestQuotes()
-	s := NewUminekoStats(quotes)
-	result := s.Compute(store.AllEpisodes).(*dto.StatsResult)
+	s := newTestStats(t, buildTestTallies(), buildTestTruth())
+	result := s.Compute(quotes.AllEpisodes).(*dto.StatsResult)
 
 	expected := map[int]string{
 		1: "Legend", 2: "Turn", 3: "Banquet", 4: "Alliance",
@@ -216,16 +214,18 @@ func TestStats_EpisodeNames(t *testing.T) {
 }
 
 func TestStats_ComputeSpecificEpisode(t *testing.T) {
-	quotes := buildTestQuotes()
-	s := NewUminekoStats(quotes)
+	s := newTestStats(t, buildTestTallies(), buildTestTruth())
 
 	result := s.Compute(1).(*dto.StatsResult)
 
-	for i := 0; i < len(result.TopSpeakers); i++ {
-		speaker := result.TopSpeakers[i]
+	for _, speaker := range result.TopSpeakers {
 		if speaker.CharacterID == "10" && speaker.Count != 2 {
 			t.Errorf("Battler count in ep1: got %d, want 2", speaker.Count)
 		}
+	}
+
+	if result.InteractionCounts["10|27"] != 1 {
+		t.Errorf("ep1 interactions: got %d, want 1", result.InteractionCounts["10|27"])
 	}
 
 	if result.LinesPerEpisode != nil {
@@ -239,21 +239,33 @@ func TestStats_ComputeSpecificEpisode(t *testing.T) {
 	}
 }
 
-func TestStats_ComputeCached(t *testing.T) {
-	quotes := buildTestQuotes()
-	s := NewUminekoStats(quotes)
+func TestStats_ComputeUnknownEpisodeIsEmpty(t *testing.T) {
+	s := newTestStats(t, buildTestTallies(), buildTestTruth())
 
-	result1 := s.Compute(store.AllEpisodes)
-	result2 := s.Compute(store.AllEpisodes)
+	result := s.Compute(99).(*dto.StatsResult)
+
+	if len(result.TopSpeakers) != 0 {
+		t.Errorf("TopSpeakers should be empty for an unknown episode, got %d", len(result.TopSpeakers))
+	}
+	if result.InteractionCounts == nil {
+		t.Error("InteractionCounts should be an empty map, not nil")
+	}
+}
+
+func TestStats_ComputeCached(t *testing.T) {
+	s := newTestStats(t, buildTestTallies(), buildTestTruth())
+
+	result1 := s.Compute(quotes.AllEpisodes)
+	result2 := s.Compute(quotes.AllEpisodes)
 
 	if result1 != result2 {
 		t.Error("Compute(AllEpisodes) should return cached result")
 	}
 }
 
-func TestStats_EmptyQuotes(t *testing.T) {
-	s := NewUminekoStats([]dto.UminekoQuote{})
-	result := s.Compute(store.AllEpisodes).(*dto.StatsResult)
+func TestStats_EmptyTallies(t *testing.T) {
+	s := newTestStats(t, params.NewSpeakerTallies(), map[int]params.TruthCounts{})
+	result := s.Compute(quotes.AllEpisodes).(*dto.StatsResult)
 
 	if len(result.TopSpeakers) != 0 {
 		t.Errorf("TopSpeakers should be empty, got %d", len(result.TopSpeakers))
@@ -263,33 +275,11 @@ func TestStats_EmptyQuotes(t *testing.T) {
 	}
 }
 
-func TestStats_InteractionPairOrdering(t *testing.T) {
-	quotes := []dto.UminekoQuote{
-		{UminekoQuote: scriptdto.UminekoQuote{BaseQuote: scriptdto.BaseQuote{Text: "Line 1", TextHtml: "Line 1", CharacterID: "27", Episode: 1}}},
-		{UminekoQuote: scriptdto.UminekoQuote{BaseQuote: scriptdto.BaseQuote{Text: "Line 2", TextHtml: "Line 2", CharacterID: "10", Episode: 1}}},
-	}
-	s := NewUminekoStats(quotes)
-	result := s.Compute(store.AllEpisodes).(*dto.StatsResult)
+func TestStats_NonNumericSegmentFails(t *testing.T) {
+	tallies := params.NewSpeakerTallies()
+	tallies.AddLines("10", "tea", 1)
 
-	if len(result.Interactions) != 1 {
-		t.Fatalf("expected 1 interaction, got %d", len(result.Interactions))
-	}
-	if result.Interactions[0].CharA != "10" || result.Interactions[0].CharB != "27" {
-		t.Errorf("interaction pair should be ordered: got %q-%q, want 10-27",
-			result.Interactions[0].CharA, result.Interactions[0].CharB)
-	}
-}
-
-func TestStats_NarratorBreaksInteraction(t *testing.T) {
-	quotes := []dto.UminekoQuote{
-		{UminekoQuote: scriptdto.UminekoQuote{BaseQuote: scriptdto.BaseQuote{Text: "Line 1", TextHtml: "Line 1", CharacterID: "10", Episode: 1}}},
-		{UminekoQuote: scriptdto.UminekoQuote{BaseQuote: scriptdto.BaseQuote{Text: "Narration", TextHtml: "Narration", CharacterID: "narrator", Episode: 1}}},
-		{UminekoQuote: scriptdto.UminekoQuote{BaseQuote: scriptdto.BaseQuote{Text: "Line 2", TextHtml: "Line 2", CharacterID: "27", Episode: 1}}},
-	}
-	s := NewUminekoStats(quotes)
-	result := s.Compute(store.AllEpisodes).(*dto.StatsResult)
-
-	if len(result.Interactions) != 0 {
-		t.Errorf("narrator should break interaction chain, got %d interactions", len(result.Interactions))
+	if _, err := NewUminekoStats(tallies, map[int]params.TruthCounts{}); err == nil {
+		t.Error("expected an error for a segment that is not an episode number")
 	}
 }
